@@ -3,9 +3,164 @@ description:
 globs: 
 alwaysApply: true
 ---
-## Rules to Follow
+---
+description: Git conventions and workflow guidelines using Conventional Commits
+globs: 
+alwaysApply: false
+---
 
-- You must always commit your changes whenever you update code. 
-- You must always try and write code that is well documented. (self or commented is fine)
+
+# General Rules
+
+## Core Principles
+
+- You must always commit your changes whenever you update code.
+- You must always try to write code that is well documented (self-documenting or commented).
 - You must only work on a single feature at a time.
-- You must explain your decisions thouroughly to the user.
+- You must explain your decisions thoroughly to the user.
+
+---
+
+## Git Commit Conventions and Workflow Guidelines
+
+### Commit Message Format
+
+Use this format ([Conventional Commits v1.0.0](mdc:https://www.conventionalcommits.org/en/v1.0.0/)):
+
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Rules
+
+- Header line must be 72 characters or less.
+- Body lines should wrap at 100 characters.
+- Use present tense, imperative mood: "add" not "added" or "adds".
+- No period at end of description.
+- Body should explain WHAT and WHY, not HOW.
+
+### Standard Types
+
+- `feat`: New feature for the user.
+- `fix`: Bug fix for the user.
+- `docs`: Documentation changes.
+- `style`: Formatting, missing semicolons, etc. (no code change).
+- `refactor`: Code change that neither fixes bug nor adds feature.
+- `test`: Adding or updating tests.
+- `chore`: Build process, dependencies, tooling changes.
+- `ci`: CI/CD configuration changes.
+- `perf`: Performance improvements.
+- `build`: Changes to build system or dependencies.
+- `revert`: Reverting previous commits.
+
+### Project-Specific Scopes
+
+The scope should be the name of the component affected (as perceived by the person reading the changelog).
+
+- `frontend`: Next.js frontend changes.
+- `api`: FastAPI backend changes.
+- `ui`: UI components and styling.
+- `auth`: Authentication related.
+- `chat`: Chat functionality.
+- `deploy`: Deployment configuration.
+- `deps`: Dependency updates.
+- `config`: Configuration files.
+
+### Examples
+
+```
+feat(frontend): add streaming chat interface
+fix(api): handle missing API key validation
+docs(readme): update setup instructions
+chore(deps): update Next.js to v14.1
+style(ui): improve message bubble spacing
+ci(deploy): add Vercel deployment workflow
+```
+
+---
+
+## Branch Naming Convention
+
+Branches should follow this pattern:
+
+```
+<type>(<scope>)/<short-description>
+```
+
+Example:
+
+```
+feat(api)/streaming-endpoint
+```
+
+---
+
+## Workflow Guidelines
+
+### 1. Protected Branches
+
+- `main`: Production-ready code, protected branch.
+- Direct commits to protected branches are NOT allowed.
+- All changes must come through Pull Requests.
+
+### 2. Feature Development
+
+```bash
+# First, check if you're on a protected branch
+git branch --show-current
+
+# If on main, create and checkout a new branch following <type>(<scope>)/<short-description>
+git checkout -b feat(api)/streaming-endpoint main
+
+# Make changes and commit
+git add .
+git commit -m "feat(api): add streaming chat endpoint"
+
+# Keep branch updated with main
+git fetch origin main
+git rebase origin/main
+
+# Push changes
+git push origin feat(api)/streaming-endpoint
+```
+
+### 3. Pull Request Proceeature branch to main/master.
+- Use the @Pull Request Tem.  
+  _(If not visible, see @.github/pull_request_template.md)_
+- Request at least 2 code reviews (optional if solo).
+- All tests must pass.
+- No merge conflicts.
+- Squash commits when merging.
+
+### 4. Release Process
+
+```bash
+# Create release branch from main
+git checkout main
+git pull origin main
+git checkout -b release/v1.0.0
+
+# After testing, merge back to main via PR
+# After PR is approved and merged:
+git checkout main
+git pull origin main
+git tag -a v1.0.0 -m "version 1.0.0"
+git push origin main --tags
+```
+
+---
+
+### Breaking Changes
+
+For breaking changes, add `!` after type/scope and include `BREAKING CHANGE:` in footer:
+
+```
+feat(api)!: change chat endpoint response format
+
+BREAKING CHANGE: Response now returns streaming format instead of single response
+```

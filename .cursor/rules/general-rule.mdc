@@ -25,7 +25,7 @@ alwaysApply: false
 
 ### Commit Message Format
 
-Use this format ([Conventional Commits v1.0.0](mdc:https://www.conventionalcommits.org/en/v1.0.0/)):
+Use this format ([Conventional Commits v1.0.0](mdc:https:/www.conventionalcommits.org/en/v1.0.0)):
 
 
 ```
@@ -155,10 +155,87 @@ git push origin main --tags
 
 ---
 
+## Git Workflow Automation
+
+### Available Git Aliases
+
+You can reference these efficient git aliases when helping with workflow tasks:
+
+#### Basic Operations
+- `git st` - Show status
+- `git co <branch>` - Checkout branch  
+- `git br` - List branches
+
+#### Feature Workflow
+- `git new <branch-name>` - Create feature branch from latest main
+- `git done <branch-name>` - Clean up after merge (switch to main, pull, delete branch)
+- `git pushpr` - Push current branch for PR creation
+
+#### Development Helpers
+- `git wip` - Quick save work in progress
+- `git amend` - Amend last commit without editing message
+- `git undo` - Undo last commit (keeps changes staged)
+- `git up` - Update current branch with latest main
+- `git sync` - Switch to main and pull latest
+
+#### Code Investigation
+- `git find <text>` - Search for code changes containing text
+- `git who <file>` - Show blame/authorship for file
+- `git lg` - Pretty git log with graph
+
+#### AI-Enhanced Commits
+- `git smart-commit` - Use QodoGen for AI commit messages
+- `git cursor-commit` - Stage changes and open Cursor editor for commit message creation
+- `git ai-review` - Complete AI workflow (commit + push for PR)
+
+### When Suggesting Git Commands
+
+- **Prefer aliases** over full commands for efficiency
+- **Suggest appropriate alias** based on the task
+- **Explain the workflow** when using multi-step aliases
+- **Reference conventional commit format** for commit messages
+
+### Examples
+
+Instead of:
+```bash
+git checkout main
+git pull origin main  
+git checkout -b feat(api)/streaming-endpoint
+```
+Suggest:
+```bash
+git new feat(api)/streaming-endpoint
+```
+
+Instead of:
+```bash
+git add .
+git commit -m "feat(api): add streaming endpoint"
+git push origin feat(api)/streaming-endpoint
+```
+Suggest:
+```bash
+git add .
+git cursor-commit  # Opens Cursor editor to create conventional commit message
+git pushpr
+```
+
+## Workflow Automation Summary
+
+For AI Engineer Challenge development:
+1. **Start feature**: `git new feat(scope)/description`
+2. **Save progress**: `git wip` (for breaks/experiments)
+3. **Clean commit**: `git cursor-commit` (AI-assisted)
+4. **Push for PR**: `git pushpr`
+5. **Finish feature**: `git done feat(scope)/description`
+
+This workflow combines conventional commits, AI assistance, and efficient automation.
+---
+
 ### Breaking Changes
 
 For breaking changes, add `!` after type/scope and include `BREAKING CHANGE:` in footer:
-
 ```
 feat(api)!: change chat endpoint response format
 

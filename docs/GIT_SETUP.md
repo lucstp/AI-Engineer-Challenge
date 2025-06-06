@@ -13,15 +13,17 @@ Before diving in, you will need these essentials:
 
  🔑 In addition, you will  need a GitHub Personal Access Token (PAT). We'll show you how to create this later.
 
-
 ## ⚙️ Initial Setup
+
 ### 🪪 Configure Git Identity
 
 Time to tell Git who you are! This is like setting up your developer ID card. Your Git identity is used to:
+
 - Identify you as the author of your commits (adds your name to each change)
 - Show up in commit history (your contributions are properly attributed)
 - Connect your work to your GitHub profile (when email matches)
 - Help other developers know who to contact about changes
+
 <details>
 <summary>⚠️ What happens if you don't set your identity?</summary>
 
@@ -46,25 +48,25 @@ git config --list
 #### 💡 Pro Tips for Git Identity
 
 - **Name**:
-	- Can be your real name or a pseudonym
-	- Will be publicly visible in commit history
-	- Choose something you're comfortable with being public
+  - Can be your real name or a pseudonym
+  - Will be publicly visible in commit history
+  - Choose something you're comfortable with being public
 - **Email**:
-	- Must match an email in your GitHub account for proper attribution
-	- You can add multiple emails to your github account
-	- You can set different identities per repository
-	- For work projects, use your work email
-	- For personal projects, use the email linked to your GitHub account
+  - Must match an email in your GitHub account for proper attribution
+  - You can add multiple emails to your github account
+  - You can set different identities per repository
+  - For work projects, use your work email
+  - For personal projects, use the email linked to your GitHub account
 - **Multiple Identities**:
-	How to set a different identity for a specific repository:
-	```bash
-	cd /[PATH TO REPO]
-	git config user.name "<YOUR WORK NAME>"
-	git config user.email "<WORK EMAIL@YOUR COMPANY.COM>"
-	```
+ How to set a different identity for a specific repository:
 
+ ```bash
+ cd /[PATH TO REPO]
+ git config user.name "<YOUR WORK NAME>"
+ git config user.email "<WORK EMAIL@YOUR COMPANY.COM>"
+ ```
 
-#### ✅ Let's Make Sure Git Knows Who You Are!
+#### ✅ Let's Make Sure Git Knows Who You Are
 
 ```bash
 # Check if Git recognizes you
@@ -86,32 +88,37 @@ git log -1  # Shows your most recent commit with your identity
 As a new Git user, it's smart to verify instructions! Here's how:
 
 1. **Test in a Safe Environment**:
-	- Create a test repository to try commands
-	- Use `git status` frequently to understand what's happening
-	- If something goes wrong, you can always delete the test repo and start over
+
+- Create a test repository to try commands
+- Use `git status` frequently to understand what's happening
+- If something goes wrong, you can always delete the test repo and start over
+
 2. **Verify Command Output**:
-	- Most Git commands will show you what they're doing
-	- Some Git commands have a dry-run option. You can try adding `--dry-run` to see what would happen
-	- Use `git status` to check the result
+
+- Most Git commands will show you what they're doing
+- Some Git commands have a dry-run option. You can try adding `--dry-run` to see what would happen
+- Use `git status` to check the result
+
 3. **Common Verification Commands**:
   
-	```bash
-	# See what Git is doing
-	git status
-	
-	# View your commit history
-	git log
-	
-	# See your last commit
-	git log -1
-	
-	# Check your configuration
-	git config --list
-	```
+ ```bash
+ # See what Git is doing
+ git status
+ 
+ # View your commit history
+ git log
+ 
+ # See your last commit
+ git log -1
+ 
+ # Check your configuration
+ git config --list
+ ```
 
 4. **When in Doubt**:
-	- Check the official Git documentation: [https://git-scm.com/doc](https://git-scm.com/doc)
-	- Use `git help <command>` for detailed help
+
+- Check the official Git documentation: [https://git-scm.com/doc](https://git-scm.com/doc)
+- Use `git help <command>` for detailed help
 
 > 💡 **Pro Tip**: Git is designed to be safe - it's hard to permanently lose work. If you're unsure about a command, you can usually undo it!
 
@@ -120,35 +127,36 @@ As a new Git user, it's smart to verify instructions! Here's how:
 > 📸 Need visual guidance? Check out the [Detailed PAT Setup Guide](https://github.com/AI-Maker-Space/Interactive-Dev-Environment-for-LLM-Development#setting-up-your-github-personal-access-token) with step-by-step screenshots!
 
 1. Create a Personal Access Token (PAT):
-	- Head to GitHub → Settings → Developer settings → Personal access tokens
-	- Click "Generate new token" (your golden ticket)
-	- Set permissions (at minimum: "Contents - Read and write")
-	- Copy and store your token somewhere safe (like a password manager)
+
+- Head to GitHub → Settings → Developer settings → Personal access tokens
+- Click "Generate new token" (your golden ticket)
+- Set permissions (at minimum: "Contents - Read and write")
+- Copy and store your token somewhere safe (like a password manager)
+
 2. Configure credential storage (so you don't have to type your token every time):
 
-	```bash
-	# For macOS (stores in Keychain - your digital vault)
-	git config --global credential.helper osxkeychain
-	
-	# For Windows (stores in Credential Manager - your Windows safe)
-	git config --global credential.helper wincred
-	
-	# For Linux (stores in memory - your temporary sticky note)
-	git config --global credential.helper cache
-	# Note that this is temporary. If you want a permanent secure option
-	# for linux, you need to install and configure a credential helper.
-	```
+ ```bash
+ # For macOS (stores in Keychain - your digital vault)
+ git config --global credential.helper osxkeychain
+ 
+ # For Windows (stores in Credential Manager - your Windows safe)
+ git config --global credential.helper wincred
+ 
+ # For Linux (stores in memory - your temporary sticky note)
+ git config --global credential.helper cache
+ # Note that this is temporary. If you want a permanent secure option
+ # for linux, you need to install and configure a credential helper.
+ ```
 
 3. Verify your setup:
 
-	```bash
-	# Test your authentication
-	git clone https://github.com/<YOUR-USERNAME>/<REPO-NAME>.git
-	# You should be prompted for your username and PAT
-	# subsequent commands to the same remote repo will use
-	# the PAT stored by the credential.helper
-	```
-
+ ```bash
+ # Test your authentication
+ git clone https://github.com/<YOUR-USERNAME>/<REPO-NAME>.git
+ # You should be prompted for your username and PAT
+ # subsequent commands to the same remote repo will use
+ # the PAT stored by the credential.helper
+ ```
 
 ## 🚀 Repository Setup
 
@@ -156,8 +164,8 @@ As a new Git user, it's smart to verify instructions! Here's how:
 
 #### 🔄 Fork the Repository
 
-	- Navigate to the original repository on GitHub  
-  Example: https://github.com/AI-Maker-Space/The-AI-Engineer-Challenge
+- Navigate to the original repository on GitHub  
+  Example: <https://github.com/AI-Maker-Space/The-AI-Engineer-Challenge>
 
 ![GitHub Fork button screenshot](https://i.imgur.com/bhjySNh.png)
 
@@ -165,8 +173,7 @@ As a new Git user, it's smart to verify instructions! Here's how:
 - Keep the repository name as is or change it if you'd like  
 - Click "Create fork"
 
-
-💡 **What is forking?** Forking creates your own copy of someone else’s repository on GitHub. It’s like photocopying a recipe so you can make your own changes without affecting the original. This allows you to freely experiment, contribute back via pull requests, or build your own version of a project — all while keeping the original intact.
+💡 **What is forking?** Forking creates your own copy of someone else's repository on GitHub. It's like photocopying a recipe so you can make your own changes without affecting the original. This allows you to freely experiment, contribute back via pull requests, or build your own version of a project — all while keeping the original intact.
 
 #### 📥 Clone Your Fork
 
@@ -188,11 +195,11 @@ git remote add upstream https://github.com/<ORIGINAL-REPO-OWNER>/<REPO-NAME>.git
 git remote -v
 ```
 
-💡 **Tip**: If you've already stored your PAT in the macOS Keychain (or equivalent), you won’t be prompted again.
+💡 **Tip**: If you've already stored your PAT in the macOS Keychain (or equivalent), you won't be prompted again.
 
 💡 **What is cloning?** Cloning creates a local copy of a GitHub repository on your computer. It downloads a working version of the project so you can explore, make changes, and push updates from your own machine. While _forking_ gives you your own copy in the cloud (on GitHub), _cloning_ brings that copy down to your local development environment.
 
-#### ✅ Let's Make Sure Everything is Connected and Working!
+#### ✅ Let's Make Sure Everything is Connected and Working
 
 ```bash
 # Check if Git is installed and ready to rock
@@ -208,7 +215,9 @@ git remote -v
 # Test your GitHub connection
 git ls-remote https://github.com/<YOUR-USERNAME>/<REPO-NAME>.git
 ```
+
 You should see a list of Git refs. If you get an error:
+
 - Double-check your remote URL (`git remote -v`)
 - Make sure your repository exists and is accessible
 - For private repos, ensure your Personal Access Token (PAT) is valid and stored
@@ -217,7 +226,7 @@ You should see a list of Git refs. If you get an error:
 
 #### 📁 Setting Up .gitignore
 
-Check or update the `.gitignore` file to keep unnecessary files out of your repository. Things like dependencies, environment files, and system artifacts don’t belong in version control.
+Check or update the `.gitignore` file to keep unnecessary files out of your repository. Things like dependencies, environment files, and system artifacts don't belong in version control.
 If your project doesn't already have a `.gitignore` file,  you can create it manually:
 
 ```bash
@@ -246,10 +255,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 ```
+
 💡 **These are just examples.** The contents of your `.gitignore` file depend on your tools and language.  
 You can find pre-made templates for different tech stacks at [https://github.com/github/gitignore](https://github.com/github/gitignore).
 
-#### ✅ Let's Make Sure Your .gitignore is Working!
+#### ✅ Let's Make Sure Your .gitignore is Working
 
 ```bash
 # Check if .gitignore is doing its job
@@ -267,11 +277,13 @@ git check-ignore -v <FILENAME>
 Here's a practical Git workflow that's great for solo projects and easy to build on as your skills grow and your team expands. It's beginner-friendly but solid enough for real-world projects.
 💡**Heads-up:**  
 This guide focuses on using Git from the command line, which gives you flexibility and full control, especially when working locally.  
-Many of the steps explained here can also be done using GitHub’s web interface.
-GitHub’s web interface can be especially helpful when you're working in a shared repository.
+Many of the steps explained here can also be done using GitHub's web interface.
+GitHub's web interface can be especially helpful when you're working in a shared repository.
 
 ### 🌿 Creating and Switching Branches
-Branches let you work on new features or fixes without touching the main project (creating a safe sandbox to play in). 
+
+Branches let you work on new features or fixes without touching the main project (creating a safe sandbox to play in).
+
 ```bash
 
 # Create and switch to a new branch 
@@ -284,12 +296,14 @@ git checkout <YOUR-BRANCH-NAME>
 git branch -a
 
 ```
+
 💡 **What is branching?**  
-Branches let you create alternate versions of your codebase where you can make changes safely, without affecting the main project. They’re useful for working on features, fixes, or experiments — and can be merged back in when ready.
+Branches let you create alternate versions of your codebase where you can make changes safely, without affecting the main project. They're useful for working on features, fixes, or experiments — and can be merged back in when ready.
 
 ### ✏️ Committing Your Changes
 
-A commit saves a snapshot of your changes to the repository. It’s like taking a picture of your progress — with a message explaining what you changed and why. Commits help track history, share your work, and roll back if needed.
+A commit saves a snapshot of your changes to the repository. It's like taking a picture of your progress — with a message explaining what you changed and why. Commits help track history, share your work, and roll back if needed.
+
 ```bash
 # Check status (what's changed in your universe?)
 git status
@@ -311,7 +325,8 @@ git status
 # Push to your fork (send your changes to your github repo)
 git push origin <YOUR-BRANCH-NAME>
 ```
-💡 **Tip:** If you make a mistake — in your code or your commit message — just fix it and make another commit. There’s no need to rewrite history.
+
+💡 **Tip:** If you make a mistake — in your code or your commit message — just fix it and make another commit. There's no need to rewrite history.
 
 #### 📝 Writing Good Commit Messages
 
@@ -336,6 +351,7 @@ Common types:
 7. `chore`: Changes to build process or auxiliary tools (housekeeping)
 
 Examples:
+
 ```bash
 git commit -m "feat(auth): add OAuth2 login support"
 git commit -m "fix(api): resolve timeout issues in user endpoint"
@@ -344,50 +360,59 @@ git commit -m "docs(readme): update installation instructions"
 
 ### 📡 Fetching and Pulling
 
-Before pushing your changes or syncing with others, it helps to understand the difference between two common Git commands: `fetch` and `pull`.
+Before pushing your changes or syncing with others, it helps to understand the difference between two common Git commands: `fetch` and `pull`.
 
-#### 🚚 `git fetch`
+#### 🚚 `git fetch`
 
-Downloads changes from a remote repository — but **doesn’t apply them** to your current branch.  
-Use this when you want to **check for updates** without affecting your work.
+Downloads changes from a remote repository — but **doesn't apply them** to your current branch.  
+Use this when you want to **check for updates** without affecting your work.
+
 ```bash
 git fetch origin
 git log origin/main # Optional: review new commits before merging
 ```
 
-#### 📥 `git pull`
+#### 📥 `git pull`
 
-Does the same fetch, **but also merges** the changes into your current branch right away.
+Does the same fetch, **but also merges** the changes into your current branch right away.
+
 ```bash
 git pull origin main
 ```
 
-#### 🧠 Tip:
+#### 🧠 Tip
 
-- Use `fetch` when you want to **stay in control** and see what’s changed first.
-    
-- Use `pull` when you’re ready to **update your branch immediately**.
-- 
-💡 You’ll see `git fetch origin` recommended in several steps below.  
-It’s a safe habit that helps avoid conflicts before pushing your changes.
+- Use `fetch` when you want to **stay in control** and see what's changed first.
+
+- Use `pull` when you're ready to **update your branch immediately**.
+-
+
+💡 You'll see `git fetch origin` recommended in several steps below.  
+It's a safe habit that helps avoid conflicts before pushing your changes.
+
 ### 🔄 Keeping Your Fork Updated
 
 💡 Pre-check: Make sure your local `main` branch is tracking your fork (`origin`)
 Run:
+
 ```bash
 git branch -vv
 ```
+
 You should see `[origin/main]` next to `main` in the output, like this:
+
 ```
 * main  abc1234 [origin/main] message here...
 ```
 
-If your `main` branch isn’t tracking `origin/main`, you probably don’t need to fix it. But if push/pull commands aren’t working as expected, you can set it manually:
+If your `main` branch isn't tracking `origin/main`, you probably don't need to fix it. But if push/pull commands aren't working as expected, you can set it manually:
+
 ```bash
 git branch --set-upstream-to=origin/main main
 ```
 
-Stay in sync with the original repository so you don’t fall behind!
+Stay in sync with the original repository so you don't fall behind!
+
 ```bash
 # Fetch changes from your fork (usually optional, but good to verify)
 git fetch origin
@@ -405,7 +430,8 @@ git merge upstream/main
 # Push the updated main branch back to your fork on GitHub
 git push origin main
 ```
-> 🎯 **If these commands succeed**, you’ll either see new commits pulled in or a message that everything is already up to date.
+
+> 🎯 **If these commands succeed**, you'll either see new commits pulled in or a message that everything is already up to date.
 
 💡 **Why it matters**: Keeping your fork updated helps avoid painful merge conflicts later and ensures your pull requests are based on the latest project state.
 
@@ -414,9 +440,11 @@ git push origin main
 Once you're finished working on a feature branch, you'll want to bring your changes into `main`.
 
 This helps you:
+
 - Keep your work organized
 - Prepare for sharing or submitting a pull request
 - Keep your fork's `main` branch current
+
 ```bash
 # Make sure you're on your feature branch
 git checkout <YOUR-FEATURE-BRANCH>
@@ -435,7 +463,9 @@ git merge <YOUR-FEATURE-BRANCH>
 git push origin main
 
 ```
+
 💡 **Optional**: After merging, you can delete your feature branch if you're done with it:
+
 ```bash
 git branch -d <YOUR-FEATURE-BRANCH>            # delete local branch
 # with the -d flag, git only deletes the local branch  if its commits are already part of another branch (like main)
@@ -443,6 +473,7 @@ git branch -d <YOUR-FEATURE-BRANCH>            # delete local branch
 git push origin --delete <YOUR-FEATURE-BRANCH>
 # deletes the branch from your fork on GitHub
 ```
+
 ### ✅ Checking Your Branch Status
 
 ```bash
@@ -455,29 +486,29 @@ git branch -vv
 # Should show tracking information
 ```
 
-
-
-
 ## 📤 Pull Request Workflow
+
 ### 🛠️ Creating a Pull Request
 
-  - Push your changes to your fork (get your code ready for the spotlight)
-  - Go to your fork on GitHub
-  - Click "Compare & pull request" (time to show off your work!)
-  - Fill in the PR template (tell everyone what you've been up to)
-  - Request reviews from team members (get some expert eyes on your work)
+- Push your changes to your fork (get your code ready for the spotlight)
+- Go to your fork on GitHub
+- Click "Compare & pull request" (time to show off your work!)
+- Fill in the PR template (tell everyone what you've been up to)
+- Request reviews from team members (get some expert eyes on your work)
   
 💡 **What is a pull request?**  
-A pull request (PR) lets you propose changes to a repository — it’s like saying, “Here’s what I worked on, and I’d like to add it to the main project.” It opens a conversation where others can review, discuss, and approve your work before merging it in.
+A pull request (PR) lets you propose changes to a repository — it's like saying, "Here's what I worked on, and I'd like to add it to the main project." It opens a conversation where others can review, discuss, and approve your work before merging it in.
+
 ### ✨ PR Best Practices
 
-  - Write clear, descriptive titles (make it pop!)
-  - Link related issues (connect the dots)
-  - Include screenshots for UI changes (show, don't just tell)
-  - Keep PRs focused and small (bite-sized is better)
-  - Respond to review comments promptly (keep the conversation flowing)
+- Write clear, descriptive titles (make it pop!)
+- Link related issues (connect the dots)
+- Include screenshots for UI changes (show, don't just tell)
+- Keep PRs focused and small (bite-sized is better)
+- Respond to review comments promptly (keep the conversation flowing)
 
 ### 📋 PR Due-Diligence
+
 ##### ✅ Documentation & Presentation Checklist
 
 Before hitting that "Create pull request" button, run through this quick checklist (it's like your pre-flight safety check!):
@@ -498,8 +529,8 @@ Before hitting that "Create pull request" button, run through this quick checkli
 **Before submitting your PR, be sure to check the `CONTRIBUTING.md` file in the repository**.  
 It may include important project-specific guidelines about branch naming, testing, code style, or review expectations.
 
-> 💡 If you don’t see one, it’s still good practice to follow clear commit messages and keep your PR focused.
-> 
+> 💡 If you don't see one, it's still good practice to follow clear commit messages and keep your PR focused.
+>
 ##### 📋 Final Sanity Checks Before Submitting
 
 ```bash
@@ -517,8 +548,8 @@ git status
 # Should be up to date with upstream/main
 ```
 
-
 ## 🔧 Troubleshooting
+
 ### 🚫 Authentication Issues
 
 ```bash
@@ -532,10 +563,11 @@ git ls-remote https://github.com/<YOUR-USERNAME>/<REPO-NAME>.git
 
 ### 🔄 Merge Conflicts
 
-Sometimes, when you merge changes from another branch (like `main` or `upstream/main`), Git may not be able to automatically combine everything — especially if the same lines of code were changed in both places. This creates a **merge conflict** that you'll need to resolve manually.
+Sometimes, when you merge changes from another branch (like `main` or `upstream/main`), Git may not be able to automatically combine everything — especially if the same lines of code were changed in both places. This creates a **merge conflict** that you'll need to resolve manually.
 
-Here’s how to handle it step by step.
+Here's how to handle it step by step.
 First make sure your local main is up-to-date with the original repo:
+
 ```bash
 #Make sure your local main is up to date with the original repo
 git checkout main
@@ -556,11 +588,13 @@ git commit -m "fix: resolve merge conflicts"
 ```
 
 Then make sure whatever feature branch you are working on is also up-to-date:
+
 ```bash
 #Switch to your feature branch
 git checkout <YOUR-BRANCH>
 
 ```
+
 ```bash
 #Merge the updated main into your feature branch
 git merge main
@@ -585,16 +619,17 @@ git reflog
 git checkout -b <branch-name> <commit-hash>
 
 ```
-💡 You usually won’t need to recover a branch unless you force-delete (`-D`) or lose unpushed commits after a reset, rebase, or amend. Regular `-d` is safe..
+
+💡 You usually won't need to recover a branch unless you force-delete (`-D`) or lose unpushed commits after a reset, rebase, or amend. Regular `-d` is safe..
 
 ## 🎓 Additional Learning Resources
 
-- [Git Documentation](https://git-scm.com/doc) (the Git bible)
-- [GitHub Guides](https://guides.github.com/) (your Git playbook)
-- [Conventional Commits](https://www.conventionalcommits.org/) (the art of commit messages)
-- [GitHub Flow](https://guides.github.com/introduction/flow/) (the way of the Git warrior)
-- [GitHub Skills](https://skills.github.com/) (level up your Git game)
+- [Git Documentation](https://git-scm.com/doc) (the Git bible)
+- [GitHub Guides](https://guides.github.com/) (your Git playbook)
+- [Conventional Commits](https://www.conventionalcommits.org/) (the art of commit messages)
+- [GitHub Flow](https://guides.github.com/introduction/flow/) (the way of the Git warrior)
+- [GitHub Skills](https://skills.github.com/) (level up your Git game)
 
 ---
 
-Remember: Git is your friend! 🚀 Happy coding! 💻
+Remember: Git is your friend! �� Happy coding! 💻

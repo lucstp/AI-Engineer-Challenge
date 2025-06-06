@@ -1,7 +1,11 @@
 {
+	"name": "ai-engineer-challenge",
+	"private": true,
 	"scripts": {
 		"lint:md": "markdownlint \"**/*.md\"",
-		"lint:md:fix": "markdownlint --fix \"**/*.md\""
+		"lint:md:fix": "markdownlint --fix \"**/*.md\"",
+		"dev": "pnpm --filter frontend dev",
+		"start": "pnpm --filter frontend start"
 	},
 	"devDependencies": {
 		"markdownlint-cli": "^0.45.0"

@@ -1,3 +1,9 @@
 packages:
-  - "frontend"
-  - "api"
+  - frontend
+  - api
+onlyBuiltDependencies:
+  - "@biomejs/biome"
+  - "@tailwindcss/postcss"
+  - "tailwindcss"
+  - "typescript"
+  - "sharp"

@@ -5,7 +5,9 @@
 		"lint:md": "markdownlint \"**/*.md\"",
 		"lint:md:fix": "markdownlint --fix \"**/*.md\"",
 		"dev": "pnpm --filter frontend dev",
-		"start": "pnpm --filter frontend start"
+		"start": "pnpm --filter frontend start",
+		"build": "pnpm --filter frontend build",
+    "deploy": "vercel --prod"
 	},
 	"devDependencies": {
 		"markdownlint-cli": "^0.45.0"

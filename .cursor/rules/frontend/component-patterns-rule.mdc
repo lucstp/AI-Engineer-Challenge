@@ -1,0 +1,417 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+---
+description: React Server Components, client patterns, and shadcn/ui integration
+globs:
+  - "**/*.{ts,tsx,js,jsx}"
+alwaysApply: false
+---
+
+# Component Architecture Patterns
+
+## React Server Components (RSC) First
+
+### Server Component Default Pattern
+Prefer Server Components unless client interactivity is required:
+
+```ts
+// ✅ Server Component (default)
+async function UserProfile({ userId }: { userId: string }) {
+  const user = await fetchUser(userId) // Direct async in RSC
+
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <p>{user.email}</p>
+    </div>
+  )
+}
+
+// ✅ Client Component when needed
+'use client'
+
+import { useState } from 'react'
+
+function InteractiveCounter() {
+  const [count, setCount] = useState(0)
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      Count: {count}
+    </button>
+  )
+}
+```
+
+### Server/Client Composition Patterns
+Smart composition reduces client bundle size:
+
+```ts
+// ✅ Server Component wrapper with Client Component slot
+async function BlogPost({ postId }: { postId: string }) {
+  const post = await fetchPost(postId)
+
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <div>{post.content}</div>
+
+      {/* Client component for interactivity only */}
+      <LikeButton postId={postId} initialLikes={post.likes} />
+    </article>
+  )
+}
+
+// ✅ Minimal Client Component
+'use client'
+
+function LikeButton({ postId, initialLikes }: {
+  postId: string
+  initialLikes: number
+}) {
+  const [likes, setLikes] = useState(initialLikes)
+  const [isOptimistic, setIsOptimistic] = useState(false)
+
+  return (
+    <button
+      onClick={async () => {
+        setIsOptimistic(true)
+        setLikes(likes + 1)
+        await likePost(postId)
+        setIsOptimistic(false)
+      }}
+      className={isOptimistic ? 'opacity-50' : ''}
+    >
+      ❤️ {likes}
+    </button>
+  )
+}
+```
+
+## Error Boundaries and Suspense
+
+### Error Boundary Implementation
+Implement at layout and page levels:
+
+```ts
+// error.tsx - App Router error boundary
+'use client'
+
+export default function ErrorBoundary({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string }
+  reset: () => void
+}) {
+  useEffect(() => {
+    console.error('Error caught by boundary:', error)
+  }, [error])
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+      <h2 className="text-lg font-semibold text-destructive">
+        Something went wrong!
+      </h2>
+      <p className="text-sm text-muted-foreground">
+        {error.message || 'An unexpected error occurred'}
+      </p>
+      <Button onClick={reset} variant="outline">
+        Try again
+      </Button>
+    </div>
+  )
+}
+```
+
+### Suspense for Async Operations
+Strategic loading state management:
+
+```ts
+// loading.tsx - App Router loading UI
+export default function Loading() {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <Spinner className="h-8 w-8" />
+    </div>
+  )
+}
+
+// Component with Suspense boundaries
+function UserDashboard() {
+  return (
+    <div className="space-y-6">
+      <h1>Dashboard</h1>
+
+      <Suspense fallback={<UserProfileSkeleton />}>
+        <UserProfile />
+      </Suspense>
+
+      <Suspense fallback={<ActivityFeedSkeleton />}>
+        <ActivityFeed />
+      </Suspense>
+    </div>
+  )
+}
+```
+
+## shadcn/ui Integration Patterns
+
+### Component Composition
+Build complex components from shadcn/ui primitives:
+
+```ts
+// ✅ Compose shadcn/ui components
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+
+function ProjectCard({ project }: { project: Project }) {
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>{project.name}</CardTitle>
+          <Badge variant={project.status === 'active' ? 'default' : 'secondary'}>
+            {project.status}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground mb-4">
+          {project.description}
+        </p>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline">
+            View Details
+          </Button>
+          <Button size="sm">
+            Edit Project
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+```
+
+### Form Patterns with React Hook Form
+Integrate shadcn/ui with form validation:
+
+```ts
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useActionState } from 'react'
+const formSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+})
+
+function UserForm() {
+  const [state, formAction] = useActionState(updateUser, { message: '' })
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting }
+  } = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema)
+  })
+
+  return (
+    <form action={formAction} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Name</Label>
+        <Input
+          {...register("name")}
+          id="name"
+          placeholder="Enter your name"
+        />
+        {errors.name && (
+          <p className="text-sm text-destructive">{errors.name.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          {...register("email")}
+          id="email"
+          type="email"
+          placeholder="Enter your email"
+        />
+        {errors.email && (
+          <p className="text-sm text-destructive">{errors.email.message}</p>
+        )}
+      </div>
+
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Updating...' : 'Update Profile'}
+      </Button>
+
+      {state.message && (
+        <p className="text-sm text-green-600">{state.message}</p>
+      )}
+    </form>
+  )
+}
+```
+
+## Custom Hook Patterns
+
+### Data Fetching Hooks
+Encapsulate complex data logic:
+
+```ts
+// ✅ Custom hook for data fetching with optimistic updates
+function useUserProfile(userId: string) {
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const [optimisticUser, addOptimistic] = useOptimistic(
+    user,
+    (state, newUser: Partial<User>) => ({ ...state, ...newUser })
+  )
+
+  useEffect(() => {
+    fetchUser(userId)
+      .then(setUser)
+      .catch(err => setError(err.message))
+      .finally(() => setIsLoading(false))
+  }, [userId])
+
+  const updateProfile = useCallback(async (updates: Partial<User>) => {
+    addOptimistic(updates)
+    try {
+      const updatedUser = await updateUser(userId, updates)
+      setUser(updatedUser)
+    } catch (err) {
+      setError(err.message)
+    }
+  }, [userId, addOptimistic])
+
+  return {
+    user: optimisticUser,
+    isLoading,
+    error,
+    updateProfile
+  }
+}
+```
+
+### State Management Hooks
+URL state with nuqs integration:
+
+```ts
+// ✅ URL state management with nuqs
+import { useQueryState, parseAsString, parseAsInteger } from 'nuqs'
+
+function useProductFilters() {
+  const [search, setSearch] = useQueryState('search', parseAsString.withDefault(''))
+  const [category, setCategory] = useQueryState('category', parseAsString.withDefault('all'))
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1))
+
+  const resetFilters = useCallback(() => {
+    setSearch('')
+    setCategory('all')
+    setPage(1)
+  }, [setSearch, setCategory, setPage])
+
+  return {
+    search,
+    setSearch,
+    category,
+    setCategory,
+    page,
+    setPage,
+    resetFilters
+  }
+}
+```
+
+## File Organization Patterns
+
+### Component Co-location
+Organize related files together:
+
+```
+components/
+  auth-wizard/
+    index.ts                 # Public exports
+    auth-wizard.tsx          # Main component
+    auth-wizard.test.tsx     # Tests
+    auth-wizard.stories.tsx  # Storybook stories
+    steps/
+      login-step.tsx
+      signup-step.tsx
+      verification-step.tsx
+  user-profile/
+    index.ts
+    user-profile.tsx
+    user-profile-form.tsx
+    hooks/
+      use-user-profile.ts
+```
+
+### Barrel Exports
+Clean public API with index files:
+
+```ts
+// components/auth-wizard/index.ts
+export { AuthWizard } from './auth-wizard'
+export { useAuthWizard } from './hooks/use-auth-wizard'
+export type { AuthWizardProps, AuthStep } from './auth-wizard'
+
+// Usage
+import { AuthWizard, useAuthWizard } from '@/components/auth-wizard'
+```
+
+## Accessibility Patterns
+
+### ARIA and Semantic HTML
+Build accessible components by default:
+
+```ts
+function SearchCombobox({ onSelect }: { onSelect: (value: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          aria-label="Search options"
+          className="w-[200px] justify-between"
+        >
+          {search || "Search..."}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0">
+        <Command>
+          <CommandInput
+            placeholder="Search..."
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandGroup>
+            {/* Command items */}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+```

@@ -1,0 +1,194 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+---
+description: React 19 stable features, new APIs, and modern patterns
+globs:
+  - "**/*.{ts,tsx,js,jsx}"
+alwaysApply: false
+---
+
+# React 19 Core Features (Stable Dec 5, 2024)
+
+## New React 19 APIs and Hooks
+
+### Actions (Stable)
+Actions provide automatic state management for async operations:
+
+```ts
+// Server Action or async function
+function updateUserProfile(formData: FormData) {
+  // Automatically handles pending, error, and success states
+  return updateUserInDatabase(formData)
+}
+
+// In components - automatic state management
+const [isPending, startTransition] = useTransition()
+startTransition(async () => {
+  await updateUserProfile(formData)
+})
+```
+
+### New Hooks
+
+**useActionState** - Replaces deprecated `useFormState`:
+```ts
+import { useActionState } from 'react'
+
+function ProfileForm() {
+  const [state, formAction] = useActionState(updateUserProfile, {
+    message: '',
+    errors: {}
+  })
+
+  return (
+    <form action={formAction}>
+      {state.message && <div>{state.message}</div>}
+      {/* form fields */}
+    </form>
+  )
+}
+```
+
+**useOptimistic** - Optimistic UI updates:
+```ts
+import { useOptimistic } from 'react'
+
+function TodoList({ todos }) {
+  const [optimisticTodos, addOptimisticTodo] = useOptimistic(
+    todos,
+    (state, newTodo) => [...state, newTodo]
+  )
+
+  return (
+    <div>
+      {optimisticTodos.map(todo => <Todo key={todo.id} todo={todo} />)}
+    </div>
+  )
+}
+```
+
+**useFormStatus** - Enhanced form status tracking:
+```ts
+import { useFormStatus } from 'react-dom'
+
+function SubmitButton() {
+  const { pending, data, method, action } = useFormStatus()
+
+  return (
+    <button disabled={pending}>
+      {pending ? 'Submitting...' : 'Submit'}
+    </button>
+  )
+}
+```
+
+## Component Modernization
+
+### ref as a Prop (Stable)
+No more `forwardRef` needed in React 19:
+
+```ts
+// ✅ React 19 - ref is now a regular prop
+function Button({ ref, children, ...props }: {
+  ref: React.Ref<HTMLButtonElement>
+  children: React.ReactNode
+}) {
+  return <button ref={ref} {...props}>{children}</button>
+}
+
+// ❌ Old pattern (still works but unnecessary)
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(({ children, ...props }, ref) => {
+  return <button ref={ref} {...props}>{children}</button>
+})
+```
+
+### Document Metadata (Stable)
+Native metadata support without external libraries:
+
+```ts
+// ✅ React 19 - Native metadata
+function BlogPost({ post }: { post: Post }) {
+  return (
+    <>
+      <title>{post.title}</title>
+      <meta name="description" content={post.excerpt} />
+      <meta property="og:title" content={post.title} />
+      <link rel="canonical" href={`https://blog.com/${post.slug}`} />
+
+      <article>{post.content}</article>
+    </>
+  )
+}
+
+// ❌ Old pattern - react-helmet no longer needed
+import { Helmet } from 'react-helmet'
+```
+
+### use() API for Resource Loading
+New API for reading resources during render:
+
+```ts
+import { use } from 'react'
+
+// Works with Promises
+function UserProfile({ userPromise }: { userPromise: Promise<User> }) {
+  const user = use(userPromise) // Suspends until resolved
+  return <div>{user.name}</div>
+}
+
+// Works with Context
+function ThemeButton() {
+  const theme = use(ThemeContext)
+  return <button className={theme.buttonClass}>Click me</button>
+}
+```
+
+## Migration Guidelines
+
+### Deprecated Features to Update
+- **useFormState** → `useActionState`
+- **react-test-renderer** → `@testing-library/react`
+- **react-helmet** → Native metadata tags
+
+### Breaking Changes
+- **JSX Transform**: Ensure modern JSX transform is enabled
+- **ref handling**: Update ref callback cleanup patterns
+- **Strict Mode**: Enhanced error detection and warnings
+
+## Testing with React 19
+
+### Modern Testing Patterns
+```ts
+// ✅ Use @testing-library/react
+import { render, screen, fireEvent } from '@testing-library/react'
+
+test('form submission with useActionState', async () => {
+  render(<ProfileForm />)
+
+  fireEvent.change(screen.getByLabelText('Name'), {
+    target: { value: 'John Doe' }
+  })
+
+  fireEvent.click(screen.getByRole('button', { name: /submit/i }))
+
+  // Test optimistic updates and final state
+})
+```
+
+### Testing Actions
+```ts
+// Test Server Actions
+import { updateUserProfile } from './actions'
+
+test('updateUserProfile action', async () => {
+  const formData = new FormData()
+  formData.append('name', 'John Doe')
+
+  const result = await updateUserProfile(formData)
+
+  expect(result.success).toBe(true)
+})
+```

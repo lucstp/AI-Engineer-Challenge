@@ -1,11 +1,6 @@
 ---
 description: React Server Components patterns, server-side rendering, and data fetching
 globs:
-alwaysApply: false
----
----
-description: React Server Components patterns, server-side rendering, and data fetching
-globs:
   - "**/*.{ts,tsx,js,jsx}"
 alwaysApply: false
 ---

@@ -1,10 +1,4 @@
 ---
-description: README.md creation guidelines with fun and approachable language
-globs:
-  - "*.md"
-  - "**/README.md"
-alwaysApply: false
----
 ### README.md Rules
 
 - When you create README.md's - they should be dope, and use fun and approachable language.

@@ -1,0 +1,455 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+---
+description: TypeScript best practices and enterprise standards for type safety
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+alwaysApply: true
+---
+
+# TypeScript Standards & Best Practices
+
+## Core TypeScript Principles
+
+### Strict Configuration
+- Use TypeScript for all code (no `.js` files)
+- tsconfig: `"strict": true` with no exceptions
+- Prohibit `any` types and `// @ts-ignore` comments
+- Enable all strict mode flags for maximum type safety
+
+### Type Definition Standards
+- Prefer `interface` for object shapes and component props
+- Use `type` for unions, utility types, and computed types
+- Prohibit `enum` - use literal types or const maps instead
+- Use the `satisfies` operator for literal type constraints
+
+## Comprehensive Type Definitions
+
+### Base Entity Patterns
+```ts
+// Base entity interface for all data models
+export interface BaseEntity {
+  id: string | number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Extend base entity for specific models
+export interface User extends BaseEntity {
+  name: string;
+  email: string;
+  role: 'admin' | 'user' | 'moderator';
+}
+
+// Optional extensions for metadata
+export interface TimestampedEntity extends BaseEntity {
+  deletedAt?: Date;
+  version: number;
+}
+```
+
+### API Response Types
+```ts
+// Generic API response wrapper
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+  meta?: {
+    page?: number;
+    limit?: number;
+    total?: number;
+  };
+}
+
+// Server Action return types
+export type ActionResult<T = unknown> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+  fieldErrors?: Record<string, string[]>;
+};
+
+// Form state types for React 19
+export interface FormState {
+  message: string;
+  errors?: Record<string, string[]>;
+  success?: boolean;
+}
+```
+
+### Zod Integration Patterns
+```ts
+import { z } from 'zod';
+
+// Schema definition with TypeScript inference
+export const userSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  role: z.enum(['admin', 'user', 'moderator']),
+  age: z.number().min(18).optional(),
+});
+
+// Infer TypeScript types from Zod schemas
+export type UserFormData = z.infer<typeof userSchema>;
+
+// Complex nested schema
+export const createItemSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(100),
+  description: z.string().optional(),
+  categoryId: z.string().uuid('Invalid category ID'),
+  tags: z.array(z.string()).max(10),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type CreateItemData = z.infer<typeof createItemSchema>;
+```
+
+## React 19 TypeScript Integration
+
+### Component Props with Strict Typing
+```ts
+// Functional component with explicit props interface
+interface UserProfileProps {
+  user: User;
+  onUpdate?: (user: User) => void;
+  className?: string;
+  showActions?: boolean;
+}
+
+export function UserProfile({
+  user,
+  onUpdate,
+  className,
+  showActions = true
+}: UserProfileProps) {
+  // Component implementation
+}
+
+// Children prop patterns
+interface ContainerProps {
+  children: React.ReactNode;
+  title?: string;
+}
+
+// Render prop patterns
+interface DataLoaderProps<T> {
+  data: T[];
+  render: (item: T, index: number) => React.ReactNode;
+  loading?: boolean;
+}
+```
+
+### Server Action Type Safety
+```ts
+// Server Action with proper typing
+export async function createUserAction(
+  prevState: FormState,
+  formData: FormData
+): Promise<ActionResult<User>> {
+  try {
+    // Type-safe form data extraction
+    const rawData = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      role: formData.get('role') as User['role'],
+    };
+
+    // Zod validation with type safety
+    const validatedData = userSchema.parse(rawData);
+
+    // Type-safe API call
+    const user = await createUser(validatedData);
+
+    return { success: true, data: user };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: 'Validation failed',
+        fieldErrors: error.flatten().fieldErrors,
+      };
+    }
+
+    return { success: false, error: 'Failed to create user' };
+  }
+}
+```
+
+### Hook Type Safety
+```ts
+// Custom hook with proper typing
+interface UseUserProfileReturn {
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+  updateProfile: (updates: Partial<User>) => Promise<void>;
+  refreshProfile: () => Promise<void>;
+}
+
+export function useUserProfile(userId: string): UseUserProfileReturn {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateProfile = useCallback(async (updates: Partial<User>) => {
+    try {
+      const updatedUser = await updateUser(userId, updates);
+      setUser(updatedUser);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Update failed');
+    }
+  }, [userId]);
+
+  return { user, isLoading, error, updateProfile, refreshProfile };
+}
+```
+
+## Pure Function Patterns
+
+### Testable Function Design
+```ts
+// Pure function with clear input/output types
+export function validateFormInput(
+  value: string,
+  rules: ValidationRules
+): ValidationResult {
+  if (!value.trim()) {
+    return { isValid: false, error: 'Field is required' };
+  }
+
+  if (rules.minLength && value.length < rules.minLength) {
+    return {
+      isValid: false,
+      error: `Minimum ${rules.minLength} characters required`
+    };
+  }
+
+  if (rules.pattern && !rules.pattern.test(value)) {
+    return { isValid: false, error: 'Invalid format' };
+  }
+
+  return { isValid: true };
+}
+
+// Supporting interfaces
+interface ValidationRules {
+  minLength?: number;
+  maxLength?: number;
+  pattern?: RegExp;
+  required?: boolean;
+}
+
+interface ValidationResult {
+  isValid: boolean;
+  error?: string;
+}
+
+// Data transformation utilities
+export function formatCurrency(
+  amount: number,
+  currency: string = 'USD'
+): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+  }).format(amount);
+}
+
+// Business logic helpers
+export function calculateTotalPrice(
+  items: CartItem[],
+  taxRate: number = 0.08
+): PriceBreakdown {
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const tax = subtotal * taxRate;
+  const total = subtotal + tax;
+
+  return { subtotal, tax, total };
+}
+
+interface CartItem {
+  id: string;
+  price: number;
+  quantity: number;
+}
+
+interface PriceBreakdown {
+  subtotal: number;
+  tax: number;
+  total: number;
+}
+```
+## Utility Types and Advanced Patterns
+
+### Custom Utility Types
+```ts
+// Make specific fields optional
+export type OptionalFields<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
+// Create update types that exclude readonly fields
+export type UpdateUser = OptionalFields<Omit<User, 'id' | 'createdAt'>, 'updatedAt'>;
+
+// Extract specific property types
+export type UserRole = User['role'];
+export type EntityId = BaseEntity['id'];
+
+// Conditional types for API responses
+export type ApiSuccessResponse<T> = ApiResponse<T> & { success: true; data: T };
+export type ApiErrorResponse = ApiResponse<never> & { success: false; error: string };
+
+// Template literal types for dynamic keys
+export type EventHandlers<T extends string> = {
+  [K in T as `on${Capitalize<K>}`]?: () => void;
+};
+
+// Usage: EventHandlers<'click' | 'hover'> creates { onClick?: () => void; onHover?: () => void; }
+```
+
+### Type Guards and Assertions
+```ts
+// Type guard functions
+export function isUser(obj: unknown): obj is User {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'id' in obj &&
+    'name' in obj &&
+    'email' in obj &&
+    'role' in obj
+  );
+}
+
+export function isApiError(response: ApiResponse<unknown>): response is ApiErrorResponse {
+  return !response.success && !!response.error;
+}
+
+// Assertion functions
+export function assertIsUser(obj: unknown): asserts obj is User {
+  if (!isUser(obj)) {
+    throw new Error('Expected User object');
+  }
+}
+```
+
+## Code Style Standards
+
+### Function Declaration Patterns
+```ts
+// Prefer function declarations for named functions
+export function processUserData(user: User): ProcessedUser {
+  // Implementation
+}
+
+// Use arrow functions for callbacks and short utilities
+const filterActiveUsers = (users: User[]): User[] =>
+  users.filter(user => user.role !== 'inactive');
+
+// Auxiliary verb naming for boolean functions
+export function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+export function hasPermission(user: User, permission: string): boolean {
+  return user.role === 'admin' || user.permissions.includes(permission);
+}
+```
+
+### Error Handling Patterns
+```ts
+// Custom error types
+export class ValidationError extends Error {
+  constructor(
+    message: string,
+    public field: string,
+    public code: string
+  ) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public code?: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+// Result type for error handling
+export type Result<T, E = Error> =
+  | { success: true; data: T }
+  | { success: false; error: E };
+
+// Safe async function wrapper
+export async function safeAsync<T>(
+  promise: Promise<T>
+): Promise<Result<T>> {
+  try {
+    const data = await promise;
+    return { success: true, data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error : new Error(String(error))
+    };
+  }
+}
+```
+
+## Integration with Development Tools
+
+### Testing-Friendly Types
+```ts
+// Mock types for testing
+export type MockUser = Partial<User> & Pick<User, 'id'>;
+
+// Factory functions for test data
+export function createMockUser(overrides: Partial<User> = {}): User {
+  return {
+    id: '1',
+    name: 'Test User',
+    email: 'test@example.com',
+    role: 'user',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+```
+
+### Documentation-Ready Types
+```ts
+/**
+ * Configuration for user authentication
+ * @example
+ * ```ts
+ * const config: AuthConfig = {
+ *   provider: 'oauth',
+ *   clientId: 'abc123',
+ *   redirectUri: '/auth/callback'
+ * };
+ * ```
+ */
+export interface AuthConfig {
+  /** Authentication provider type */
+  provider: 'oauth' | 'saml' | 'local';
+  /** Client identifier for OAuth */
+  clientId?: string;
+  /** Redirect URI after authentication */
+  redirectUri: string;
+  /** Additional provider-specific options */
+  options?: Record<string, unknown>;
+}
+```
+
+This TypeScript ruleset ensures type safety, developer productivity, and seamless integration with React 19, Next.js 15, and our testing infrastructure.

@@ -1,0 +1,396 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+---
+description: React Server Components performance patterns and server-side optimization strategies
+globs:
+  - "**/*.{ts,tsx,js,jsx}"
+alwaysApply: false
+---
+
+# React Server Components Performance Patterns
+
+## **RSC Performance Principles**
+
+### **1. Server Components First (Default Choice)**
+- **Minimize `'use client'`** - Default to Server Components
+- **Minimize `useEffect`** - Favor server-side data fetching
+- **Minimize `setState`** - Use server state and URL state instead
+- **Favor React Server Components (RSC)** for all data fetching and static content
+
+### **2. Strategic Server/Client Boundaries**
+- **Wrap client components in Suspense** with meaningful fallbacks
+- **Use dynamic loading** for non-critical components
+- **Implement proper loading states** to prevent layout shifts
+
+---
+
+## React Server Components First (RSC Priority)
+
+### ✅ Server Component Patterns
+```ts
+// ✅ Preferred: Server Component for data fetching
+async function UserDashboard({ userId }: { userId: string }) {
+  const user = await fetchUser(userId) // Server-side fetch
+  const posts = await fetchUserPosts(userId) // No loading states needed
+
+  return (
+    <div>
+      <UserProfile user={user} />
+      <Suspense fallback={<PostsSkeleton />}>
+        <PostsList posts={posts} />
+      </Suspense>
+    </div>
+  )
+}
+
+// ✅ Server Component with streaming
+async function ProductPage({ productId }: { productId: string }) {
+  return (
+    <div>
+      <Suspense fallback={<ProductDetailsSkeleton />}>
+        <ProductDetails productId={productId} />
+      </Suspense>
+      <Suspense fallback={<ReviewsSkeleton />}>
+        <ProductReviews productId={productId} />
+      </Suspense>
+    </div>
+  )
+}
+```
+
+### ❌ Avoid Client-Side Data Fetching
+```ts
+// ❌ Avoid: Client Component with useEffect for data
+'use client'
+
+function UserProfile({ userId }: { userId: string }) {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchUser(userId).then(setUser).finally(() => setLoading(false))
+  }, [userId])
+
+  if (loading) return <div>Loading...</div>
+  // This should be a Server Component!
+}
+
+// ✅ Convert to Server Component
+async function UserProfile({ userId }: { userId: string }) {
+  const user = await fetchUser(userId) // Direct server fetch
+  return <div>{user.name}</div>
+}
+```
+
+## Minimize Client Components
+
+### **Only Use Client Components For:**
+- **User interactions**: clicks, form inputs, hover states
+- **Browser APIs**: localStorage, geolocation, device features
+- **Real-time features**: WebSocket connections, live updates
+- **Complex animations**: motion components requiring state
+
+### ✅ Minimal Client Component Pattern
+```ts
+// ✅ Minimal client component for interactivity only
+'use client'
+
+function LikeButton({ postId, initialLikes }: {
+  postId: string
+  initialLikes: number
+}) {
+  const [likes, setLikes] = useState(initialLikes)
+  const [isPending, setIsPending] = useState(false)
+
+  async function handleLike() {
+    setIsPending(true)
+    setLikes(prev => prev + 1) // Optimistic update
+    try {
+      await likePost(postId)
+    } catch {
+      setLikes(prev => prev - 1) // Rollback on error
+    } finally {
+      setIsPending(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleLike}
+      disabled={isPending}
+      className="flex items-center gap-2"
+    >
+      ❤️ {likes}
+    </button>
+  )
+}
+
+// ✅ Server Component wrapper
+async function BlogPost({ postId }: { postId: string }) {
+  const post = await fetchPost(postId) // Server data
+
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <div>{post.content}</div>
+      {/* Only the interactive part is client-side */}
+      <LikeButton postId={postId} initialLikes={post.likes} />
+    </article>
+  )
+}
+```
+
+## Suspense Boundaries Strategy
+
+### ✅ Wrap Client Components in Suspense
+```ts
+// ✅ Proper Suspense boundaries
+function Dashboard() {
+  return (
+    <div className="space-y-6">
+      <h1>Dashboard</h1>
+
+      {/* Wrap async server components */}
+      <Suspense fallback={<UserStatsSkeleton />}>
+        <UserStats />
+      </Suspense>
+
+      {/* Wrap client components that may suspend */}
+      <Suspense fallback={<ChartSkeleton />}>
+        <InteractiveChart />
+      </Suspense>
+
+      {/* Wrap dynamic imports */}
+      <Suspense fallback={<WidgetSkeleton />}>
+        <LazyWidget />
+      </Suspense>
+    </div>
+  )
+}
+
+// ✅ Meaningful fallback components
+function UserStatsSkeleton() {
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="h-24 bg-gray-200 rounded animate-pulse" />
+      ))}
+    </div>
+  )
+}
+```
+
+## Dynamic Loading for Non-Critical Components
+
+### ✅ Strategic Code Splitting
+```ts
+import dynamic from 'next/dynamic'
+
+// ✅ Heavy components - load only when needed
+const HeavyDataVisualization = dynamic(() => import('./HeavyDataVisualization'), {
+  loading: () => <DataVisualizationSkeleton />,
+  ssr: false // Skip SSR for client-only components
+})
+
+// ✅ Feature-based splitting
+const AdminPanel = dynamic(() => import('./AdminPanel'), {
+  loading: () => <AdminPanelSkeleton />
+})
+// ✅ Conditional loading
+function Dashboard({ user }: { user: User }) {
+  const [showAdvanced, setShowAdvanced] = useState(false)
+
+  return (
+    <div>
+      <BasicDashboard />
+      <Button onClick={() => setShowAdvanced(true)}>
+        Show Advanced Analytics
+      </Button>
+
+      {showAdvanced && (
+        <Suspense fallback={<AnalyticsSkeleton />}>
+          <HeavyDataVisualization />
+        </Suspense>
+      )}
+
+      {user.role === 'admin' && (
+        <Suspense fallback={<AdminSkeleton />}>
+          <AdminPanel />
+        </Suspense>
+      )}
+    </div>
+  )
+}
+```
+
+## Server-Side Caching Strategy
+
+### ✅ Strategic Cache Configuration
+```tsx
+// Aggressive caching for static data
+const staticData = await fetch('/api/static', {
+  next: { revalidate: 3600 } // 1 hour
+});
+
+// Short cache for dynamic data
+const dynamicData = await fetch('/api/users', {
+  next: { revalidate: 60 } // 1 minute
+});
+
+// No cache for real-time data
+const realTimeData = await fetch('/api/live', {
+  cache: 'no-store'
+});
+```
+
+### ✅ React's cache for Deduplication
+```tsx
+import { cache } from 'react'
+
+// Use React's cache for deduplication
+export const getUser = cache(async (id: string) => {
+  const response = await fetch(`/api/users/${id}`)
+  return response.json()
+})
+
+// Multiple calls in the same render are deduplicated
+function UserProfile({ userId }: { userId: string }) {
+  const user = await getUser(userId) // Called once
+  const posts = await getUserPosts(userId) // Different function
+
+  return (/* JSX */)
+}
+
+function UserSidebar({ userId }: { userId: string }) {
+  const user = await getUser(userId) // Reuses cached result
+
+  return (/* JSX */)
+}
+```
+
+## Database and API Optimization
+
+### ✅ Connection Pooling
+```ts
+// Database connection with pooling
+import { Pool } from 'pg'
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 20, // Maximum connections
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+})
+
+export async function getUser(id: string) {
+  const client = await pool.connect()
+  try {
+    const result = await client.query('SELECT * FROM users WHERE id = $1', [id])
+    return result.rows[0]
+  } finally {
+    client.release()
+  }
+}
+```
+
+### ✅ Server Actions Over API Routes
+```tsx
+// ✅ Preferred: Server Actions for mutations
+"use server";
+
+export async function updateUserProfile(formData: FormData) {
+  const data = {
+    name: formData.get('name') as string,
+    email: formData.get('email') as string,
+  };
+  // Direct database operation
+  await updateUser(data);
+  revalidatePath('/profile');
+}
+
+// ❌ Avoid: Custom API routes when Server Actions suffice
+// Don't create /api/update-user when Server Action works
+```
+
+## Server Component Anti-Patterns
+
+### ❌ Avoid These Patterns
+```tsx
+// ❌ Unnecessary client-side state for static data
+"use client";
+function UserProfile({ userId }: { userId: string }) {
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(setUser);
+  }, [userId]);
+  // This should be a Server Component!
+}
+
+// ✅ Server Component for static data
+async function UserProfile({ userId }: { userId: string }) {
+  const user = await getUser(userId); // Server-side fetch
+  return <ProfileDisplay user={user} />;
+}
+```
+
+## Streaming and Partial Hydration
+
+### ✅ Progressive Enhancement Patterns
+```tsx
+// ✅ Stream different parts of the page
+export default function ProductPage({ productId }: { productId: string }) {
+  return (
+    <div>
+      {/* Immediately available */}
+      <ProductHeader productId={productId} />
+
+      {/* Stream in when ready */}
+      <Suspense fallback={<PricingSkeleton />}>
+        <ProductPricing productId={productId} />
+      </Suspense>
+
+      {/* Stream in separately */}
+      <Suspense fallback={<ReviewsSkeleton />}>
+        <ProductReviews productId={productId} />
+      </Suspense>
+    </div>
+  )
+}
+
+// ✅ Error boundaries for each stream
+function ProductPricing({ productId }: { productId: string }) {
+  return (
+    <ErrorBoundary fallback={<PricingError />}>
+      <Suspense fallback={<PricingSkeleton />}>
+        <PricingDetails productId={productId} />
+      </Suspense>
+    </ErrorBoundary>
+  )
+}
+```
+
+## Performance Monitoring for RSC
+
+### ✅ Server-Side Performance Tracking
+```tsx
+// Track server component performance
+export async function ServerComponentMetrics({ children }: { children: React.ReactNode }) {
+  const startTime = performance.now()
+
+  return (
+    <>
+      {children}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs">
+          Render time: {(performance.now() - startTime).toFixed(2)}ms
+        </div>
+      )}
+    </>
+  )
+}
+```

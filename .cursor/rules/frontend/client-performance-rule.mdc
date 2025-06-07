@@ -1,0 +1,545 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+---
+description: Client-side performance optimization, Core Web Vitals, and browser-specific patterns
+globs:
+  - "**/*.{ts,tsx,js,jsx}"
+alwaysApply: false
+---
+
+# Client-Side Performance Patterns
+
+## Core Web Vitals Optimization
+
+### Largest Contentful Paint (LCP)
+Optimize main content loading:
+
+```ts
+// ✅ Optimize images for LCP
+import Image from 'next/image'
+
+function HeroSection() {
+  return (
+    <section className="relative h-screen">
+      <Image
+        src="/hero-image.jpg"
+        alt="Hero"
+        fill
+        priority // Critical for LCP
+        sizes="100vw"
+        className="object-cover"
+      />
+      <div className="relative z-10">
+        <h1 className="text-4xl font-bold">Welcome</h1>
+      </div>
+    </section>
+  )
+}
+
+// ✅ Preload critical resources
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <link
+        rel="preload"
+        href="/fonts/inter-var.woff2"
+        as="font"
+        type="font/woff2"
+        crossOrigin=""
+      />
+      {children}
+    </>
+  )
+}
+```
+
+### Cumulative Layout Shift (CLS)
+Prevent layout shifts:
+
+```ts
+// ✅ Reserve space for dynamic content
+function UserAvatar({ userId }: { userId: string }) {
+  const [user, setUser] = useState<User | null>(null)
+
+  return (
+    <div className="flex items-center space-x-3">
+      {/* Reserve fixed dimensions */}
+      <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0">
+        {user && (
+          <Image
+            src={user.avatar}
+            alt={user.name}
+            width={40}
+            height={40}
+            className="rounded-full"
+          />
+        )}
+      </div>
+      <div className="min-w-0">
+        {/* Reserve height for text */}
+        <div className="h-5">
+          {user ? (
+            <p className="text-sm font-medium truncate">{user.name}</p>
+          ) : (
+            <div className="h-4 bg-gray-200 rounded animate-pulse" />
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+### First Input Delay (FID) / Interaction to Next Paint (INP)
+Optimize interactivity:
+
+```ts
+// ✅ Use React.lazy for code splitting
+const HeavyComponent = lazy(() => import('./heavy-component'))
+
+function Dashboard() {
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <Suspense fallback={<DashboardSkeleton />}>
+        <HeavyComponent />
+      </Suspense>
+    </div>
+  )
+}
+
+// ✅ Debounce expensive operations
+function SearchInput() {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+
+  const debouncedSearch = useMemo(
+    () => debounce(async (q: string) => {
+      if (q.trim()) {
+        const searchResults = await searchAPI(q)
+        setResults(searchResults)
+      }
+    }, 300),
+    []
+  )
+
+  useEffect(() => {
+    debouncedSearch(query)
+  }, [query, debouncedSearch])
+
+  return (
+    <Input
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+      placeholder="Search..."
+    />
+  )
+}
+```
+
+## Image Optimization Standards
+
+### ✅ WebP Format with Proper Sizing
+```ts
+import Image from 'next/image'
+
+// ✅ Optimized images with all performance features
+function ProductImage({ product }: { product: Product }) {
+  return (
+    <Image
+      src={product.imageUrl}
+      alt={product.name}
+      width={400}
+      height={300}
+      className="w-full h-auto object-cover rounded-lg"
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      priority={false} // Only true for above-fold images
+      placeholder="blur"
+      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..." // Low-quality placeholder
+    />
+  )
+}
+
+// ✅ Hero images with priority loading
+function HeroSection() {
+  return (
+    <section className="relative h-screen">
+      <Image
+        src="/hero-image.webp" // WebP format
+        alt="Hero section"
+        fill
+        className="object-cover"
+        priority={true} // Critical for LCP
+        sizes="100vw"
+        quality={85} // Optimized quality
+      />
+      <div className="absolute inset-0 bg-black/40">
+        <h1 className="text-5xl font-bold text-white">Hero Title</h1>
+      </div>
+    </section>
+  )
+}
+
+// ✅ Lazy loading for below-fold images
+function ProductGrid({ products }: { products: Product[] }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {products.map((product, index) => (
+        <div key={product.id}>
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            width={300}
+            height={200}
+            className="w-full h-48 object-cover rounded"
+            sizes="(max-width: 768px) 100vw, 33vw"
+            priority={index < 3} // First 3 images get priority
+            loading={index < 3 ? 'eager' : 'lazy'}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+## Bundle Optimization
+
+### Dynamic Imports and Code Splitting
+Strategic lazy loading:
+
+```ts
+// ✅ Route-level code splitting
+const AdminDashboard = lazy(() => import('./admin-dashboard'))
+const UserDashboard = lazy(() => import('./user-dashboard'))
+
+function Dashboard({ userRole }: { userRole: 'admin' | 'user' }) {
+  const DashboardComponent = userRole === 'admin' ? AdminDashboard : UserDashboard
+
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardComponent />
+    </Suspense>
+  )
+}
+
+// ✅ Feature-based splitting
+const ChartComponent = lazy(() => import('./chart-component'))
+
+function Analytics() {
+  const [showCharts, setShowCharts] = useState(false)
+
+  return (
+    <div>
+      <h1>Analytics</h1>
+      <Button onClick={() => setShowCharts(true)}>
+        Show Charts
+      </Button>
+
+      {showCharts && (
+        <Suspense fallback={<div>Loading charts...</div>}>
+          <ChartComponent />
+        </Suspense>
+      )}
+    </div>
+  )
+}
+```
+
+### Tree Shaking Optimization
+Import only what you need:
+
+```ts
+// ✅ Specific imports for better tree shaking
+import { debounce } from 'lodash-es/debounce'
+import { format } from 'date-fns/format'
+
+// ❌ Imports entire library
+import _ from 'lodash'
+import * as dateFns from 'date-fns'
+
+// ✅ Configure Next.js for optimal bundling
+// next.config.ts
+export default {
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'date-fns',
+      'lodash-es'
+    ]
+  }
+}
+```
+## React Compiler Optimization
+
+### Let the Compiler Handle Memoization
+Reduce manual optimization with React Compiler:
+
+```ts
+// ✅ React Compiler handles optimization automatically
+function ProductList({ products, filters }: {
+  products: Product[]
+  filters: FilterOptions
+}) {
+  // Compiler automatically optimizes this computation
+  const filteredProducts = products.filter(product => {
+    return filters.categories.includes(product.category) &&
+           product.price >= filters.minPrice &&
+           product.price <= filters.maxPrice
+  })
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {filteredProducts.map(product => (
+        <ProductCard key={product.id} product={product} />
+      ))}
+    </div>
+  )
+}
+
+// ❌ Manual optimization (unnecessary with React Compiler)
+const ProductList = memo(({ products, filters }) => {
+  const filteredProducts = useMemo(() => {
+    return products.filter(/* filter logic */)
+  }, [products, filters])
+
+  return (/* JSX */)
+})
+```
+
+### Annotation-based Optimization
+When you need manual control:
+
+```ts
+// Enable annotation mode in next.config.ts
+export default {
+  experimental: {
+    reactCompiler: {
+      compilationMode: 'annotation'
+    }
+  }
+}
+
+// Use "use memo" directive for specific optimizations
+function ExpensiveComponent({ data }: { data: ComplexData }) {
+  "use memo"
+
+  const processedData = processComplexData(data)
+
+  return <div>{/* Render processed data */}</div>
+}
+```
+
+## Font Optimization
+
+### ✅ next/font Optimization
+```ts
+// Optimize web font loading
+import { Inter, Roboto_Mono } from 'next/font/google'
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter'
+})
+
+const robotoMono = Roboto_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-roboto-mono'
+})
+
+export default function RootLayout({ children }: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
+      <body className="font-sans">{children}</body>
+    </html>
+  )
+}
+```
+
+## Turbopack Integration
+
+### Development Optimization
+Leverage Turbopack for faster development:
+
+```bash
+# Use Turbopack for development
+pnpm dev --turbo
+
+# Or configure permanently
+# package.json
+{
+  "scripts": {
+    "dev": "next dev --turbo",
+    "build": "next build"
+  }
+}
+```
+
+### Turbopack Configuration
+Optimize for your specific needs:
+
+```ts
+// next.config.ts
+export default {
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        '@': './src',
+        '@/components': './src/components'
+      },
+      resolveExtensions: ['.ts', '.tsx', '.js', '.jsx']
+    }
+  }
+}
+```
+
+## Client-Side Error Handling
+
+### Error Boundaries
+```tsx
+'use client';
+
+export default function FeatureError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[300px] p-6">
+      <h2 className="text-xl font-semibold mb-4 text-red-600">
+        Something went wrong
+      </h2>
+      <p className="text-gray-600 mb-4">
+        An error occurred while loading this content. Please try again.
+      </p>
+      <button
+        onClick={reset}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Try Again
+      </button>
+    </div>
+  );
+}
+```
+
+### Loading States
+```tsx
+export default function FeatureLoading() {
+  return (
+    <div className="space-y-4 p-4">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="flex gap-3">
+          <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## Web Vitals & Performance Standards
+
+### Performance-aware Components
+```tsx
+// Example: Performance-aware component
+export function OptimizedProductList({ products }: { products: Product[] }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {products.map((product, index) => (
+        <Suspense key={product.id} fallback={<ProductCardSkeleton />}>
+          <ProductCard
+            product={product}
+            priority={index < 3} // Prioritize first 3 images
+            sizes="(max-width: 768px) 100vw, 33vw"
+          />
+        </Suspense>
+      ))}
+    </div>
+  );
+}
+```
+
+### Core Web Vitals Prevention
+```tsx
+// CLS (Cumulative Layout Shift) prevention
+export function StableLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header className="h-16 bg-white border-b"> {/* Fixed height */}
+        <Navigation />
+      </header>
+      <main className="flex-1">
+        {children}
+      </main>
+      <footer className="h-20 bg-gray-100"> {/* Fixed height */}
+        <Footer />
+      </footer>
+    </div>
+  );
+}
+```
+
+## Performance Monitoring
+
+### Web Vitals Tracking
+```ts
+// Track Core Web Vitals
+import { onCLS, onFID, onFCP, onLCP, onTTFB } from 'web-vitals'
+
+function sendToAnalytics(metric: any) {
+  // Send to your analytics service
+  console.log(metric)
+}
+
+export function reportWebVitals() {
+  onCLS(sendToAnalytics)
+  onFID(sendToAnalytics)
+  onFCP(sendToAnalytics)
+  onLCP(sendToAnalytics)
+  onTTFB(sendToAnalytics)
+}
+
+// _app.tsx or layout.tsx
+export { reportWebVitals }
+```
+
+### Bundle Analysis
+```bash
+# Analyze bundle size
+pnpm add -D @next/bundle-analyzer
+
+# next.config.ts
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+})
+
+export default withBundleAnalyzer({
+  // Next.js config
+})
+
+# Run analysis
+ANALYZE=true pnpm build
+```
+
+## Lighthouse CI Integration
+
+All code must meet these minimum performance standards:
+
+- **Performance**: 90+ (Core Web Vitals optimized)
+- **Accessibility**: 95+ (WCAG compliance)
+- **Best Practices**: 95+ (Security, HTTPS, modern APIs)
+- **SEO**: 95+ (Meta tags, semantic HTML, structured data)

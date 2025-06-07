@@ -1,5 +1,5 @@
 ---
-description:
+description: >
 globs:
 alwaysApply: true
 ---
@@ -20,7 +20,7 @@ Before responding to any request, follow these steps:
 
 1. **Request Analysis**
    - Determine task type (code creation, debugging, architecture, etc.)
-   - Identiinvolved
+   - Identify languages and frameworks involved
    - Note explicit and implicit requirements
    - Define core problem and desired outcome
    - Consider project context and constraints
@@ -97,6 +97,11 @@ Before responding to any request, follow these steps:
 
 When working on specific aspects of the frontend, consult these specialized rules:
 
+### TypeScript Standards
+- **See: `typescript.mdc`** for comprehensive type safety standards
+- **See: `typescript.mdc`** for Zod integration and pure function patterns
+- **See: `typescript.mdc`** for React 19 + TypeScript integration
+
 ### React 19 Features
 - **See: `react19-core-rule.mdc`** for Actions, new hooks, and React 19 APIs
 - **See: `react19-core-rule.mdc`** for useActionState, useOptimistic, and use() patterns
@@ -126,6 +131,7 @@ When working on specific aspects of the frontend, consult these specialized rule
 - **See: `animation-patterns.mdc`** for motion/react animation standards
 - **See: `animation-patterns.mdc`** for performance-optimized animation patterns
 - **See: `animation-patterns.mdc`** for accessibility-compliant animations
+- **See: `animation-patterns.mdc`** for Tailwind + motion integration guidelines
 
 ---
 

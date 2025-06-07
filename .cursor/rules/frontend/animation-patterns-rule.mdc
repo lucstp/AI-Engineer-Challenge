@@ -1,0 +1,391 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+---
+description: Motion/React animation patterns and standards using motion library
+globs:
+  - "**/*.{ts,tsx,js,jsx}"
+alwaysApply: false
+---
+
+# Animation Patterns & Standards
+
+Support runtime animation using `motion/react` while maintaining strict separation between **animated behavior** and **static styling**.
+
+## **Allowed Animation Practices**
+
+### ✅ Use Motion Components for Dynamic Properties
+
+```tsx
+import { motion } from 'motion/react';
+
+// Correct: Animate properties that change over time
+export function FadeInContainer({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="p-6 bg-white rounded-xl shadow-lg border"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Correct: Animate layout changes
+export function ExpandablePanel({ isExpanded, children }: ExpandablePanelProps) {
+  return (
+    <motion.div
+      initial={{ height: 0 }}
+      animate={{ height: isExpanded ? 'auto' : 0 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="overflow-hidden bg-gray-50 rounded-lg"
+    >
+      <div className="p-4">
+        {children}
+      </div>
+    </motion.div>
+  );
+}
+```
+
+### ✅ Use `style={{}}` ONLY for Animated Properties
+
+Properties that require `style={{}}` for animation:
+- **Transform properties**: `translateX`, `translateY`, `rotate`, `scale`
+- **Dynamic dimensions**: `width`, `height` (when animating to specific values)
+- **Opacity changes**: When animating between specific opacity values
+- **Custom transforms**: Complex transform combinations
+
+```tsx
+// Correct: style={{}} only for animated transform
+<motion.div
+  style={{ x: mouseX, y: mouseY }} // Animated position
+  className="fixed w-4 h-4 bg-blue-500 rounded-full pointer-events-none"
+/>
+
+// Correct: Combine static Tailwind with animated styles
+<motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium"
+>
+  Click me
+</motion.button>
+```
+
+## **Disallowed Animation Practices**
+
+### ❌ Do Not Use `style={{}}` for Static Properties
+
+```tsx
+// ❌ Wrong: Using inline styles for static properties
+<motion.div
+  style={{
+    padding: '16px', // Use className="p-4"
+    backgroundColor: '#3B82F6', // Use className="bg-blue-500"
+    fontSize: '18px', // Use className="text-lg"
+    fontWeight: 'bold' // Use className="font-bold"
+  }}
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+/>
+
+// ✅ Correct: Tailwind for static, motion for animated
+<motion.div
+  className="p-4 bg-blue-500 text-lg font-bold text-white"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+/>
+```
+### ❌ Avoid Alternative Animation Solutions
+
+- **CSS animations**: No `@keyframes`, CSS transitions for complex animations
+- **Styled-components**: No `styled-components` or CSS-in-JS for animations
+- **External libraries**: No GSAP, Lottie, or other animation libraries
+- **Mixed approaches**: Don't animate the same property with both Tailwind and Motion
+
+```tsx
+// ❌ Wrong: CSS keyframes
+<div className="animate-spin-custom" /> // Don't create custom CSS animations
+
+// ❌ Wrong: Mixing animation approaches
+<motion.div
+  animate={{ width: 200 }}
+  className="w-48" // Conflicts with animated width
+/>
+
+// ✅ Correct: Choose one approach per property
+<motion.div
+  animate={{ width: 200 }}
+  className="h-12 bg-blue-500" // Height and color via Tailwind
+/>
+```
+
+## **Animation Pattern Examples**
+
+### Loading States
+
+```tsx
+export function LoadingSpinner() {
+  return (
+    <motion.div
+      animate={{ rotate: 360 }}
+      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"
+    />
+  );
+}
+```
+
+### Page Transitions
+
+```tsx
+export function PageTransition({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen bg-gray-50"
+    >
+      {children}
+    </motion.div>
+  );
+}
+```
+
+### Interactive Elements
+
+```tsx
+export function InteractiveCard({ children, onClick }: InteractiveCardProps) {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      onClick={onClick}
+      className="p-6 bg-white rounded-xl shadow-md border cursor-pointer"
+    >
+      {children}
+    </motion.div>
+  );
+}
+```
+
+### Form Feedback Animations
+
+```tsx
+export function AnimatedFormField({
+  error,
+  children
+}: {
+  error?: string
+  children: React.ReactNode
+}) {
+  return (
+    <motion.div
+      animate={error ? { x: [-10, 10, -10, 10, 0] } : {}}
+      transition={{ duration: 0.4 }}
+      className="space-y-2"
+    >
+      {children}
+      {error && (
+        <motion.p
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="text-sm text-red-600"
+        >
+          {error}
+        </motion.p>
+      )}
+    </motion.div>
+  );
+}
+```
+
+### Data Loading Animations
+
+```tsx
+export function AnimatedList({ items }: { items: any[] }) {
+  return (
+    <div className="space-y-2">
+      {items.map((item, index) => (
+        <motion.div
+          key={item.id}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{
+            delay: index * 0.1,
+            duration: 0.3,
+            ease: "easeOut"
+          }}
+          className="p-4 bg-white border rounded-lg"
+        >
+          {/* Item content */}
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+```
+
+## **Animation Performance Guidelines**
+
+### Optimize for Performance
+
+```tsx
+// ✅ Good: Transform properties (GPU-accelerated)
+<motion.div animate={{ x: 100, scale: 1.1, rotate: 45 }} />
+
+// ⚠️ Careful: Layout properties (can cause reflow)
+<motion.div animate={{ width: 200, height: 300 }} />
+
+// ✅ Better: Use transform scale instead of width/height when possible
+<motion.div animate={{ scaleX: 1.5, scaleY: 1.2 }} />
+```
+
+### Use Appropriate Transition Types
+
+```tsx
+// Smooth easing for UI feedback
+<motion.button
+  whileTap={{ scale: 0.95 }}
+  transition={{ type: "spring", stiffness: 500 }}
+/>
+
+// Natural spring for layout changes
+<motion.div
+  layout
+  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+/>
+
+// Linear for continuous animations
+<motion.div
+  animate={{ rotate: 360 }}
+  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+/>
+```
+
+### Performance Monitoring
+
+```tsx
+// Use layout animations sparingly
+<motion.div
+  layout // Expensive - use only when necessary
+  className="grid grid-cols-3 gap-4"
+>
+  {items.map(item => (
+    <motion.div key={item.id} layout>
+      {item.content}
+    </motion.div>
+  ))}
+</motion.div>
+
+// Prefer transform-based animations
+<motion.div
+  animate={{
+    x: isVisible ? 0 : -100,
+    opacity: isVisible ? 1 : 0
+  }}
+  transition={{ duration: 0.3 }}
+  className="transform-gpu" // Ensure GPU acceleration
+>
+  Content
+</motion.div>
+```
+
+## **Integration with shadcn/ui**
+
+### Animate shadcn/ui Components
+
+```tsx
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+
+export function AnimatedCard({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      whileHover={{ y: -5 }}
+      transition={{ type: "spring", stiffness: 300 }}
+    >
+      <Card className="cursor-pointer">
+        <CardContent className="p-6">
+          {children}
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+export function AnimatedButton({ children, ...props }: ButtonProps) {
+  return (
+    <motion.div whileTap={{ scale: 0.95 }}>
+      <Button {...props}>
+        {children}
+      </Button>
+    </motion.div>
+  );
+}
+```
+
+## **Accessibility Considerations**
+
+### Respect User Preferences
+
+```tsx
+import { useReducedMotion } from 'motion/react'
+
+export function AccessibleAnimation({ children }: { children: React.ReactNode }) {
+  const shouldReduceMotion = useReducedMotion()
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: shouldReduceMotion ? 0 : 0.3,
+        ease: "easeOut"
+      }}
+      className="space-y-4"
+    >
+      {children}
+    </motion.div>
+  );
+}
+```
+
+### Focus Management
+
+```tsx
+export function AnimatedModal({ isOpen, children }: AnimatedModalProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isOpen ? 1 : 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 bg-black/50 z-50"
+      style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: isOpen ? 1 : 0.9, y: isOpen ? 0 : 20 }}
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6"
+        role="dialog"
+        aria-modal="true"
+      >
+        {children}
+      </motion.div>
+    </motion.div>
+  );
+}
+```
+
+This approach ensures animations enhance user experience while maintaining design system consistency and optimal performance.

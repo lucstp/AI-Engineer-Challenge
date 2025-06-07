@@ -1,10 +1,5 @@
 ---
 description: >
-globs:
-alwaysApply: true
----
----
-description: >
   Core frontend engineering standards and structured reasoning process for Next.js 15 and React 19.
   This rule orchestrates all frontend development patterns and references specialized domain rules.
 globs:

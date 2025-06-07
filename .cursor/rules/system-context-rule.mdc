@@ -1,9 +1,4 @@
 ---
-description: System context and rule synchronization for AI Engineer Challenge project
-globs: []
-alwaysApply: true
----
----
 description: System context and rule synchronization for LLM Chat Application project
 globs: []
 alwaysApply: true

@@ -3,12 +3,6 @@ description: Motion/React animation patterns and standards using motion library
 globs:
 alwaysApply: false
 ---
----
-description: Motion/React animation patterns and standards using motion library
-globs:
-  - "**/*.{ts,tsx,js,jsx}"
-alwaysApply: false
----
 
 # Animation Patterns & Standards
 

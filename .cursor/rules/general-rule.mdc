@@ -3,11 +3,6 @@ description: Git conventions, workflow guidelines, and core development principl
 globs: []
 alwaysApply: true
 ---
----
-description: Git conventions, workflow guidelines, and core development principles
-globs: []
-alwaysApply: true
----
 
 # General Rules
 

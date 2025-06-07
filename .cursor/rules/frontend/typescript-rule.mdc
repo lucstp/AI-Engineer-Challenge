@@ -3,15 +3,7 @@ description: TypeScript best practices and enterprise standards for type safety
 globs:
 alwaysApply: true
 ---
----
-description: TypeScript best practices and enterprise standards for type safety
-globs:
-  - "**/*.ts"
-  - "**/*.tsx"
-alwaysApply: true
----
 
-TypeScript Standards & Best Practices
 # TypeScript Standards & Best Practices
 
 ## Core TypeScript Principles

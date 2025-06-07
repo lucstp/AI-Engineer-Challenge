@@ -1,0 +1,321 @@
+---
+description: UI styling patterns, shadcn/ui integration, and responsive design
+globs:
+alwaysApply: false
+---
+---
+description: UI styling patterns, shadcn/ui integration, and responsive design
+globs:
+  - "**/*.{ts,tsx,js,jsx}"
+alwaysApply: false
+---
+
+# UI and Styling Patterns
+
+This rule describes guidelines for creating UI and styling components.
+
+
+## Technology Stack
+- Use **shadcn/ui + Radix** for component primitives and accessibility
+- Use **Tailwind CSS** for all styling with utility-first approach
+- Use **Lucide icons** for consistent iconography
+- Global theme variables and Tailwind config are defined in `frontend/src/styles/globals.css`
+
+## Responsive Design Guidelines
+- **Mobile-first approach**: Start with mobile styles, then scale up with responsive prefixes
+- **Use responsive utility variants** to build adaptive user interfaces following [Tailwind responsive design](mdc:https:/tailwindcss.com/docs/responsive-design)
+- Use Tailwind responsive breakpoints: `sm:` (640px), `md:` (768px), `lg:` (1024px), `xl:` (1280px), `2xl:` (1536px)
+- **Use touch-action utilities** for controlling how elements can be scrolled and zoomed on touchscreens: [touch-action utilities](mdc:https:/tailwindcss.com/docs/touch-action)
+- Test on mobile devices first, then progressively enhance for larger screens
+- Ensure touch-friendly interaction areas (minimum 44px tap targets)
+
+## Touch and Interaction Guidelines
+```ts
+// ✅ Use touch-action utilities for touchscreen optimization
+function SwipeableCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className={cn(
+      // Base mobile styles
+      "bg-white rounded-lg p-4",
+      // Touch behavior control
+      "touch-pan-y",           // Allow vertical panning only
+      "select-none",           // Prevent text selection during swipe
+      // Responsive variants
+      "md:touch-auto md:select-text" // Reset touch behavior on larger screens
+    )}>
+      {children}
+    </div>
+  )
+}
+
+// ✅ Interactive elements with proper touch handling
+function InteractiveButton({ children, ...props }: ButtonProps) {
+  return (
+    <button
+      className={cn(
+        // Base styles with touch optimization
+        "inline-flex items-center justify-center rounded-md font-medium",
+        "touch-manipulation",    // Optimize for touch (removes 300ms delay)
+        "active:scale-95",       // Touch feedback
+        // Responsive sizing
+        "h-10 px-4 text-sm",    // Mobile
+        "md:h-11 md:px-6 md:text-base", // Tablet+
+        // Touch target size compliance
+        "min-h-[44px] min-w-[44px]" // Minimum 44px for accessibility
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  )
+}
+```
+
+## Class Name Management
+- **Use the `cn` function for class name concatenation** (located in `frontend/src/lib/utils.ts`)
+- Import from `@/lib/utils.ts` for consistent class name handling
+- Combine conditional classes with base styles for maintainable code
+- Always use `cn` instead of template literals or manual string concatenation
+
+```ts
+import { cn } from '@/lib/utils'
+
+// ✅ Use cn function for conditional class concatenation
+function Button({ variant, size, className, ...props }: ButtonProps) {
+  return (
+    <button
+      className={cn(
+        // Base styles
+        "inline-flex items-center justify-center rounded-md font-medium transition-colors",
+        // Variant styles
+        {
+          "bg-primary text-primary-foreground hover:bg-primary/90": variant === "default",
+          "border border-input hover:bg-accent": variant === "outline",
+        },
+        // Size styles
+        {
+          "h-10 px-4 py-2": size === "default",
+          "h-9 px-3": size === "sm",
+        },
+        // Additional classes from props
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+// ✅ cn function with responsive utilities and touch actions
+function ResponsiveCard({ isActive, className, children }: ResponsiveCardProps) {
+  return (
+    <div
+      className={cn(
+        // Base styles with touch optimization
+        "bg-white rounded-lg p-4 transition-all touch-manipulation",
+        // Conditional state styles
+        {
+          "ring-2 ring-primary": isActive,
+          "hover:shadow-md": !isActive,
+        },
+        // Responsive utilities
+        "md:p-6 lg:p-8",
+        // Custom classes
+        className
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+
+// ❌ Don't use template literals or manual concatenation
+function BadExample({ variant, className }: BadExampleProps) {
+  return (
+    <div className={`base-class ${variant === 'primary' ? 'primary-class' : 'secondary-class'} ${className || ''}`}>
+      {/* This is harder to maintain and less type-safe */}
+    </div>
+  )
+}
+```
+
+## Responsive Layout Patterns
+```ts
+// ✅ Mobile-first responsive design with utility variants
+function ResponsiveGrid({ children }: { children: React.ReactNode }) {
+  return (
+    <div className={cn(
+      // Mobile: single column with touch optimization
+      "grid grid-cols-1 gap-4 touch-pan-y",
+      // Tablet: two columns
+      "md:grid-cols-2 md:gap-6 md:touch-auto",
+      // Desktop: three columns
+      "lg:grid-cols-3 lg:gap-8"
+    )}>
+      {children}
+    </div>
+  )
+}
+
+// ✅ Responsive typography and spacing with adaptive utilities
+function HeroSection() {
+  return (
+    <section className={cn(
+      // Mobile spacing, text, and touch behavior
+      "px-4 py-8 text-center touch-manipulation",
+      // Tablet adjustments
+      "md:px-6 md:py-12",
+      // Desktop large spacing
+      "lg:px-8 lg:py-16"
+    )}>
+      <h1 className={cn(
+        // Mobile typography
+        "text-3xl font-bold leading-tight",
+        // Responsive scaling with utility variants
+        "sm:text-4xl sm:leading-tight",
+        "md:text-5xl md:leading-tight",
+        "lg:text-6xl lg:leading-tight",
+        "xl:text-7xl xl:leading-tight"
+      )}>
+        Hero Title
+      </h1>
+    </section>
+  )
+}
+
+// ✅ Adaptive navigation with touch-action utilities
+function MobileNavigation() {
+  return (
+    <nav className={cn(
+      // Mobile: full-width with proper touch handling
+      "fixed bottom-0 left-0 right-0 bg-white border-t",
+      "touch-none",              // Prevent scrolling conflicts
+      "safe-area-inset-bottom",  // Handle safe area on mobile
+      // Desktop: horizontal layout
+      "md:relative md:bottom-auto md:border-t-0 md:touch-auto",
+      "md:flex md:items-center"
+    )}>
+      {/* Navigation items */}
+    </nav>
+  )
+}
+
+// ✅ Scrollable content with controlled touch behavior
+function ScrollableContent({ children }: { children: React.ReactNode }) {
+  return (
+    <div className={cn(
+      // Mobile: vertical scroll only
+      "overflow-y-auto touch-pan-y",
+      // Desktop: allow all touch interactions
+      "md:touch-auto"
+    )}>
+      {children}
+    </div>
+  )
+}
+```
+
+## shadcn/ui Integration Patterns
+```ts
+// ✅ Compose shadcn/ui primitives for complex components
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+
+function ProductCard({ product }: { product: Product }) {
+  return (
+    <Card className="h-full flex flex-col">
+      <CardHeader>
+        <CardTitle className="line-clamp-2">{product.name}</CardTitle>
+        <Badge variant={product.inStock ? "default" : "secondary"}>
+          {product.inStock ? "In Stock" : "Out of Stock"}
+        </Badge>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col justify-between">
+        <p className="text-sm text-muted-foreground line-clamp-3">
+          {product.description}
+        </p>
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-lg font-bold">${product.price}</span>
+          <Button size="sm" disabled={!product.inStock}>
+            Add to Cart
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ✅ Custom variants with shadcn/ui base components
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+function CustomActionButton({ variant = "default", size = "default", className, ...props }: CustomButtonProps) {
+  return (
+    <button
+      className={cn(
+        buttonVariants({ variant, size }),
+        "transition-transform hover:scale-105 active:scale-95",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+```
+
+## Accessibility Integration
+```ts
+// ✅ Accessible components with proper ARIA attributes
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+
+function AccessibleCard({ title, children, onAction }: AccessibleCardProps) {
+  return (
+    <Card
+      className="focus-within:ring-2 focus-within:ring-primary"
+      role="article"
+      aria-labelledby="card-title"
+    >
+      <div className="p-6">
+        <h3 id="card-title" className="text-lg font-semibold mb-2">
+          {title}
+        </h3>
+        <div className="text-sm text-muted-foreground mb-4">
+          {children}
+        </div>
+        <Button
+          onClick={onAction}
+          aria-describedby="card-title"
+          className="w-full"
+        >
+          Take Action
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
+// ✅ Form components with proper labeling
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+function AccessibleForm() {
+  return (
+    <form className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email Address</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="Enter your email"
+          aria-describedby="email-help"
+          required
+        />
+        <p id="email-help" className="text-xs text-muted-foreground">
+          We'll never share your email with anyone else.
+        </p>
+      </div>
+    </form>
+  )
+}
+```

@@ -1,6 +1,8 @@
 ---
-description: 
-globs: *.md
+description: README.md creation guidelines with fun and approachable language
+globs:
+  - "*.md"
+  - "**/README.md"
 alwaysApply: false
 ---
 ### README.md Rules

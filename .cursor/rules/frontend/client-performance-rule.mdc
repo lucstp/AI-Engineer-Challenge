@@ -1,5 +1,5 @@
 ---
-description:
+description: Client-side performance optimization, Core Web Vitals, and browser-specific patterns
 globs:
 alwaysApply: false
 ---

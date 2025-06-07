@@ -1,5 +1,5 @@
 ---
-description:
+description: Motion/React animation patterns and standards using motion library
 globs:
 alwaysApply: false
 ---

@@ -1,209 +1,241 @@
 ---
-description:
-globs:
+description: Git conventions, workflow guidelines, and core development principles
+globs: []
 alwaysApply: true
 ---
 ---
-description: >
-  Core frontend engineering standards and structured reasoning process for Next.js 15 and React 19.
-  This rule orchestrates all frontend development patterns and references specialized domain rules.
-globs:
-  - "frontend/**/*.{ts,tsx,js,jsx}"
+description: Git conventions, workflow guidelines, and core development principles
+globs: []
 alwaysApply: true
 ---
 
-# Frontend Engineering Standards (Core Orchestrator)
+# General Rules
 
-## Analysis Process
+## Core Principles and Rules to Follow
 
-Before responding to any request, follow these steps:
-
-1. **Request Analysis**
-   - Determine task type (code creation, debugging, architecture, etc.)
-   - Identiinvolved
-   - Note explicit and implicit requirements
-   - Define core problem and desired outcome
-   - Consider project context and constraints
-
-2. **Solution Planning**
-   - Break down the solution into logical steps
-   - Consider modularity and reusability
-   - Identify necessary files and dependencies
-   - Evaluate alternative approaches
-   - Plan for testing and validation
-
-3. **Implementation Strategy**
-   - Choose appropriate design patterns
-   - Consider performance implications
-   - Plan for error handling and edge cases
-   - Ensure accessibility compliance
-   - Verify best practices alignment
+- You must always commit your changes whenever you update code.
+- You must always try to write code that is well documented (self-documenting or commented).
+- You must only work on a single feature at a time.
+- You must explain your decisions thoroughly to the user.
 
 ---
 
-## Code Style and Structure
+## Git Commit Conventions and Workflow Guidelines
 
-### General Principles
+### Commit Message Format
 
-- Write concise, readable TypeScript code
-- Use functional and declarative programming patterns
-- Follow DRY (Don't Repeat Yourself)
-- Prefer early returns to reduce nesting
-- Structure: main exports → subcomponents → helpers → types
+Use this format ([Conventional Commits v1.0.0](mdc:https:/www.conventionalcommits.org/en/v1.0.0)):
 
-### Naming Conventions
 
-- Follow the established naming conventions defined in `naming-convention-rule.mdc`
-- Use descriptive variable names that clearly indicate purpose and state
-- Ensure React-specific patterns align with overall project standards
+```
+<type>(<scope>): <description>
 
-### TypeScript Usage
+[optional body]
 
-- Enforce TypeScript across the codebase
-- Prefer `interface` over `type` for object shapes
-- Avoid `enum` in favor of const maps
-- Use the `satisfies` operator for literal type constraints
-- Emphasize strict null safety and type inference
+[optional footer(s)]
+```
 
----
+### Commit Rules
 
-## Core Frontend Architecture Principles
+- Header line must be 72 characters or less.
+- Body lines should wrap at 100 characters.
+- Use present tense, imperative mood: "add" not "added" or "adds".
+- No period at end of description.
+- Body should explain WHAT and WHY, not HOW.
 
-### React Server Components First
-- **Minimize `use client` usage** - Default to Server Components
-- **Minimize `useEffect` and `setState`** - Favor RSC patterns
-- **Wrap client components in Suspense** with appropriate fallbacks
-- Use **error boundaries** at layout/page level
-- Leverage **Suspense** for async rendering
+### Standard Types
 
-### Performance-First Mindset
-- **Server-side optimization**: RSC patterns, caching, streaming
-- **Client-side optimization**: Core Web Vitals, bundle size, interactivity
-- **Dynamic loading** for non-critical components
-- **Optimize images**: WebP format, size data, lazy loading
-- **Optimize for Core Web Vitals** (LCP, CLS, FID/INP)
-- Use **Turbopack** for faster development builds
-- Implement **React Compiler** optimizations when available
+- `feat`: New feature for the user.
+- `fix`: Bug fix for the user.
+- `docs`: Documentation changes.
+- `style`: Formatting, missing semicolons, etc. (no code change).
+- `refactor`: Code change that neither fixes bug nor adds feature.
+- `test`: Adding or updating tests.
+- `chore`: Build process, dependencies, tooling changes.
+- `ci`: CI/CD configuration changes.
+- `perf`: Performance improvements.
+- `build`: Changes to build system or dependencies.
+- `revert`: Reverting previous commits.
 
-### Modern Development Patterns
-- Prefer `useActionState` over deprecated `useFormState`
-- Implement **stateful URLs** with `@nuqs` for URL state management
-- Keep **client-side state minimal and ephemeral**
-- Use **React 19 Actions** for form handling and async operations
+### Project-Specific Scopes
 
----
+The scope should be the name of the component affected (as perceived by the person reading the changelog).
 
-## Domain-Specific Rule References
+- `frontend`: Next.js frontend changes.
+- `api`: FastAPI backend changes.
+- `ui`: UI components and styling.
+- `auth`: Authentication related.
+- `chat`: Chat functionality.
+- `deploy`: Deployment configuration.
+- `deps`: Dependency updates.
+- `config`: Configuration files.
 
-When working on specific aspects of the frontend, consult these specialized rules:
+### Examples
 
-### React 19 Features
-- **See: `react19-core-rule.mdc`** for Actions, new hooks, and React 19 APIs
-- **See: `react19-core-rule.mdc`** for useActionState, useOptimistic, and use() patterns
-- **See: `react19-core-rule.mdc`** for ref as prop and Document Metadata features
-
-### Next.js 15 Features
-- **See: `nextjs15-core.rule.mdc`** for async Request APIs and caching changes
-- **See: `nextjs15-core.rule.mdc`** for Turbopack, after() API, and authorization patterns
-- **See: `nextjs15-core.rule.mdc`** for React Compiler integration and ESLint 9 support
-
-### Component Architecture
-- **See: `component-patterns.mdc`** for RSC patterns and shadcn/ui integration
-- **See: `component-patterns.mdc`** for error boundaries, Suspense, and accessibility
-- **See: `component-patterns.mdc`** for custom hooks and file organization patterns
-
-### Server-Side Performance
-- **See: `rsc-performance.mdc`** for React Server Components optimization
-- **See: `rsc-performance.mdc`** for server-side caching and data fetching strategies
-- **See: `rsc-performance.mdc`** for database optimization and Server Actions patterns
-
-### Client-Side Performance
-- **See: `client-performance.mdc`** for Core Web Vitals and bundle optimization
-- **See: `client-performance.mdc`** for React Compiler and monitoring strategies
-- **See: `client-performance.mdc`** for image optimization and Turbopack integration
-
-### Animation Patterns
-- **See: `animation-patterns.mdc`** for motion/react animation standards
-- **See: `animation-patterns.mdc`** for performance-optimized animation patterns
-- **See: `animation-patterns.mdc`** for accessibility-compliant animations
+```
+feat(frontend): add streaming chat interface
+fix(api): handle missing API key validation
+docs(readme): update setup instructions
+chore(deps): update Next.js to v14.1
+style(ui): improve message bubble spacing
+ci(deploy): add Vercel deployment workflow
+```
 
 ---
 
-## Quick Reference Checklist
+## Branch Naming Convention
 
-When implementing any frontend feature, ensure:
+Branches should follow this pattern:
 
-- ✅ **Server Components by default** - only use `'use client'` when necessary
-- ✅ **Suspense boundaries** around async components
-- ✅ **Error boundaries** at appropriate levels
-- ✅ **Naming conventions** follow kebab-case for files, PascalCase for components
-- ✅ **TypeScript strict mode** with proper type definitions
-- ✅ **Performance considerations** for images, fonts, and bundle size
-- ✅ **Accessibility compliance** with ARIA labels and semantic HTML
-- ✅ **Testing strategy** for components and user interactions
-- ✅ **Animation guidelines** using motion/react with Tailwind separation
-- ✅ **React 19 features** like Actions, useActionState, and useOptimistic
+```
+<type>(<scope>)/<short-description>
+```
 
-## Integration Guidelines
+Example:
 
-### shadcn/ui Components
-- Compose primitives to build complex UI patterns
-- Maintain consistent design system patterns
-- Use React Hook Form for form validation and handling
-- Follow kebab-case naming for custom components
+```
+feat(api)/streaming-endpoint
+```
 
-### State Management Hierarchy
-1. **Server State** (RSC) - Preferred for data fetching
-2. **URL State** (@nuqs) - For shareable application state
-3. **Local State** (useState) - Only for ephemeral UI state
-4. **Global State** (Context/Zustand) - Sparingly, for truly global concerns
+---
 
-### File Organization
-- Use kebab-case for all file and directory names
-- Co-locate related components, hooks, and tests
-- Implement barrel exports for clean public APIs
-- Follow the established project structure patterns
+## Workflow Guidelines
 
-### Package Management
-- Use `pnpm` as the standard package manager
-- Leverage pnpm workspaces for monorepo management
-- Cache pnpm store for faster CI/CD builds
+### 1. Protected Branches
 
-## Technology Stack Integration
+- `main`: Production-ready code, protected branch.
+- Direct commits to protected branches are NOT allowed.
+- All changes must come through Pull Requests.
 
-### Core Technologies
-- **Frontend**: Next.js 15 + React 19 + TypeScript 5 + Tailwind CSS
-- **UI Components**: shadcn/ui + Radix + Lucide icons
-- **Animation**: Motion library (motion/react)
-- **Linting**: Biome (formatting) + ESLint 9 (React-specific rules)
-- **Package Manager**: pnpm
+### 2. Feature Development
 
-### Development Tools
-- **Turbopack**: For faster development builds
-- **React Compiler**: Experimental optimization
-- **Biome**: Fast formatting and basic linting
-- **ESLint**: React/Next.js specific rules and accessibility
+```bash
+# First, check if you're on a protected branch
+git branch --show-current
 
-## Enterprise Standards Summary
+# If on main, create and checkout a new branch following <type>(<scope>)/<short-description>
+git checkout -b feat(api)/streaming-endpoint main
 
-### ✅ ALWAYS DO
-- Use TypeScript strict mode with comprehensive types
-- Default to Server Components for data fetching
-- Implement Server Actions with Zod validation
-- Use React 19 hooks: `useActionState`, `useOptimistic`, `useFormStatus`
-- Apply Tailwind utilities with shadcn/ui components
-- Include proper error boundaries and loading states
-- Follow naming conventions consistently
-- Implement comprehensive error handling
-- Use motion/react for animations with Tailwind for static styles
+# Make changes and commit
+git add .
+git commit -m "feat(api): add streaming chat endpoint"
 
-### ❌ NEVER DO
-- Mix `pages/` and `app/` directories
-- Use inline styles except for motion animations
-- Skip TypeScript types or use `any`
-- Bypass Zod validation for user inputs
-- Skip error handling in Server Actions
-- Use CSS animations when motion/react is available
-- Mix animation approaches (CSS + motion for same property)
+# Keep branch updated with main
+git fetch origin main
+git rebase origin/main
 
-This orchestrator ensures all specialized rules work together harmoniously while maintaining the structured approach and comprehensive coverage your engineering team needs.
+# Push changes
+git push origin feat(api)/streaming-endpoint
+```
+
+### 3. Pull Request Proceeature branch to main/master.
+- Use the @Pull Request Tem.
+  _(If not visible, see @.github/pull_request_template.md)_
+- Request at least 2 code reviews (optional if solo).
+- All tests must pass.
+- No merge conflicts.
+- Squash commits when merging.
+
+### 4. Release Process
+
+```bash
+# Create release branch from main
+git checkout main
+git pull origin main
+git checkout -b release/v1.0.0
+
+# After testing, merge back to main via PR
+# After PR is approved and merged:
+git checkout main
+git pull origin main
+git tag -a v1.0.0 -m "version 1.0.0"
+git push origin main --tags
+```
+
+---
+
+## Git Workflow Automation
+
+### Available Git Aliases
+
+You can reference these efficient git aliases when helping with workflow tasks:
+
+#### Basic Operations
+- `git st` - Show status
+- `git co <branch>` - Checkout branch
+- `git br` - List branches
+
+#### Feature Workflow
+- `git new <branch-name>` - Create feature branch from latest main
+- `git done <branch-name>` - Clean up after merge (switch to main, pull, delete branch)
+- `git pushpr` - Push current branch for PR creation
+
+#### Development Helpers
+- `git wip` - Quick save work in progress
+- `git amend` - Amend last commit without editing message
+- `git undo` - Undo last commit (keeps changes staged)
+- `git up` - Update current branch with latest main
+- `git sync` - Switch to main and pull latest
+
+#### Code Investigation
+- `git find <text>` - Search for code changes containing text
+- `git who <file>` - Show blame/authorship for file
+- `git lg` - Pretty git log with graph
+
+#### AI-Enhanced Commits
+- `git smart-commit` - Use QodoGen for AI commit messages
+- `git cursor-commit` - Stage changes and open Cursor editor for commit message creation
+- `git ai-review` - Complete AI workflow (commit + push for PR)
+
+### When Suggesting Git Commands
+
+- **Prefer aliases** over full commands for efficiency
+- **Suggest appropriate alias** based on the task
+- **Explain the workflow** when using multi-step aliases
+- **Reference conventional commit format** for commit messages
+
+### Examples
+
+Instead of:
+```bash
+git checkout main
+git pull origin main
+git checkout -b feat(api)/streaming-endpoint
+```
+Suggest:
+```bash
+git new feat(api)/streaming-endpoint
+```
+
+Instead of:
+```bash
+git add .
+git commit -m "feat(api): add streaming endpoint"
+git push origin feat(api)/streaming-endpoint
+```
+Suggest:
+```bash
+git add .
+git cursor-commit  # Opens Cursor editor to create conventional commit message
+git pushpr
+```
+
+## Workflow Automation Summary
+
+For AI Engineer Challenge development:
+1. **Start feature**: `git new feat(scope)/description`
+2. **Save progress**: `git wip` (for breaks/experiments)
+3. **Clean commit**: `git cursor-commit` (AI-assisted)
+4. **Push for PR**: `git pushpr`
+5. **Finish feature**: `git done feat(scope)/description`
+
+This workflow combines conventional commits, AI assistance, and efficient automation.
+---
+
+### Breaking Changes
+
+For breaking changes, add `!` after type/scope and include `BREAKING CHANGE:` in footer:
+```
+feat(api)!: change chat endpoint response format
+BREAKING CHANGE: Response now returns streaming format instead of single response
+```

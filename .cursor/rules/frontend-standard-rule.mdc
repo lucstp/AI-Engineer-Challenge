@@ -14,6 +14,16 @@ alwaysApply: true
 
 # Frontend Engineering Standards (Core Orchestrator)
 
+## Foundation Rules
+
+Before proceeding with frontend-specific patterns, ensure compliance with:
+
+### Universal Standards
+- **See: `general-rule.mdc`** for Git conventions, commit standards, and core development principles
+- **See: `naming-convention-rule.mdc`** for universal naming conventions across all file types
+
+---
+
 ## Analysis Process
 
 Before responding to any request, follow these steps:
@@ -55,7 +65,8 @@ Before responding to any request, follow these steps:
 
 - Follow the established naming conventions defined in `naming-convention-rule.mdc`
 - Use descriptive variable names that clearly indicate purpose and state
-- Ensure React-specific patterns align with overall project standards
+- Ensure React-specific patterns align with universal project standards
+- Apply consistent patterns for components, files, and directories
 
 ### TypeScript Usage
 
@@ -64,6 +75,21 @@ Before responding to any request, follow these steps:
 - Avoid `enum` in favor of const maps
 - Use the `satisfies` operator for literal type constraints
 - Emphasize strict null safety and type inference
+
+---
+
+## Project Requirements
+
+### Visual Design Standards
+- **Pay attention to visual clarity and contrast** - Never place white text on white backgrounds
+- **Ensure pleasant UX** - Boxes should grow to fit their contents, responsive layouts
+- **Use password style text-entry** for sensitive information (passwords, API keys, tokens)
+
+### Deployment and Development Standards
+- **Use Next.js** as the primary framework (optimized for Vercel deployment)
+- **Vercel deployment ready** - All code must be compatible with Vercel's platform
+- **Local development support** - Must be testable locally before deployment
+- **User guidance** - Always provide clear instructions for running the created UI
 
 ---
 
@@ -98,9 +124,9 @@ Before responding to any request, follow these steps:
 When working on specific aspects of the frontend, consult these specialized rules:
 
 ### TypeScript Standards
-- **See: `typescript.mdc`** for comprehensive type safety standards
-- **See: `typescript.mdc`** for Zod integration and pure function patterns
-- **See: `typescript.mdc`** for React 19 + TypeScript integration
+- **See: `typescript-rule.mdc`** for comprehensive type safety standards
+- **See: `typescript-rule.mdc`** for Zod integration and pure function patterns
+- **See: `typescript-rule.mdc`** for React 19 + TypeScript integration
 
 ### React 19 Features
 - **See: `react19-core-rule.mdc`** for Actions, new hooks, and React 19 APIs
@@ -108,30 +134,30 @@ When working on specific aspects of the frontend, consult these specialized rule
 - **See: `react19-core-rule.mdc`** for ref as prop and Document Metadata features
 
 ### Next.js 15 Features
-- **See: `nextjs15-core.rule.mdc`** for async Request APIs and caching changes
-- **See: `nextjs15-core.rule.mdc`** for Turbopack, after() API, and authorization patterns
-- **See: `nextjs15-core.rule.mdc`** for React Compiler integration and ESLint 9 support
+- **See: `nextjs15-core-rule.mdc`** for async Request APIs and caching changes
+- **See: `nextjs15-core-rule.mdc`** for Turbopack, after() API, and authorization patterns
+- **See: `nextjs15-core-rule.mdc`** for React Compiler integration and ESLint 9 support
 
 ### Component Architecture
-- **See: `component-patterns.mdc`** for RSC patterns and shadcn/ui integration
-- **See: `component-patterns.mdc`** for error boundaries, Suspense, and accessibility
-- **See: `component-patterns.mdc`** for custom hooks and file organization patterns
+- **See: `component-patterns-rule.mdc`** for component architecture orchestration and integration patterns
+- **See: `ui-styling-patterns-rule.mdc`** for shadcn/ui integration, responsive design, and accessibility
+- **See: `rsc-component-patterns-rule.mdc`** for RSC patterns, error boundaries, and custom hooks
 
 ### Server-Side Performance
-- **See: `rsc-performance.mdc`** for React Server Components optimization
-- **See: `rsc-performance.mdc`** for server-side caching and data fetching strategies
-- **See: `rsc-performance.mdc`** for database optimization and Server Actions patterns
+- **See: `rsc-performance-rule.mdc`** for React Server Components optimization
+- **See: `rsc-performance-rule.mdc`** for server-side caching and data fetching strategies
+- **See: `rsc-performance-rule.mdc`** for database optimization and Server Actions patterns
 
 ### Client-Side Performance
-- **See: `client-performance.mdc`** for Core Web Vitals and bundle optimization
-- **See: `client-performance.mdc`** for React Compiler and monitoring strategies
-- **See: `client-performance.mdc`** for image optimization and Turbopack integration
+- **See: `client-performance-rule.mdc`** for Core Web Vitals and bundle optimization
+- **See: `client-performance-rule.mdc`** for React Compiler and monitoring strategies
+- **See: `client-performance-rule.mdc`** for image optimization and Turbopack integration
 
 ### Animation Patterns
-- **See: `animation-patterns.mdc`** for motion/react animation standards
-- **See: `animation-patterns.mdc`** for performance-optimized animation patterns
-- **See: `animation-patterns.mdc`** for accessibility-compliant animations
-- **See: `animation-patterns.mdc`** for Tailwind + motion integration guidelines
+- **See: `animation-patterns-rule.mdc`** for motion/react animation standards
+- **See: `animation-patterns-rule.mdc`** for performance-optimized animation patterns
+- **See: `animation-patterns-rule.mdc`** for accessibility-compliant animations
+- **See: `animation-patterns-rule.mdc`** for Tailwind + motion integration guidelines
 
 ---
 
@@ -139,6 +165,9 @@ When working on specific aspects of the frontend, consult these specialized rule
 
 When implementing any frontend feature, ensure:
 
+- ✅ **Project requirements**: Visual contrast, pleasant UX, password inputs for sensitive data
+- ✅ **Vercel compatibility**: Next.js patterns, deployment-ready configuration
+- ✅ **Local development**: Testable locally with clear run instructions
 - ✅ **Server Components by default** - only use `'use client'` when necessary
 - ✅ **Suspense boundaries** around async components
 - ✅ **Error boundaries** at appropriate levels

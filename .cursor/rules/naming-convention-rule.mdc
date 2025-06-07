@@ -1,7 +1,7 @@
 ---
-description:
+description: Enforce consistent naming across all frontend files and root-level config, excluding backend and Python code
 globs:
-alwaysApply: false
+alwaysApply: true
 ---
 ---
 description: Enforce consistent naming across all frontend files and root-level config, excluding backend and Python code.
@@ -19,7 +19,7 @@ globs:
   - ".editorconfig"
   - ".markdownlint.json"
 
-alwaysApply: false
+alwaysApply: true
 ---
 
 ## Code Element Naming

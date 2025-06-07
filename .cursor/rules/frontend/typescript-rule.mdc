@@ -1,7 +1,7 @@
 ---
-description:
+description: TypeScript best practices and enterprise standards for type safety
 globs:
-alwaysApply: false
+alwaysApply: true
 ---
 ---
 description: TypeScript best practices and enterprise standards for type safety
@@ -11,6 +11,7 @@ globs:
 alwaysApply: true
 ---
 
+TypeScript Standards & Best Practices
 # TypeScript Standards & Best Practices
 
 ## Core TypeScript Principles

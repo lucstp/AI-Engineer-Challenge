@@ -1,0 +1,169 @@
+---
+description: System context and rule synchronization for AI Engineer Challenge project
+globs: []
+alwaysApply: true
+---
+---
+description: System context and rule synchronization for LLM Chat Application project
+globs: []
+alwaysApply: true
+---
+
+# Project Context and Architecture
+
+## SYSTEM_CONTEXT
+
+You are a senior Silicon Valley engineer working on the **LLM Chat Application** project using Next.js 15 + React 19 + TypeScript + FastAPI.
+
+### Required Rule Understanding on Startup:
+- `.cursor/rules/general-rule.mdc`: Git conventions, commit standards, and core development principles
+- `.cursor/rules/naming-convention-rule.mdc`: Universal naming conventions across all file types
+- `.cursor/rules/frontend-standard-rule.mdc`: Frontend orchestrator and structured analysis process
+- `.cursor/rules/frontend/`: Domain-specific rules for specialized patterns
+
+### Project Architecture:
+```
+AI-Engineer-Challenge/
+├── .cursor/rules/               # Project-wide Cursor rules
+│   ├── frontend/               # Domain-specific frontend rules
+│   ├── general-rule.mdc        # Git conventions and core principles
+│   ├── frontend-standard-rule.mdc # Frontend orchestrator
+│   ├── naming-convention-rule.mdc # Universal naming standards
+│   └── system-context-rule.mdc # System awareness and rule sync
+├── api/                        # FastAPI backend (Python)
+│   ├── app.py                  # Main FastAPI application
+│   ├── requirements.txt        # Python dependencies
+│   └── vercel.json            # Backend deployment config
+├── frontend/                   # Next.js 15 frontend application
+│   ├── src/                   # Source code
+│   │   ├── app/               # App Router (primary)
+│   │   │   ├── layout.tsx     # Root layout
+│   │   │   └── page.tsx       # Home page
+│   │   ├── components/        # Shared UI components
+│   │   │   ├── ui/           # shadcn/ui components
+│   │   │   ├── layout/       # Layout components (Server)
+│   │   │   ├── features/     # Feature-specific components
+│   │   │   │   ├── [feature]/
+│   │   │   │   │   ├── server/    # Server Components
+│   │   │   │   │   ├── client/    # Client Components
+│   │   │   │   │   └── index.ts   # Barrel exports
+│   │   │   └── common/       # Shared utilities
+│   │   ├── lib/              # Utilities and helpers
+│   │   │   └── utils.ts       # Common utility functions
+│   │   └── styles/           # Global styles
+│   │       └── globals.css    # Global CSS
+│   ├── public/               # Static assets
+│   ├── next.config.ts        # Next.js configuration
+│   ├── package.json          # Frontend dependencies
+│   ├── tsconfig.json         # TypeScript configuration
+│   ├── biome.json           # Biome linting/formatting
+│   └── components.json       # shadcn/ui configuration
+├── .github/                  # CI/CD automation
+│   └── pull_request_template.md # PR template
+├── docs/                     # Project documentation
+├── package.json             # Root workspace configuration
+├── pnpm-workspace.yaml      # pnpm workspace setup
+├── vercel.json              # Deployment configuration
+└── README.md                # Project documentation
+```
+
+## Rule Hierarchy Understanding
+
+Before making any changes, understand this rule structure:
+
+### **1. Foundation Layer (Universal)**
+- **`general-rule.mdc`** → Git conventions, commit standards, workflow guidelines
+- **`naming-convention-rule.mdc`** → Universal naming (kebab-case files, PascalCase components)
+
+### **2. Frontend Orchestrator Layer**
+- **`frontend-standard-rule.mdc`** → Core orchestrator with Analysis Process and domain rule references
+
+### **3. Domain-Specific Layer**
+- **`typescript-rule.mdc`** → Type safety, Zod validation, pure function patterns
+- **`react19-core-rule.mdc`** → Actions, useActionState, useOptimistic, use() API
+- **`nextjs15-core-rule.mdc`** → Async Request APIs, Turbopack, after() API
+- **`component-patterns-rule.mdc`** → Component architecture orchestration and integration patterns
+- **`ui-styling-patterns-rule.mdc`** → shadcn/ui integration, responsive design, and accessibility
+- **`rsc-component-patterns-rule.mdc`** → RSC patterns, error boundaries, and custom hooks
+- **`rsc-performance-rule.mdc`** → Server-side optimization and caching strategies
+- **`client-performance-rule.mdc`** → Core Web Vitals, bundle optimization, image optimization
+- **`animation-patterns-rule.mdc`** → Motion/React animation with Tailwind separation
+
+## File Management Rules
+
+### ON_FILE_CHANGE
+Required actions after any code changes:
+
+1. **VERIFY rule compliance** against the appropriate domain rule:
+   - TypeScript files → Check `typescript-rule.mdc` standards
+   - React components → Validate against `component-patterns-rule.mdc` (orchestrator)
+   - UI/Styling → Reference `ui-styling-patterns-rule.mdc` for shadcn/ui and responsive design
+   - Server Components → Follow `rsc-component-patterns-rule.mdc` for RSC patterns
+   - Performance-critical code → Reference `rsc-performance-rule.mdc` or `client-performance-rule.mdc`
+   - Animations → Follow `animation-patterns-rule.mdc` guidelines
+
+2. **APPLY structured reasoning** from `frontend-standard-rule.mdc`:
+   - Request Analysis → Understand the task type and requirements
+   - Solution Planning → Break down into logical steps
+   - Implementation Strategy → Choose appropriate patterns and consider implications
+
+3. **FOLLOW naming conventions** from `naming-convention-rule.mdc`:
+   - Files: kebab-case (`user-profile.tsx`)
+   - Components: PascalCase (`UserProfile`)
+   - Functions: camelCase with verb-first (`handleSubmit`, `validateForm`)
+
+4. **COMMIT properly** using `general-rule.mdc` standards:
+   - Conventional Commits format: `type(scope): description`
+   - Single feature per commit
+   - Well-documented, self-explanatory code
+
+## Technology Stack Alignment
+
+### Core Technologies (Enforce Consistency)
+- **Frontend**: Next.js 15 + React 19 + TypeScript 5 + Tailwind CSS
+- **UI Components**: shadcn/ui + Radix + Lucide icons
+- **Animation**: Motion library (motion/react)
+- **Linting**: Biome (formatting) + ESLint 9 (React-specific rules)
+- **Package Manager**: pnpm
+- **Backend**: FastAPI + Python
+- **Deployment**: Vercel
+
+### Development Standards (Always Enforce)
+- **Server Components First**: Default to RSC, minimize `'use client'`
+- **Performance Targets**: Lighthouse 90+ Performance, 95+ Accessibility
+- **Type Safety**: TypeScript strict mode, no `any` types
+- **React 19 Patterns**: useActionState, useOptimistic, Server Actions
+- **Bootcamp Requirements**: Visual contrast, pleasant UX, Vercel deployment
+
+## Context Switching Protocol
+
+### When Working on Different Areas:
+1. **Frontend Components** → Reference `frontend-standard-rule.mdc` + `component-patterns-rule.mdc` (orchestrator)
+2. **UI/Styling Work** → Primary: `ui-styling-patterns-rule.mdc`, Secondary: `frontend-standard-rule.mdc`
+3. **Server Components** → Primary: `rsc-component-patterns-rule.mdc`, Secondary: `rsc-performance-rule.mdc`
+4. **TypeScript/Validation** → Primary: `typescript-rule.mdc`, Secondary: domain rules
+5. **Performance Issues** → `rsc-performance-rule.mdc` OR `client-performance-rule.mdc` based on context
+6. **Animations** → `animation-patterns-rule.mdc` + performance considerations
+7. **Git/Workflow** → `general-rule.mdc` for commit and branch standards
+
+### Rule Precedence:
+1. **Project Requirements** (in `frontend-standard-rule.mdc`) → Highest priority
+2. **General Rules** (Git, naming) → Universal application
+3. **Domain Rules** → Context-specific application
+4. **Performance Rules** → Critical for production readiness
+
+## AI Collaboration Context
+
+This project integrates with:
+- **Cursor AI** (Code generation) → Follow all rule patterns
+- **CodeRabbit** (Code review) → R
+- **QODO AI** (Testing) → Create pure, testable functions
+
+### Code Generation Guidelines:
+- Generate enterprise-grade, production-ready code
+- Follow Silicon Valley engineering standards
+- Apply structured reasoning process
+- Ensure all patterns align with the comprehensive rule system
+- Maintain consistency across the entire codebase
+
+This context ensures Cursor AI maintains awareness of the complete rule ecosystem and generates code that aligns with all established standards.

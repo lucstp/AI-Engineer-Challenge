@@ -1,5 +1,5 @@
 ---
-description:
+description: Next.js 15 stable features, async APIs, and caching changes
 globs:
 alwaysApply: false
 ---

@@ -1,0 +1,58 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+---
+description: Enforce consistent naming across all frontend files and root-level config, excluding backend and Python code.
+globs:
+  - "frontend/**/*.{ts,tsx,js,jsx,json,yaml,toml,md,mjs}"
+  - "frontend/.env*"
+  - "frontend/.*rc"
+  - "*.json"
+  - "*.yaml"
+  - "*.yml"
+  - "*.toml"
+  - "*.ts"
+  - "*.js"
+  - "*.mjs"
+  - ".editorconfig"
+  - ".markdownlint.json"
+
+alwaysApply: false
+---
+
+## Code Element Naming
+
+- **PascalCase**: Components, classes, types, interfaces, and enums
+- **camelCase**: Variables, functions, methods, hooks, and object keys
+- **snake_case**: functions, and files
+- **kebab-case**: All file and directory names
+- **UPPERCASE_SNAKE_CASE**: Constants and environment variables
+
+## Function Naming Rules
+
+- Use **PascalCase** for any function that returns JSX (e.g., in `.jsx` or `.tsx` files) and is used as a component (e.g., `UserAvatar()`, `ProfileHeader()`)
+- Use **camelCase** for all other functions, including callbacks, event handlers, and utilities inside components (e.g., `handleClick`, `fetchData`)
+- All functions must start with a **verb** to express intent
+- Functions must be **self-documenting**
+- Custom hooks must start with the `use` prefix (e.g., `useUser`, `useFeatureToggle`)
+
+## File and Directory Naming
+
+- Components: `user-profile-card.tsx`, `navigation-menu.tsx`
+- Services: `payment-service.ts`, `auth-service.ts`
+- Utilities: `date-helpers.ts`, `form-validators.ts`
+- Directories: Always kebab-case
+
+## Server Actions and Routes
+
+- Server Actions: `user-profile.action.ts`, `payment.server.ts`
+- API Routes: `app/api/payment-status/route.ts`
+- API Handlers: camelCase like `getUsers()`, `postLogin()`
+
+## Magic Number Policy
+
+- Extract all magic numbers to named constants
+- Group constants into separate files when needed
+- Use descriptive names: `MAX_LOGIN_ATTEMPTS`, not `3`

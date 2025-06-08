@@ -96,7 +96,9 @@ export function useChat(): ChatContextType {
         };
       });
 
-      if (!shouldProceed) return;
+      if (!shouldProceed) {
+        return;
+      }
 
       // Add optimistic assistant response
       addOptimisticMessage({

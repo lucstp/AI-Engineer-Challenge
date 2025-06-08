@@ -2,7 +2,8 @@
 'use client';
 
 import { createContext, Suspense, useContext, type ReactNode } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
+// Error boundary fallback for chat errors
+import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 
 import { useChat } from '../hooks/use-chat';
 import type { ChatContextType } from '../types/chat';
@@ -18,9 +19,6 @@ function ChatLoadingFallback() {
     </div>
   );
 }
-
-// Error boundary fallback for chat errors
-import type { FallbackProps } from 'react-error-boundary';
 
 function ChatErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (

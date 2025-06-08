@@ -31,6 +31,7 @@ function createMessage(content: string, role: Message['role']): Message {
 const initialChatState: ChatState = {
   messages: [],
   isLoading: false,
+  isSending: false,
   error: null,
   apiKey: '',
 };
@@ -70,17 +71,27 @@ export function useChat(): ChatContextType {
         return;
       }
 
+      // Prevent concurrent sends
+      if (chatState.isSending) {
+        setChatState((prev) => ({
+          ...prev,
+          error: 'Please wait for the current message to complete',
+        }));
+        return;
+      }
+
       const userMessage = createMessage(content, 'user');
 
       // Capture current state to avoid stale closures
       const currentApiKey = chatState.apiKey;
       const currentMessages = chatState.messages;
 
-      // Add user message to base state
+      // Add user message to base state and set isSending flag
       setChatState((prev) => ({
         ...prev,
         messages: [...prev.messages, userMessage],
         isLoading: true,
+        isSending: true,
         error: null,
       }));
 
@@ -122,6 +133,7 @@ export function useChat(): ChatContextType {
             ...prev,
             messages: [...prev.messages, assistantMessage],
             isLoading: false,
+            isSending: false,
             error: null,
           }));
         } catch (error) {
@@ -130,12 +142,13 @@ export function useChat(): ChatContextType {
           setChatState((prev) => ({
             ...prev,
             isLoading: false,
+            isSending: false,
             error: errorMessage,
           }));
         }
       });
     },
-    [chatState.apiKey, chatState.messages, addOptimisticMessage],
+    [chatState.apiKey, chatState.messages, chatState.isSending, addOptimisticMessage],
   );
 
   // Clear all messages
@@ -149,6 +162,15 @@ export function useChat(): ChatContextType {
 
   // Regenerate last assistant response
   const regenerateResponse = useCallback(async () => {
+    // Prevent regeneration if already sending
+    if (chatState.isSending) {
+      setChatState((prev) => ({
+        ...prev,
+        error: 'Cannot regenerate while sending a message',
+      }));
+      return;
+    }
+
     const messages = chatState.messages;
     const lastUserMessageIndex = messages.findLastIndex((msg) => msg.role === 'user');
 
@@ -170,7 +192,7 @@ export function useChat(): ChatContextType {
 
     // Resend the last user message
     await sendMessage(lastUserMessage.content);
-  }, [chatState.messages, sendMessage]);
+  }, [chatState.messages, chatState.isSending, sendMessage]);
 
   // Manual optimistic message addition (for advanced use cases)
   const addOptimisticMessageManual = useCallback(
@@ -187,6 +209,7 @@ export function useChat(): ChatContextType {
     // State (using optimistic messages for UI)
     messages: optimisticMessages,
     isLoading: chatState.isLoading || isPending,
+    isSending: chatState.isSending,
     error: chatState.error,
     apiKey: chatState.apiKey,
 

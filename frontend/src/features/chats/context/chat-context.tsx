@@ -2,8 +2,10 @@
 'use client';
 
 import { createContext, Suspense, useContext, type ReactNode } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 
-import { useChat, type ChatContextType } from '../index';
+import { useChat } from '../hooks/use-chat';
+import type { ChatContextType } from '../types/chat';
 
 // Create context with proper TypeScript typing
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -18,12 +20,9 @@ function ChatLoadingFallback() {
 }
 
 // Error boundary fallback for chat errors
-interface ChatErrorFallbackProps {
-  error: Error;
-  resetError: () => void;
-}
+import type { FallbackProps } from 'react-error-boundary';
 
-function ChatErrorFallback({ error, resetError }: ChatErrorFallbackProps) {
+function ChatErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
     <div className="border-destructive/20 bg-destructive/5 flex flex-col items-center justify-center space-y-4 rounded-lg border p-6">
       <div className="text-destructive font-medium">Chat Error</div>
@@ -32,7 +31,7 @@ function ChatErrorFallback({ error, resetError }: ChatErrorFallbackProps) {
       </div>
       <button
         type="button"
-        onClick={resetError}
+        onClick={resetErrorBoundary}
         className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm transition-colors"
       >
         Try Again
@@ -53,7 +52,9 @@ export function ChatProvider({ children, fallback }: ChatProviderProps) {
 
   return (
     <ChatContext.Provider value={chatState}>
-      <Suspense fallback={fallback || <ChatLoadingFallback />}>{children}</Suspense>
+      <ErrorBoundary FallbackComponent={ChatErrorFallback}>
+        <Suspense fallback={fallback || <ChatLoadingFallback />}>{children}</Suspense>
+      </ErrorBoundary>
     </ChatContext.Provider>
   );
 }

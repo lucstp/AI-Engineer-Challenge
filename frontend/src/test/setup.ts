@@ -79,8 +79,24 @@ Object.defineProperty(window, 'scrollTo', {
   value: vi.fn(),
 })
 
-// Mock fetch for API calls
-global.fetch = vi.fn()
+// Mock fetch for API calls with default implementation
+global.fetch = vi.fn().mockResolvedValue({
+  ok: true,
+  status: 200,
+  json: async () => ({}),
+  text: async () => '',
+  headers: new Headers(),
+  redirected: false,
+  statusText: 'OK',
+  type: 'basic' as ResponseType,
+  url: '',
+  clone: vi.fn(),
+  body: null,
+  bodyUsed: false,
+  arrayBuffer: async () => new ArrayBuffer(0),
+  blob: async () => new Blob(),
+  formData: async () => new FormData(),
+} as unknown as Response)
 
 // Suppress console errors in tests unless explicitly needed
 const originalError = console.error
@@ -99,13 +115,21 @@ beforeAll(() => {
 // Custom matchers are provided by @testing-library/jest-dom
 
 // Global test utilities
-export const createMockUser = () => ({
-  id: '1',
+export const createMockUser = (overrides: Partial<{
+  id: string
+  name: string
+  email: string
+  role: 'user' | 'admin' | 'moderator'
+  createdAt: Date
+  updatedAt: Date
+}> = {}) => ({
+  id: Math.random().toString(36).substring(2, 11),
   name: 'Test User',
-  email: 'test@example.com',
+  email: `test-${Math.random().toString(36).substring(2, 7)}@example.com`,
   role: 'user' as const,
   createdAt: new Date(),
   updatedAt: new Date(),
+  ...overrides,
 })
 
 export const createMockApiResponse = <T>(data: T) => ({

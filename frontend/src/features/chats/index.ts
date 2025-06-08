@@ -11,12 +11,7 @@ export type {
   MessageRole,
   MessageContent,
   OptimisticMessage,
-} from './types/chat'
+} from './types/chat';
 
-export { useChat } from './hooks/use-chat'
-export {
-  ChatProvider,
-  useChatContext,
-  withChatContext,
-  ChatContext
-} from './context/chat-context'
+export { useChat } from './hooks/use-chat';
+export { ChatProvider, useChatContext, withChatContext, ChatContext } from './context/chat-context';

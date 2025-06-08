@@ -1,4 +1,3 @@
-import React from 'react';
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -68,16 +67,21 @@ describe('ChatProvider', () => {
   });
 
   it('renders fallback during suspense', async () => {
-    // Simulate Suspense fallback
+    // Create a component that suspends by throwing a promise
+    const SuspendingConsumer = () => {
+      const promise = new Promise(() => {}); // Never resolves, keeps suspending
+      throw promise;
+    };
+
     const SuspenseFallback = <div data-testid="loading">Loading chat...</div>;
+
     render(
       <ChatProvider fallback={SuspenseFallback}>
-        <React.Suspense fallback={null}>
-          <Consumer />
-        </React.Suspense>
+        <SuspendingConsumer />
       </ChatProvider>,
     );
-    // The fallback should be present (simulate loading state if needed)
+
+    // The ChatProvider's fallback should be rendered
     expect(screen.getByTestId('loading')).toBeInTheDocument();
   });
 

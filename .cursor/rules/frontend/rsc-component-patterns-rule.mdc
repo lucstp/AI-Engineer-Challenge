@@ -416,6 +416,7 @@ function useApi<T>(url: string) {
 ## Testing Patterns
 
 ### Component Testing
+
 ```ts
 // ✅ Testing Server Components
 import { render, screen } from '@testing-library/react'
@@ -437,6 +438,10 @@ describe('ProductList', () => {
     expect(screen.getByText('Product 2')).toBeInTheDocument()
   })
 })
+ts
+Copy
+Edit
+
 
 // ✅ Testing Client Components
 import { render, screen, fireEvent } from '@testing-library/react'

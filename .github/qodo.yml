@@ -1,0 +1,30 @@
+name: QODO AI Test Generation
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'frontend/src/**/*.{js,jsx,ts,tsx}'
+      - '!frontend/src/**/*.{test,spec}.{js,jsx,ts,tsx}'
+  workflow_dispatch:
+
+jobs:
+  generate-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Generate tests with QODO
+        run: |
+          # QODO will auto-detect Vitest and generate co-located tests
+          npx qodo-cli test generate --framework=vitest --location=colocated

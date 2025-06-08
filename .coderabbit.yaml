@@ -1,0 +1,76 @@
+code_generation:
+  language: "en"
+  exclude_patterns:
+    - "api/**/*"
+  path_instructions:
+    "frontend/src/app/**/*.{ts,tsx,js,jsx}": |
+      Single-line comment for route/page purpose.
+      Document key data fetching or state management.
+
+    "frontend/src/components/**/*.{ts,tsx,js,jsx}": |
+      Single-line comment for component purpose.
+      Document key props and accessibility features.
+
+    "frontend/src/lib/**/*.{ts,js}": |
+      Single-line comment for function purpose.
+      Document key parameters and return value.
+
+    "frontend/src/hooks/**/*.{ts,js}": |
+      Single-line comment for hook purpose.
+      Document key dependencies and side effects.
+
+  unit_test_generation:
+    "frontend/src/**/*.{test,spec}.{ts,tsx,js,jsx}": |
+      Test core functionality and edge cases.
+      Mock external dependencies appropriately.
+
+# OPTIMIZED for solo development
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  auto_title_placeholder: "@coderabbitai"
+  auto_title_instructions: "Use conventional commit format: type(scope): description"
+  commit_status: false
+  changed_files_summary: true
+  sequence_diagrams: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  auto_apply_labels: true
+  suggested_reviewers: false
+  auto_assign_reviewers: false
+
+tools:
+  github:
+    checks: false
+    timeout_ms: 180000
+
+  languagetool: true
+  ast_grep: true
+
+  linters:
+    biome: false  # You run this in CI already
+    typescript: false  # You run this in CI already
+    markdownlint: true
+    gitleaks: false  # You have separate workflow
+
+  caching:
+    enabled: true
+    ttl: 86400
+    paths:
+      - "frontend/src/**/*"
+      - "frontend/public/**/*"
+
+  changed_files_summary: true
+  sequence_diagrams: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  auto_apply_labels: true
+  poem: false
+  abort_on_close: true
+  disable_cache: false

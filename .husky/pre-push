@@ -18,4 +18,5 @@ cd frontend && pnpm ci-basic || {
   exit 1
 }
 
+echo "ℹ️  Note: Security scans (gitleaks) will run in CI."
 echo "✅ All pre-push checks passed! Ready to push."

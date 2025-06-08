@@ -70,7 +70,11 @@ export function useChat(): ChatContextType {
 
     const userMessage = createMessage(content, 'user')
 
-    // Add user message immediately
+    // Capture current state to avoid stale closures
+    const currentApiKey = chatState.apiKey
+    const currentMessages = chatState.messages
+
+    // Add user message to base state
     setChatState(prev => ({
       ...prev,
       messages: [...prev.messages, userMessage],
@@ -91,11 +95,12 @@ export function useChat(): ChatContextType {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${chatState.apiKey}`,
+            'Authorization': `Bearer ${currentApiKey}`,
           },
           body: JSON.stringify({
             message: content,
-            messages: chatState.messages
+            // Include the just-added user message for full context
+            messages: [...currentMessages, userMessage],
           }),
         })
 

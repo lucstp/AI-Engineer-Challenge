@@ -8,9 +8,21 @@
 		"dev": "pnpm --filter frontend dev",
 		"start": "pnpm --filter frontend start",
 		"build": "pnpm --filter frontend build",
-    "deploy": "vercel --prod"
+		"deploy": "vercel --prod",
+		"prepare": "husky"
 	},
 	"devDependencies": {
+		"husky": "^9.1.7",
+    "lint-staged": "^16.1.0",
 		"markdownlint-cli": "^0.45.0"
+	},
+  "lint-staged": {
+		"frontend/**/*.{js,jsx,ts,tsx,json}": [
+			"cd frontend && pnpm biome check --write",
+			"cd frontend && pnpm format"
+		],
+		"**/*.md": [
+			"markdownlint --fix"
+		]
 	}
 }

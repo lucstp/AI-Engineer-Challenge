@@ -1,0 +1,21 @@
+#!/bin/sh
+
+current_branch=$(git symbolic-ref --short HEAD)
+push_branch=$(git rev-parse --abbrev-ref HEAD@{push} 2>/dev/null || echo "")
+
+# Protect main and develop
+if [ "$push_branch" = "main" ] || [ "$push_branch" = "develop" ]; then
+  echo "❌ Direct pushes to $push_branch are not allowed!"
+  echo "🔁 Please create a pull request instead."
+  exit 1
+fi
+
+echo "🛡️  Running pre-push CI checks..."
+
+# Run CI checks from frontend directory
+cd frontend && pnpm ci-basic || {
+  echo "❌ CI checks failed. Run 'cd frontend && pnpm ci-basic' to debug."
+  exit 1
+}
+
+echo "✅ All pre-push checks passed! Ready to push."

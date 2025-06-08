@@ -1,11 +1,11 @@
 packages:
-  - "frontend"
-  - "api"
-
+  - frontend
+  - api
 onlyBuiltDependencies:
-  - "@biomejs/biome"
-  - "@tailwindcss/postcss"
-  - "@tailwindcss/oxide"
-  - "tailwindcss"
-  - "typescript"
-  - "sharp"
+  - '@biomejs/biome'
+  - '@tailwindcss/oxide'
+  - '@tailwindcss/postcss'
+  - esbuild
+  - sharp
+  - tailwindcss
+  - typescript

@@ -415,16 +415,17 @@ function useApi<T>(url: string) {
 
 ## Testing Patterns
 
-### Component Testing
+### Component Testing with Vitest
 
 ```ts
 // ✅ Testing Server Components
 import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ProductList } from './product-list'
 
 // Mock the data fetching
-jest.mock('./api', () => ({
-  getProducts: jest.fn(() => Promise.resolve([
+vi.mock('./api', () => ({
+  getProducts: vi.fn(() => Promise.resolve([
     { id: '1', name: 'Product 1', price: 100 },
     { id: '2', name: 'Product 2', price: 200 },
   ]))
@@ -437,11 +438,17 @@ describe('ProductList', () => {
     expect(screen.getByText('Product 1')).toBeInTheDocument()
     expect(screen.getByText('Product 2')).toBeInTheDocument()
   })
-})
-ts
-Copy
-Edit
 
+  it('handles loading state', async () => {
+    const { getProducts } = await import('./api')
+    vi.mocked(getProducts).mockImplementation(() =>
+      new Promise(resolve => setTimeout(() => resolve([]), 100))
+    )
+
+    render(await ProductList())
+    expect(screen.getByText('Loading...')).toBeInTheDocument()
+  })
+})
 
 // ✅ Testing Client Components
 import { render, screen, fireEvent } from '@testing-library/react'
@@ -449,7 +456,7 @@ import { InteractiveButton } from './interactive-button'
 
 describe('InteractiveButton', () => {
   it('handles click events correctly', () => {
-    const handleClick = jest.fn()
+    const handleClick = vi.fn()
 
     render(
       <InteractiveButton onClick={handleClick}>
@@ -459,5 +466,75 @@ describe('InteractiveButton', () => {
 
     fireEvent.click(screen.getByText('Click me'))
     expect(handleClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('applies correct styling based on variant', () => {
+    render(
+      <InteractiveButton variant="primary">
+        Primary Button
+      </InteractiveButton>
+    )
+
+    const button = screen.getByRole('button')
+    expect(button).toHaveClass('bg-primary')
+  })
+})
+
+// ✅ Testing Custom Hooks
+import { renderHook, act } from '@testing-library/react'
+import { useLocalStorage } from './use-local-storage'
+
+describe('useLocalStorage', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('returns initial value when localStorage is empty', () => {
+    const { result } = renderHook(() => useLocalStorage('test-key', 'initial'))
+
+    expect(result.current[0]).toBe('initial')
+  })
+
+  it('updates localStorage when value changes', () => {
+    const { result } = renderHook(() => useLocalStorage('test-key', 'initial'))
+
+    act(() => {
+      result.current[1](mdc:'updated')
+    })
+
+    expect(result.current[0]).toBe('updated')
+    expect(localStorage.getItem('test-key')).toBe('"updated"')
+  })
+})
+
+// ✅ Testing Server Actions
+import { createUserAction } from './user.action'
+import { createMockApiResponse, createMockApiError } from '@/test/setup'
+
+describe('createUserAction', () => {
+  it('creates user successfully with valid data', async () => {
+    const formData = new FormData()
+    formData.append('name', 'John Doe')
+    formData.append('email', 'john@example.com')
+
+    const result = await createUserAction({ message: '' }, formData)
+
+    expect(result.success).toBe(true)
+    expect(result.data).toMatchObject({
+      name: 'John Doe',
+      email: 'john@example.com'
+    })
+  })
+
+  it('returns validation errors for invalid data', async () => {
+    const formData = new FormData()
+    formData.append('name', '')
+    formData.append('email', 'invalid-email')
+
+    const result = await createUserAction({ message: '' }, formData)
+
+    expect(result.success).toBe(false)
+    expect(result.fieldErrors).toHaveProperty('name')
+    expect(result.fieldErrors).toHaveProperty('email')
   })
 })

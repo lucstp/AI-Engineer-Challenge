@@ -11,12 +11,22 @@ import type {
   OptimisticMessage,
 } from '../types/chat';
 
-// Generate unique message ID
+/**
+ * Generates a unique identifier for a chat message.
+ *
+ * @returns A string representing a unique message ID.
+ */
 function generateMessageId(): string {
   return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-// Create message with timestamp
+/**
+ * Creates a new chat message object with a unique ID and timestamp.
+ *
+ * @param content - The message text.
+ * @param role - The role of the message sender, either 'user' or 'assistant'.
+ * @returns A {@link Message} object containing the provided content, sender role, unique ID, and timestamp.
+ */
 function createMessage(content: string, role: Message['role']): Message {
   return {
     id: generateMessageId(),
@@ -36,6 +46,13 @@ const initialChatState: ChatState = {
   apiKey: '',
 };
 
+/**
+ * Provides chat state management and actions with optimistic UI updates for React 19 applications.
+ *
+ * Integrates message sending, assistant response handling, message regeneration, and clearing, while supporting immediate UI feedback using optimistic updates. Manages API key, loading and sending states, and error handling. Exposes current chat messages, state indicators, and all chat-related actions.
+ *
+ * @returns An object containing the current chat state and functions to interact with the chat, including sending messages, regenerating responses, clearing messages, setting the API key, and manually adding optimistic messages.
+ */
 export function useChat(): ChatContextType {
   // Core state management
   const [chatState, setChatState] = useState<ChatState>(initialChatState);

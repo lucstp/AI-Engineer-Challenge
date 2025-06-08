@@ -11,7 +11,11 @@ import type { ChatContextType } from '../types/chat';
 // Create context with proper TypeScript typing
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-// Loading fallback component for Suspense
+/**
+ * Displays a loading indicator for the chat interface during suspense.
+ *
+ * Used as a fallback UI while chat data is being loaded.
+ */
 function ChatLoadingFallback() {
   return (
     <div className="flex items-center justify-center p-4">
@@ -20,6 +24,14 @@ function ChatLoadingFallback() {
   );
 }
 
+/**
+ * Renders a fallback UI for chat-related errors within an error boundary.
+ *
+ * Displays the error message and provides a button to retry by resetting the error boundary.
+ *
+ * @param error - The error object caught by the error boundary.
+ * @param resetErrorBoundary - Function to reset the error boundary and retry rendering.
+ */
 function ChatErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
     <div className="border-destructive/20 bg-destructive/5 flex flex-col items-center justify-center space-y-4 rounded-lg border p-6">
@@ -44,7 +56,14 @@ interface ChatProviderProps {
   fallback?: ReactNode;
 }
 
-// React 19 optimized provider with Suspense and error handling
+/**
+ * Provides chat state to descendant components with built-in loading and error handling.
+ *
+ * Wraps children in a context provider, error boundary, and suspense boundary to manage chat state, display loading indicators, and handle errors gracefully.
+ *
+ * @param children - React nodes that will have access to the chat context.
+ * @param fallback - Optional React node to display while chat state is loading.
+ */
 export function ChatProvider({ children, fallback }: ChatProviderProps) {
   const chatState = useChat();
 
@@ -57,7 +76,13 @@ export function ChatProvider({ children, fallback }: ChatProviderProps) {
   );
 }
 
-// Custom hook to consume chat context with proper error handling
+/**
+ * Retrieves the current chat context value.
+ *
+ * @returns The chat context provided by {@link ChatProvider}.
+ *
+ * @throws {Error} If called outside of a {@link ChatProvider}.
+ */
 export function useChatContext(): ChatContextType {
   const context = useContext(ChatContext);
 
@@ -71,7 +96,14 @@ export function useChatContext(): ChatContextType {
   return context;
 }
 
-// Higher-order component for chat context requirement
+/**
+ * Higher-order component that injects the chat context as a `chatContext` prop into the wrapped component.
+ *
+ * @param Component - The React component to wrap.
+ * @returns A new component that provides the chat context to {@link Component} via the `chatContext` prop.
+ *
+ * @remark Throws an error if used outside a {@link ChatProvider}.
+ */
 export function withChatContext<P extends object>(Component: React.ComponentType<P>) {
   const WrappedComponent = (props: P) => {
     const chatContext = useChatContext();

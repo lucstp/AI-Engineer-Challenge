@@ -31,12 +31,23 @@ describe('useChat', () => {
     expect(result.current.apiKey).toBe('abc');
   });
 
-  it('prevents sending empty message or missing API key', async () => {
+  it('prevents sending empty message', async () => {
     const { result } = renderHook(() => useChat());
+    act(() => {
+      result.current.setApiKey('test-key');
+    });
     await act(async () => {
       await result.current.sendMessage('');
     });
-    expect(result.current.error).toMatch(/Message cannot be empty|API key is required/);
+    expect(result.current.error).toBe('Message cannot be empty');
+  });
+
+  it('prevents sending message without API key', async () => {
+    const { result } = renderHook(() => useChat());
+    await act(async () => {
+      await result.current.sendMessage('Hello');
+    });
+    expect(result.current.error).toBe('API key is required');
   });
 
   it('adds optimistic message and sends user message (happy path)', async () => {
@@ -63,14 +74,13 @@ describe('useChat', () => {
       result.current.setApiKey('test-key');
     });
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      json: async () => ({ success: false, error: 'Server error' }),
+      ok: true,
+      json: async () => ({ message: '', success: false, error: 'Server error' }),
     } as Response);
     await act(async () => {
       await result.current.sendMessage('fail');
     });
-    expect(result.current.error).toMatch(/HTTP error|Server error/);
+    expect(result.current.error).toBe('Server error');
   });
 
   it('clearMessages resets messages', () => {

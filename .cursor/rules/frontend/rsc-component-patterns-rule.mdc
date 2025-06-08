@@ -1,7 +1,6 @@
 ---
 description: React Server Components patterns, server-side rendering, and data fetching
 globs:
-  - "**/*.{ts,tsx,js,jsx}"
 alwaysApply: false
 ---
 
@@ -326,15 +325,22 @@ components/
 ```
 
 ### Barrel Exports Pattern
-```ts
-// components/features/auth/index.ts
-export { LoginForm } from './login-form'
-export { SignupForm } from './signup-form'
-export { AuthProvider } from './auth-provider'
+- **See: `frontend-standard-rule.mdc`** for comprehensive barrel export guidelines including internal vs external usage patterns
+- **Quick Rule**: Use direct imports within features, barrel imports between features
 
-// Usage
-import { LoginForm, SignupForm } from '@/components/features/auth'
-```
+```ts
+// ✅ Internal import (within same feature)
+import { useChat } from '../hooks/use-chat'
+import type { ChatState } from '../types/chat'
+
+// ✅ External import (between features)
+import { ChatProvider, useChatContext } from '@/features/chat'
+
+// ✅ Barrel export file structure
+// features/chat/index.ts
+export { ChatProvider, useChatContext } from './context/chat-context'
+export { useChat } from './hooks/use-chat'
+export type { Message, ChatState, ChatContextType } from './types/chat'
 
 ## Custom Hooks Patterns
 

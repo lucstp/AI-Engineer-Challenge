@@ -71,29 +71,32 @@ export function useChat(): ChatContextType {
         return;
       }
 
-      // Prevent concurrent sends
-      if (chatState.isSending) {
-        setChatState((prev) => ({
-          ...prev,
-          error: 'Please wait for the current message to complete',
-        }));
-        return;
-      }
-
+      // Atomic check and set using functional state update
+      let shouldProceed = false;
+      let currentApiKey = '';
+      let currentMessages: Message[] = [];
       const userMessage = createMessage(content, 'user');
 
-      // Capture current state to avoid stale closures
-      const currentApiKey = chatState.apiKey;
-      const currentMessages = chatState.messages;
+      setChatState((prev) => {
+        if (prev.isSending) {
+          return { ...prev, error: 'Please wait for the current message to complete' };
+        }
 
-      // Add user message to base state and set isSending flag
-      setChatState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, userMessage],
-        isLoading: true,
-        isSending: true,
-        error: null,
-      }));
+        // Capture state atomically and proceed
+        shouldProceed = true;
+        currentApiKey = prev.apiKey;
+        currentMessages = prev.messages;
+
+        return {
+          ...prev,
+          messages: [...prev.messages, userMessage],
+          isLoading: true,
+          isSending: true,
+          error: null,
+        };
+      });
+
+      if (!shouldProceed) return;
 
       // Add optimistic assistant response
       addOptimisticMessage({
@@ -148,7 +151,7 @@ export function useChat(): ChatContextType {
         }
       });
     },
-    [chatState.apiKey, chatState.messages, chatState.isSending, addOptimisticMessage],
+    [chatState.apiKey, addOptimisticMessage],
   );
 
   // Clear all messages

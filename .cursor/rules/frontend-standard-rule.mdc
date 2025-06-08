@@ -1,9 +1,6 @@
 ---
 description: >
-  Core frontend engineering standards and structured reasoning process for Next.js 15 and React 19.
-  This rule orchestrates all frontend development patterns and references specialized domain rules.
 globs:
-  - "frontend/**/*.{ts,tsx,js,jsx}"
 alwaysApply: true
 ---
 
@@ -193,6 +190,12 @@ When implementing any frontend feature, ensure:
 - Co-locate related components, hooks, and tests
 - Implement barrel exports for clean public APIs
 - Follow the established project structure patterns
+
+### Barrel Exports Pattern (Updated) ← Add this new section
+- **External API**: Use barrel exports for clean public APIs between features
+- **Internal API**: Use direct imports within the same feature to avoid circular dependencies
+- **Rule**: Never import from barrel file within the same directory tree that exports to that barrel
+- **Example**: Within `/features/chat/`, use direct imports. From outside, use barrel imports.
 
 ### Package Management
 - Use `pnpm` as the standard package manager

@@ -1,8 +1,8 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import tsconfigPaths from 'vite-tsconfig-paths'
-import path from 'node:path'
+import path from 'node:path';
+import react from '@vitejs/plugin-react';
+import tsconfigPaths from 'vite-tsconfig-paths';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [
@@ -27,13 +27,7 @@ export default defineConfig({
       'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
       'src/**/__tests__/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
     ],
-    exclude: [
-      'node_modules',
-      'dist',
-      '.next',
-      'coverage',
-      '**/*.d.ts',
-    ],
+    exclude: ['node_modules', 'dist', '.next', 'coverage', '**/*.d.ts'],
 
     // Performance optimization
     pool: 'threads',
@@ -69,8 +63,6 @@ export default defineConfig({
       },
     },
 
-
-
     // Reporter configuration
     reporters: ['verbose', 'json', 'html'],
     outputFile: {
@@ -100,4 +92,4 @@ export default defineConfig({
   esbuild: {
     jsx: 'automatic',
   },
-})
+});

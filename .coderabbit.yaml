@@ -1,0 +1,74 @@
+code_generation:
+  docstrings:
+    language: "en"
+    path_instructions:
+      - path: "frontend/src/app/**/*.{ts,tsx,js,jsx}"
+        instructions: |
+          Single-line comment for route/page purpose.
+          Document key data fetching or state management.
+      - path: "frontend/src/components/**/*.{ts,tsx,js,jsx}"
+        instructions: |
+          Single-line comment for component purpose.
+          Document key props and accessibility features.
+      - path: "frontend/src/lib/**/*.{ts,js}"
+        instructions: |
+          Single-line comment for function purpose.
+          Document key parameters and return value.
+      - path: "frontend/src/hooks/**/*.{ts,js}"
+        instructions: |
+          Single-line comment for hook purpose.
+          Document key dependencies and side effects.
+
+  unit_tests:
+    path_instructions:
+      - path: "frontend/src/**/*.{test,spec}.{ts,tsx,js,jsx}"
+        instructions: |
+          Test core functionality and edge cases.
+          Mock external dependencies appropriately.
+
+# OPTIMIZED for solo development
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  auto_title_placeholder: "@coderabbitai"
+  auto_title_instructions: "Use conventional commit format: type(scope): description"
+  commit_status: false
+  changed_files_summary: true
+  sequence_diagrams: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  auto_apply_labels: true
+  suggested_reviewers: false
+  auto_assign_reviewers: false
+  poem: false
+  abort_on_close: true
+
+# Linting configuration
+linters:
+  biome: false # You run this in CI already
+  typescript: false # You run this in CI already
+  markdownlint: true
+  gitleaks: false # You have separate workflow
+
+# Caching configuration
+caching:
+  enabled: true
+  ttl: 86400
+  paths:
+    - "frontend/src/**/*"
+    - "frontend/public/**/*"
+
+tools:
+  github:
+    enabled: false
+    timeout_ms: 180000
+
+  languagetool:
+    enabled: true
+
+  ast_grep:
+    enabled: true

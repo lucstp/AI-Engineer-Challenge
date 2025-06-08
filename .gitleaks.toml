@@ -1,0 +1,58 @@
+# Gitleaks config for AI Engineer Challenge (Next.js + FastAPI)
+
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI API Key"
+regex = '''sk-[a-zA-Z0-9]{48}'''
+tags = ["openai", "key"]
+
+[[rules]]
+id = "doppler-token"
+description = "Doppler Service Token"
+regex = '''dp\.pt\.[a-zA-Z0-9_-]{43,45}'''
+tags = ["doppler", "token"]
+
+[[rules]]
+id = "vercel-token"
+description = "Vercel Token"
+regex = '''(?i)vercel[_-]?token['"\s:=]+[0-9a-zA-Z-_]{20,}'''
+tags = ["vercel", "token"]
+
+[[rules]]
+id = "github-token"
+description = "GitHub Token"
+regex = '''ghp_[0-9a-zA-Z]{36,}'''
+tags = ["github", "token"]
+
+[[rules]]
+id = "coderabbit-api-key"
+description = "CodeRabbit API Key"
+regex = '''(?i)coderabbit[_-]?(?:api[_-]?)?key['"\s:=]+[0-9a-zA-Z-_]{32,}'''
+tags = ["coderabbit", "key"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)api[_-]?key['"\s:=]+[0-9a-zA-Z]{16,45}'''
+tags = ["key", "api"]
+
+[[rules]]
+id = "next-public-env"
+description = "NEXT_PUBLIC_ keys in server-side code"
+regex = '''NEXT_PUBLIC_[A-Z0-9_]+=.+'''
+tags = ["nextjs", "env"]
+paths = [
+  "api/**/*",
+  "frontend/src/app/api/**/*",
+  "frontend/src/lib/server/**/*",
+  "frontend/src/middleware.ts"
+]
+
+# Allowlist for example/test files
+[allowlist]
+description = "Allow example env files and documentation"
+paths = [
+  "frontend/.env.example",
+  "**/*.md",
+  "**/README*"
+]

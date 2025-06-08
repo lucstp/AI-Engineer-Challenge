@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 
 import React from 'react';
 import { cleanup } from '@testing-library/react';
-import { afterEach, beforeAll, vi, beforeEach } from 'vitest';
+import { afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
 // Cleanup after each test case (e.g. clearing jsdom)
 afterEach(() => {
@@ -135,5 +135,5 @@ export const waitForNextTick = () => new Promise((resolve) => setTimeout(resolve
 export const flushPromises = () => new Promise(setImmediate);
 
 beforeEach(() => {
-  global.fetch = vi.fn()
-})
+  global.fetch = vi.fn();
+});

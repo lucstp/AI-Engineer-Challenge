@@ -66,7 +66,7 @@ jobs:
           fi
 
           # Check if source files exist
-          if ! find src -name "*.{ts,tsx}" -not -path "*/test/*" -not -name "*.test.*" -not -name "*.spec.*" | grep -q .; then
+          if ! find src \( -name "*.ts" -o -name "*.tsx" \) -not -path "*/test/*" -not -name "*.test.*" -not -name "*.spec.*" | grep -q .; then
             echo "⚠️  Warning: No source files found for test generation"
             exit 0
           fi
@@ -93,7 +93,7 @@ jobs:
             # Enhanced error diagnostics
             echo "🔍 Diagnostic information:"
             echo "📋 Available source files:"
-            find src -name "*.{ts,tsx}" -not -path "*/test/*" -not -name "*.test.*" -not -name "*.spec.*" | head -10
+            find src \( -name "*.ts" -o -name "*.tsx" \) -not -path "*/test/*" -not -name "*.test.*" -not -name "*.spec.*" | head -10
             echo "📁 Current directory contents:"
             ls -la
             echo "🔧 Node.js version: $(node --version)"
@@ -112,12 +112,12 @@ jobs:
           fi
 
           # Verify test generation results
-          if find src -name "*.test.ts" -o -name "*.spec.ts" | grep -q .; then
+          if find src \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" \) | grep -q .; then
             echo "📝 Generated test files:"
-            find src -name "*.test.ts" -o -name "*.spec.ts" -newer /tmp/qodo_start 2>/dev/null || echo "No new test files found"
+            find src \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" \) -newer /tmp/qodo_start 2>/dev/null || echo "No new test files found"
 
             # Count generated tests
-            test_count=$(find src -name "*.test.ts" -o -name "*.spec.ts" -newer /tmp/qodo_start 2>/dev/null | wc -l)
+            test_count=$(find src \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" \) -newer /tmp/qodo_start 2>/dev/null | wc -l)
             echo "📊 Total tests generated: $test_count"
           else
             echo "⚠️  No test files were generated"
@@ -130,9 +130,9 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          if git diff --quiet; then
-            echo "📝 No test files to commit"
-          else
+          # Check for any changes including untracked files
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "📝 Changes detected, committing generated tests..."
             git add .
             git commit -m "test: add QODO-generated tests
 
@@ -142,4 +142,6 @@ jobs:
             - Generated on: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
             echo "✅ Generated tests committed successfully"
+          else
+            echo "📝 No test files to commit"
           fi

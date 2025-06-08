@@ -4,8 +4,8 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths:
-      - 'frontend/src/**/*.{js,jsx,ts,tsx}'
-      - '!frontend/src/**/*.{test,spec}.{js,jsx,ts,tsx}'
+      - "frontend/src/**/*.{js,jsx,ts,tsx}"
+      - "!frontend/src/**/*.{test,spec}.{js,jsx,ts,tsx}"
   workflow_dispatch:
 
 jobs:
@@ -17,14 +17,129 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
 
-      - name: Generate tests with QODO
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Create timestamp marker
+        run: touch /tmp/qodo_start
+
+      - name: Validate QODO credentials
         run: |
-          # QODO will auto-detect Vitest and generate co-located tests
-          npx qodo-cli test generate --framework=vitest --location=colocated
+          if [[ -z "${{ secrets.QODO_API_KEY }}" ]]; then
+            echo "❌ Error: QODO_API_KEY secret is not set"
+            exit 1
+          fi
+
+          if [[ -z "${{ secrets.QODO_PROJECT_ID }}" ]]; then
+            echo "❌ Error: QODO_PROJECT_ID secret is not set"
+            exit 1
+          fi
+
+          echo "✅ QODO credentials validated"
+
+      - name: Generate tests with QODO
+        working-directory: ./frontend
+        env:
+          QODO_API_KEY: ${{ secrets.QODO_API_KEY }}
+          QODO_PROJECT_ID: ${{ secrets.QODO_PROJECT_ID }}
+          QODO_BASE_URL: ${{ secrets.QODO_BASE_URL || 'https://api.qodo.ai' }}
+          NODE_ENV: test
+        run: |
+          set -euo pipefail  # Exit on any error, undefined variables, and pipe failures
+
+          echo "🤖 Starting QODO AI test generation..."
+          echo "📊 Project ID: $QODO_PROJECT_ID"
+          echo "🌐 Base URL: $QODO_BASE_URL"
+
+          # Validate environment
+          if ! command -v npx &> /dev/null; then
+            echo "❌ Error: npx is not available"
+            exit 1
+          fi
+
+          # Check if source files exist
+          if ! find src -name "*.{ts,tsx}" -not -path "*/test/*" -not -name "*.test.*" -not -name "*.spec.*" | grep -q .; then
+            echo "⚠️  Warning: No source files found for test generation"
+            exit 0
+          fi
+
+          # Generate tests with enhanced error handling and authentication
+          echo "🔧 Executing QODO CLI with authentication..."
+          if timeout 300 npx qodo-cli test generate \
+            --api-key="$QODO_API_KEY" \
+            --project-id="$QODO_PROJECT_ID" \
+            --base-url="$QODO_BASE_URL" \
+            --framework=vitest \
+            --location=colocated \
+            --config-file=../vitest.config.ts \
+            --output-format=typescript \
+            --coverage-threshold=80 \
+            --max-retries=3 \
+            --timeout=240 \
+            --verbose 2>&1; then
+            echo "✅ QODO test generation completed successfully"
+          else
+            exit_code=$?
+            echo "❌ QODO test generation failed with exit code $exit_code"
+
+            # Enhanced error diagnostics
+            echo "🔍 Diagnostic information:"
+            echo "📋 Available source files:"
+            find src -name "*.{ts,tsx}" -not -path "*/test/*" -not -name "*.test.*" -not -name "*.spec.*" | head -10
+            echo "📁 Current directory contents:"
+            ls -la
+            echo "🔧 Node.js version: $(node --version)"
+            echo "📦 npm version: $(npm --version)"
+
+            # Check for common issues
+            if [[ $exit_code -eq 124 ]]; then
+              echo "⏰ Error: Command timed out after 5 minutes"
+            elif [[ $exit_code -eq 1 ]]; then
+              echo "🔑 Error: Possible authentication or API issue"
+            elif [[ $exit_code -eq 127 ]]; then
+              echo "🚫 Error: QODO CLI not found or not installed"
+            fi
+
+            exit $exit_code
+          fi
+
+          # Verify test generation results
+          if find src -name "*.test.ts" -o -name "*.spec.ts" | grep -q .; then
+            echo "📝 Generated test files:"
+            find src -name "*.test.ts" -o -name "*.spec.ts" -newer /tmp/qodo_start 2>/dev/null || echo "No new test files found"
+
+            # Count generated tests
+            test_count=$(find src -name "*.test.ts" -o -name "*.spec.ts" -newer /tmp/qodo_start 2>/dev/null | wc -l)
+            echo "📊 Total tests generated: $test_count"
+          else
+            echo "⚠️  No test files were generated"
+            echo "💡 This might be expected if no new testable code was found"
+          fi
+
+      - name: Commit generated tests
+        if: success()
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          if git diff --quiet; then
+            echo "📝 No test files to commit"
+          else
+            git add .
+            git commit -m "test: add QODO-generated tests
+
+            - Generated by QODO AI test generation workflow
+            - Coverage threshold: 80%
+            - Framework: Vitest
+            - Generated on: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+            echo "✅ Generated tests committed successfully"
+          fi

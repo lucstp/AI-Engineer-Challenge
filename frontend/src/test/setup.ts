@@ -2,11 +2,12 @@ import '@testing-library/jest-dom';
 
 import React from 'react';
 import { cleanup } from '@testing-library/react';
-import { afterEach, beforeAll, vi } from 'vitest';
+import { afterEach, beforeAll, vi, beforeEach } from 'vitest';
 
 // Cleanup after each test case (e.g. clearing jsdom)
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 // Global test setup
@@ -80,25 +81,6 @@ Object.defineProperty(window, 'scrollTo', {
   value: vi.fn(),
 });
 
-// Mock fetch for API calls with default implementation
-global.fetch = vi.fn().mockResolvedValue({
-  ok: true,
-  status: 200,
-  json: async () => ({}),
-  text: async () => '',
-  headers: new Headers(),
-  redirected: false,
-  statusText: 'OK',
-  type: 'basic' as ResponseType,
-  url: '',
-  clone: vi.fn(),
-  body: null,
-  bodyUsed: false,
-  arrayBuffer: async () => new ArrayBuffer(0),
-  blob: async () => new Blob(),
-  formData: async () => new FormData(),
-} as unknown as Response);
-
 // Suppress console errors in tests unless explicitly needed
 const originalError = console.error;
 beforeAll(() => {
@@ -151,3 +133,7 @@ export const createMockApiError = (message: string) => ({
 export const waitForNextTick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 export const flushPromises = () => new Promise(setImmediate);
+
+beforeEach(() => {
+  global.fetch = vi.fn()
+})

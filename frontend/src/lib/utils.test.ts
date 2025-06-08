@@ -22,9 +22,8 @@ describe('utils', () => {
 
     it('merges conflicting Tailwind classes correctly', () => {
       const result = cn('px-4 px-6', 'py-2 py-4');
-      // Should keep the last conflicting class
-      expect(result).toContain('px-6');
-      expect(result).toContain('py-4');
+      // Should keep only the last conflicting classes, removing earlier ones
+      expect(result).toBe('px-6 py-4');
     });
   });
 });

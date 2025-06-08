@@ -499,7 +499,7 @@ describe('useLocalStorage', () => {
     const { result } = renderHook(() => useLocalStorage('test-key', 'initial'))
 
     act(() => {
-      result.current[1](mdc:'updated')
+      result.current]('updated')
     })
 
     expect(result.current[0]).toBe('updated')

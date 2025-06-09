@@ -36,7 +36,3 @@ Brief summary of **what** changed and **why**.
 
 - Special instructions for testing or verifying
 - Contextual decisions worth remembering
-
-> **Rules Reminder:**
-> Please review and comply with
-> [`.cursor/rules/general-rule.mdc`](../.cursor/rules/general-rule.mdc) before submitting this pull request.

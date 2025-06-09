@@ -129,6 +129,7 @@ git push origin feat(api)/streaming-endpoint
 - The PR description must be written in valid **Markdown** and begin with:
   ```md
   <!-- @cursor format: markdown -->
+  ```
 - Request at least 2 code reviews (optional if solo).
 - All tests must pass.
 - No merge conflicts.

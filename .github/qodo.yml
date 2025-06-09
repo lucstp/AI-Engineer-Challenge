@@ -5,7 +5,6 @@ on:
     types: [opened, synchronize]
     paths:
       - "frontend/src/**/*.{js,jsx,ts,tsx}"
-      - "!frontend/src/**/*.{test,spec}.{js,jsx,ts,tsx}"
   workflow_dispatch:
 
 jobs:
@@ -112,10 +111,10 @@ jobs:
           fi
 
           # Verify test generation results
-          if find src \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" \) | grep -q .; then
-            echo "📝 Generated test files:"
-            find src \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" \) -newer /tmp/qodo_start 2>/dev/null || echo "No new test files found"
-
+          if find src \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" \) | grep -q .;
+          then
+          echo "📝 Generated test files:"
+          find src \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" \) -newer /tmp/qodo_start 2>/dev/null || echo "No new test files found"
             # Count generated tests
             test_count=$(find src \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" \) -newer /tmp/qodo_start 2>/dev/null | wc -l)
             echo "📊 Total tests generated: $test_count"

@@ -17,6 +17,7 @@
     "check": "pnpm lint && pnpm format:check && pnpm typecheck",
     "ci-basic": "pnpm check && pnpm build",
     "ci-full": "pnpm check && pnpm test:coverage && pnpm build",
+    "generate:tests": "qodo-cli test generate --framework=vitest --location=colocated --output-format=typescript --config-file=vitest.config.ts",
     "shadcn-ui": "pnpm dlx shadcn@latest",
     "clean": "rm -rf .next node_modules",
     "reinstall": "pnpm run clean && pnpm install"

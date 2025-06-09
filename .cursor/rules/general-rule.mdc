@@ -123,13 +123,19 @@ git rebase origin/main
 git push origin feat(api)/streaming-endpoint
 ```
 
-### 3. Pull Request Proceeature branch to main/master.
-- Use the @Pull Request Tem.
-  _(If not visible, see @.github/pull_request_template.md)_
+### 3. Pull Request Procedure
+
+- Use the Pull Request Template when opening a pull request.
+- The PR description must be written in valid **Markdown** and begin with:
+  ```md
+  <!-- @cursor format: markdown -->
+  ```
 - Request at least 2 code reviews (optional if solo).
 - All tests must pass.
 - No merge conflicts.
 - Squash commits when merging.
+
+@../templates/pull_request_template.md
 
 ### 4. Release Process
 

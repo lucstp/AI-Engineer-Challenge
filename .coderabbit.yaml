@@ -12,12 +12,20 @@ code_generation:
           Document key props and accessibility features.
       - path: "frontend/src/lib/**/*.{ts,js}"
         instructions: |
-          Single-line comment for function purpose.
-          Document key parameters and return value.
+          Single-line comment for utility or helper function purpose.
+          Document all parameters, return values, and edge cases.
       - path: "frontend/src/hooks/**/*.{ts,js}"
         instructions: |
           Single-line comment for hook purpose.
-          Document key dependencies and side effects.
+          Document key dependencies, inputs, and side effects.
+      - path: "frontend/src/features/**/*.{ts,tsx,js,jsx}"
+        instructions: |
+          Single-line comment for feature module purpose.
+          Document business logic, local state, and integration with shared context/hooks.
+      - path: "frontend/src/**/*.{test,spec}.{ts,tsx,js,jsx}"
+        instructions: |
+          Single-line comment for test purpose.
+          Document mocked dependencies and what behavior is being verified.
 
   unit_tests:
     path_instructions:

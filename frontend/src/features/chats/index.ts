@@ -1,16 +1,22 @@
 // Barrel exports for chat feature - clean public API
 //
+// PHASE 2 MIGRATION NOTE:
+// - React Context and useChat hook have been migrated to Zustand store
+// - New store location: @/store/chat-store
+// - This file now re-exports types and points to the new architecture
+//
 // IMPORT PATTERN GUIDELINES:
-// - External imports: Use this barrel export from outside the chat feature
-//   Example: import { ChatProvider, useChat } from '@/features/chats'
+// - External imports: Use @/store for chat state management
+//   Example: import { useChatStore, type Message } from '@/store'
 //
-// - Internal imports: Use direct imports within the chat feature to avoid circular dependencies
-//   Example: import { useChat } from '../hooks/use-chat'
-//             import type { ChatContextType } from '../types/chat'
-//
-// This maintains clean external APIs while avoiding circular dependencies within the feature.
+// - For legacy compatibility, some types are still exported from here
+//   Example: import type { ChatState } from '@/features/chats'
+
+// Re-export Message type from new store for compatibility
+export type { Message } from '@/store/chat-store';
+
+// Legacy types still available from original location
 export type {
-  Message,
   ChatState,
   ChatContextType,
   ChatActionResult,
@@ -23,5 +29,5 @@ export type {
   OptimisticMessage,
 } from './types/chat';
 
-export { useChat } from './hooks/use-chat';
-export { ChatProvider, useChatContext, withChatContext, ChatContext } from './context/chat-context';
+// Phase 2: Context and hooks have been replaced with Zustand store
+// Use: import { useChatStore } from '@/store' instead

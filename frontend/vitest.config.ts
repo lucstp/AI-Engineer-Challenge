@@ -16,6 +16,9 @@ export default defineConfig({
     // Test environment
     environment: 'jsdom',
 
+    // /allow CSS imports in component tests
+    css: true,
+
     // Global setup
     globals: true,
 

@@ -1,74 +1,44 @@
-import { z } from 'zod';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+
+import { apiKeySchema, type ChatState } from './store.types';
 
 // Chat functionality previously managed through useChat hook
 // has been migrated to this centralized store for better state management.
 
-const apiKeySchema = z
-  .string()
-  .min(31, 'API key must be at least 31 characters long')
-  .regex(/^sk-[\w-]+$/, 'API key must start with "sk-" and be valid');
-
-export interface Message {
-  id: string;
-  content: string;
-  role: 'user' | 'assistant';
-  timestamp: string;
-  animated?: boolean;
-  showTimestamp?: boolean;
-}
-
-interface ChatState {
+// Initial state constant to ensure DRY principle and consistency
+const INITIAL_STATE: Partial<ChatState> = {
   // Messages state
-  messages: Message[];
-  setMessages: (messages: Message[]) => void;
-  addMessage: (message: Message) => void;
-  clearMessages: () => void;
-
+  messages: [],
   // API Key state
-  apiKey: string;
-  setApiKey: (key: string) => void;
-  deleteApiKey: () => void;
-  isApiKeyValid: boolean;
-  apiKeyError: string | null;
-  validateApiKey: (key: string) => void;
-
-  // Initialization
-  isInitialized: boolean;
-  initializeStore: () => void;
-
+  apiKey: '',
+  isApiKeyValid: false,
+  apiKeyError: null,
+  // Initialization state
+  isInitialized: false,
   // Model state
-  selectedModel: string;
-  setSelectedModel: (model: string) => void;
-
+  selectedModel: 'gpt-4.1-mini',
   // UI state
-  isLoading: boolean;
-  setIsLoading: (loading: boolean) => void;
-  isTyping: boolean;
-  setIsTyping: (typing: boolean) => void;
-  showTimestamps: boolean;
-  setShowTimestamps: (show: boolean) => void;
-  isAnimating: boolean;
-  setIsAnimating: (animating: boolean) => void;
-  animatedContent: string;
-  setAnimatedContent: (content: string) => void;
-  isExpanded: boolean;
-  setIsExpanded: (expanded: boolean) => void;
-}
+  isLoading: false,
+  isTyping: false,
+  showTimestamps: false,
+  isAnimating: false,
+  animatedContent: '',
+  isExpanded: false,
+};
 
 export const useChatStore = create<ChatState>()(
   devtools(
     persist(
       (set, get) => ({
-        // Messages state
-        messages: [],
+        ...(INITIAL_STATE as ChatState),
+
+        // Messages actions
         setMessages: (messages) => set({ messages }),
         addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
         clearMessages: () => set({ messages: [] }),
 
-        // API Key state
-        apiKey: '',
+        // API Key actions
         setApiKey: (key) => {
           set({ apiKey: key });
           get().validateApiKey(key);
@@ -83,8 +53,6 @@ export const useChatStore = create<ChatState>()(
           // Clear from localStorage to ensure it's gone
           localStorage.removeItem('OPENAI_API_KEY');
         },
-        isApiKeyValid: false,
-        apiKeyError: null,
         validateApiKey: (key) => {
           const validation = apiKeySchema.safeParse(key.trim());
           set({
@@ -93,8 +61,7 @@ export const useChatStore = create<ChatState>()(
           });
         },
 
-        // Initialization state
-        isInitialized: false,
+        // Initialization actions
         initializeStore: () => {
           // This ensures we validate the API key on app initialization
           const currentKey = get().apiKey;
@@ -104,23 +71,25 @@ export const useChatStore = create<ChatState>()(
           set({ isInitialized: true });
         },
 
-        // Model state
-        selectedModel: 'gpt-4.1-mini',
+        // Model actions
         setSelectedModel: (model) => set({ selectedModel: model }),
 
-        // UI state
-        isLoading: false,
+        // UI state actions
         setIsLoading: (loading) => set({ isLoading: loading }),
-        isTyping: false,
         setIsTyping: (typing) => set({ isTyping: typing }),
-        showTimestamps: false,
         setShowTimestamps: (show) => set({ showTimestamps: show }),
-        isAnimating: false,
         setIsAnimating: (animating) => set({ isAnimating: animating }),
-        animatedContent: '',
         setAnimatedContent: (content) => set({ animatedContent: content }),
-        isExpanded: false,
         setIsExpanded: (expanded) => set({ isExpanded: expanded }),
+
+        // Testing utilities - public reset method for test usage
+        reset: () => {
+          // Clear localStorage to ensure complete reset
+          localStorage.removeItem('OPENAI_API_KEY');
+          localStorage.removeItem('chat-storage');
+          // Reset to initial state
+          set(INITIAL_STATE);
+        },
       }),
       {
         name: 'chat-storage',

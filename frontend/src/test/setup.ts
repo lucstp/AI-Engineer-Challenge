@@ -4,6 +4,15 @@ import React from 'react';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
+// Mock global styles (Tailwind & App Router friendly)
+vi.mock('@/styles/globals.css', () => ({}));
+
+// Mock next/font/google for App Router
+vi.mock('next/font/google', () => ({
+  __esModule: true,
+  default: () => ({ className: '' }),
+}));
+
 // Cleanup after each test case (e.g. clearing jsdom)
 afterEach(() => {
   cleanup();

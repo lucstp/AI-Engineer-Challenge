@@ -13,7 +13,7 @@
 //   Example: import type { ChatState } from '@/features/chats'
 
 // Re-export Message type from new store for compatibility
-export type { Message } from '@/store/chat-store';
+export type { Message } from '@/store/store.types';
 
 // Legacy types still available from original location
 export type {

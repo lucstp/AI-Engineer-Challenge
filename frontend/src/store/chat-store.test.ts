@@ -1,10 +1,21 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useChatStore, type Message } from './chat-store';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-// Helper to reset Zustand store state between tests
+import { useChatStore } from './chat-store';
+import type { Message } from './store.types';
+
+// Helper to reset Zustand store state between tests using public API
 const resetStore = () => {
-  useChatStore.setState(useChatStore.getInitialState());
+  useChatStore.getState().reset();
 };
+
+// Clearly fake/mock API keys for testing (51 chars total, 48 after prefix sk-)
+const validKey = 'sk-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; // 48 a's after sk-
+const anotherValidKey = 'sk-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'; // 48 b's after sk-
+// Realistic format: mixed case and digits, still fake
+const realisticKey = 'sk-aA1bB2cC3dD4eE5fF6gG7hH8iI9jJ0kK1lL2mM3nN4oO5pQr'; // 48 chars after sk-
+const wrongLengthKey = 'sk-shortkey123'; // too short
+const invalidCharKey = 'sk-abc$%^defghijklmnopqrstuvwxyz1234567890ABCDEFghij'; // contains symbols
+const uppercaseOnlyKey = 'sk-ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKL'; // 48 uppercase after sk-
 
 describe('chat-store Zustand store', () => {
   beforeEach(() => {
@@ -15,9 +26,7 @@ describe('chat-store Zustand store', () => {
 
   describe('messages state', () => {
     it('sets messages', () => {
-      const messages: Message[] = [
-        { id: '1', content: 'hi', role: 'user', timestamp: 't1' },
-      ];
+      const messages: Message[] = [{ id: '1', content: 'hi', role: 'user', timestamp: 't1' }];
       useChatStore.getState().setMessages(messages);
       expect(useChatStore.getState().messages).toEqual(messages);
     });
@@ -29,9 +38,9 @@ describe('chat-store Zustand store', () => {
     });
 
     it('clears messages', () => {
-      useChatStore.getState().setMessages([
-        { id: '1', content: 'hi', role: 'user', timestamp: 't1' },
-      ]);
+      useChatStore
+        .getState()
+        .setMessages([{ id: '1', content: 'hi', role: 'user', timestamp: 't1' }]);
       useChatStore.getState().clearMessages();
       expect(useChatStore.getState().messages).toEqual([]);
     });
@@ -39,9 +48,36 @@ describe('chat-store Zustand store', () => {
 
   describe('API key state', () => {
     it('sets and validates a valid API key', () => {
-      const validKey = 'sk-abcdefghijklmnopqrstuvwxyz12345';
       useChatStore.getState().setApiKey(validKey);
       expect(useChatStore.getState().apiKey).toBe(validKey);
+      expect(useChatStore.getState().isApiKeyValid).toBe(true);
+      expect(useChatStore.getState().apiKeyError).toBeNull();
+    });
+
+    it('sets and validates a realistic format API key', () => {
+      useChatStore.getState().setApiKey(realisticKey);
+      expect(useChatStore.getState().apiKey).toBe(realisticKey);
+      expect(useChatStore.getState().isApiKeyValid).toBe(true);
+      expect(useChatStore.getState().apiKeyError).toBeNull();
+    });
+
+    it('rejects a key with correct prefix but wrong length', () => {
+      useChatStore.getState().setApiKey(wrongLengthKey);
+      expect(useChatStore.getState().apiKey).toBe(wrongLengthKey);
+      expect(useChatStore.getState().isApiKeyValid).toBe(false);
+      expect(useChatStore.getState().apiKeyError).toBeDefined();
+    });
+
+    it('rejects a key with invalid characters', () => {
+      useChatStore.getState().setApiKey(invalidCharKey);
+      expect(useChatStore.getState().apiKey).toBe(invalidCharKey);
+      expect(useChatStore.getState().isApiKeyValid).toBe(false);
+      expect(useChatStore.getState().apiKeyError).toBeDefined();
+    });
+
+    it('accepts an uppercase-only API key (current regex allows it)', () => {
+      useChatStore.getState().setApiKey(uppercaseOnlyKey);
+      expect(useChatStore.getState().apiKey).toBe(uppercaseOnlyKey);
       expect(useChatStore.getState().isApiKeyValid).toBe(true);
       expect(useChatStore.getState().apiKeyError).toBeNull();
     });
@@ -55,7 +91,6 @@ describe('chat-store Zustand store', () => {
     });
 
     it('deletes API key and clears related state', () => {
-      const validKey = 'sk-abcdefghijklmnopqrstuvwxyz12345';
       useChatStore.getState().setApiKey(validKey);
       useChatStore.getState().deleteApiKey();
       expect(useChatStore.getState().apiKey).toBe('');
@@ -73,7 +108,6 @@ describe('chat-store Zustand store', () => {
 
   describe('initialization', () => {
     it('initializes and validates API key if present', () => {
-      const validKey = 'sk-abcdefghijklmnopqrstuvwxyz12345';
       useChatStore.getState().setApiKey(validKey);
       useChatStore.setState({ isApiKeyValid: false });
       useChatStore.getState().initializeStore();
@@ -123,14 +157,14 @@ describe('chat-store Zustand store', () => {
 
   describe('persistence', () => {
     it('persists apiKey, selectedModel, messages, isExpanded', () => {
-      useChatStore.getState().setApiKey('sk-abcdefghijklmnopqrstuvwxyz12345');
+      useChatStore.getState().setApiKey(anotherValidKey);
       useChatStore.getState().setSelectedModel('gpt-4.2');
-      useChatStore.getState().setMessages([
-        { id: '1', content: 'hi', role: 'user', timestamp: 't1' },
-      ]);
+      useChatStore
+        .getState()
+        .setMessages([{ id: '1', content: 'hi', role: 'user', timestamp: 't1' }]);
       useChatStore.getState().setIsExpanded(true);
       const persisted = JSON.parse(localStorage.getItem('chat-storage') || '{}');
-      expect(persisted.state.apiKey).toBe('sk-abcdefghijklmnopqrstuvwxyz12345');
+      expect(persisted.state.apiKey).toBe(anotherValidKey);
       expect(persisted.state.selectedModel).toBe('gpt-4.2');
       expect(persisted.state.messages).toHaveLength(1);
       expect(persisted.state.isExpanded).toBe(true);

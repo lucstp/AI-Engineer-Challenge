@@ -39,7 +39,8 @@ describe('isKeyFormatValid', () => {
   });
 
   it('rejects a key with wrong length (too long)', () => {
-    const key = 'sk-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; // 49 a's
+    const key = `sk-${'a'.repeat(49)}`; // 52 chars total – intentionally invalid
+    expect(key.length).toBe(52);
     expect(isKeyFormatValid(key)).toBe(false);
   });
 

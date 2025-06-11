@@ -1,15 +1,20 @@
 import { z } from 'zod';
 
+// Single source of truth for API key regex pattern
+const API_KEY_REGEX = /^sk-[A-Za-z0-9_-]{48}$/;
+
 // Zod schema for API key validation (OpenAI keys are exactly 51 characters as of 2025)
 export const apiKeySchema = z
   .string()
-  .length(51, 'API key must be exactly 51 characters long')
-  .regex(/^sk-[A-Za-z0-9_-]{48}$/, 'API key must start with "sk-" and be valid');
+  .regex(API_KEY_REGEX, 'API key must start with "sk-" and be exactly 51 characters');
 
 // Helper for direct format validation (for unit testing and clarity)
 export function isKeyFormatValid(key: string): boolean {
-  return /^sk-[A-Za-z0-9_-]{48}$/.test(key);
+  return API_KEY_REGEX.test(key);
 }
+
+// Export regex for potential reuse elsewhere
+export { API_KEY_REGEX };
 
 // Core message interface
 export interface Message {

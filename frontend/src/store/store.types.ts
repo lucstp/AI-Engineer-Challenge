@@ -8,7 +8,12 @@ export const apiKeySchema = z
   .string()
   .regex(API_KEY_REGEX, 'API key must start with "sk-" and be exactly 51 characters');
 
-// Helper for direct format validation (for unit testing and clarity)
+/**
+ * Checks if a string matches the required API key format.
+ *
+ * @param key - The string to validate as an API key.
+ * @returns `true` if {@link key} matches the API key pattern; otherwise, `false`.
+ */
 export function isKeyFormatValid(key: string): boolean {
   return API_KEY_REGEX.test(key);
 }

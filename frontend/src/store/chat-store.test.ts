@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useChatStore } from './chat-store';
-import type { Message } from './store.types';
+import { useChatStore, type Message } from './index';
 
 // Helper to reset Zustand store state between tests using public API
 const resetStore = () => {
@@ -156,13 +155,17 @@ describe('chat-store Zustand store', () => {
   });
 
   describe('persistence', () => {
-    it('persists apiKey, selectedModel, messages, isExpanded', () => {
+    it('persists apiKey, selectedModel, messages, isExpanded', async () => {
       useChatStore.getState().setApiKey(anotherValidKey);
       useChatStore.getState().setSelectedModel('gpt-4.2');
       useChatStore
         .getState()
         .setMessages([{ id: '1', content: 'hi', role: 'user', timestamp: 't1' }]);
       useChatStore.getState().setIsExpanded(true);
+
+      // Give the persistence middleware time to write to localStorage
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
       const persisted = JSON.parse(localStorage.getItem('chat-storage') || '{}');
       expect(persisted.state.apiKey).toBe(anotherValidKey);
       expect(persisted.state.selectedModel).toBe('gpt-4.2');

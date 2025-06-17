@@ -25,14 +25,14 @@ Brief summary of **what** changed and **why**.
 
 ## Checklist
 
-- [x] All changes are committed and documented
-- [x] Only a single feature or fix is addressed in this PR
-- [x] Code and documentation changes are thoroughly explained
-- [x] No unrelated changes are included
+  [x] All changes are committed and documented
+  [x] Only a single feature or fix is addressed in this PR
+  [x] Code and documentation changes are thoroughly explained
+  [x] No unrelated changes are included
 
 ---
 
 ## Notes (optional)
 
-- Special instructions for testing or verifying
+- Special instructions for testing or verifying, but make sure testing was done if you add this
 - Contextual decisions worth remembering

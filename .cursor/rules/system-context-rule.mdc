@@ -8,7 +8,7 @@ alwaysApply: true
 
 ## SYSTEM_CONTEXT
 
-You are a senior Silicon Valley engineer working on the **LLM Chat Application** project using Next.js 15 + React 19 + TypeScript + FastAPI.
+You are a senior Silicon Valley engineer working on a **Next.js 15 + React 19 + TypeScript** project following the **Silicon Valley DDD Frontend Architecture** pattern.
 
 ### Required Rule Understanding on Startup:
 - `.cursor/rules/general-rule.mdc`: Git conventions, commit standards, and core development principles
@@ -16,51 +16,133 @@ You are a senior Silicon Valley engineer working on the **LLM Chat Application**
 - `.cursor/rules/frontend-standard-rule.mdc`: Frontend orchestrator and structured analysis process
 - `.cursor/rules/frontend/`: Domain-specific rules for specialized patterns
 
-### Project Architecture:
+### Architecture Pattern: **"Silicon Valley DDD Frontend"**
+
+This project follows the **Silicon Valley Domain-Driven Design (DDD) Frontend Architecture**, which emphasizes:
+- **Single Source of Truth** for types and state
+- **Hierarchical Component Organization** (primitives → layout → features)
+- **Legacy Compatibility Layers** with clear migration paths
+- **Pure Function Utilities** separated from business logic
+- **Modern React/Next.js Patterns** (Server Components First)
+
+#### **Current Project Structure:**
 ```
-AI-Engineer-Challenge/
+{PROJECT_ROOT}/
 ├── .cursor/rules/               # Project-wide Cursor rules
 │   ├── frontend/               # Domain-specific frontend rules
 │   ├── general-rule.mdc        # Git conventions and core principles
 │   ├── frontend-standard-rule.mdc # Frontend orchestrator
 │   ├── naming-convention-rule.mdc # Universal naming standards
 │   └── system-context-rule.mdc # System awareness and rule sync
-├── api/                        # FastAPI backend (Python)
-│   ├── app.py                  # Main FastAPI application
-│   ├── requirements.txt        # Python dependencies
-│   └── vercel.json            # Backend deployment config
-├── frontend/                   # Next.js 15 frontend application
-│   ├── src/                   # Source code
-│   │   ├── app/               # App Router (primary)
-│   │   │   ├── layout.tsx     # Root layout
-│   │   │   └── page.tsx       # Home page
-│   │   ├── components/        # Shared UI components
-│   │   │   ├── ui/           # shadcn/ui components
-│   │   │   ├── layout/       # Layout components (Server)
-│   │   │   ├── features/     # Feature-specific components
-│   │   │   │   ├── [feature]/
-│   │   │   │   │   ├── server/    # Server Components
-│   │   │   │   │   ├── client/    # Client Components
-│   │   │   │   │   └── index.ts   # Barrel exports
-│   │   │   └── common/       # Shared utilities
-│   │   ├── lib/              # Utilities and helpers
-│   │   │   └── utils.ts       # Common utility functions
-│   │   └── styles/           # Global styles
-│   │       └── globals.css    # Global CSS
+├── {BACKEND_DIR}/              # Backend application (FastAPI/Express/etc)
+├── {FRONTEND_DIR}/             # Next.js 15+ frontend application
+│   ├── src/                   # Source code (Domain-Driven Design)
+│   │   ├── app/               # App Router (Next.js 15+)
+│   │   │   ├── layout.tsx     # Root layout with global providers
+│   │   │   ├── page.tsx       # Home page (Server Component)
+│   │   │   └── globals.css    # Global styles and Tailwind
+│   │   ├── types/             # Global Types Hub (Single Source of Truth)
+│   │   │   └── index.ts       # All shared TypeScript interfaces/types
+│   │   ├── lib/               # 🔧 Pure Utilities & Infrastructure
+│   │   │   ├── index.ts       # Barrel exports for utilities
+│   │   │   ├── utils.ts       # Framework utility functions (Tailwind/etc)
+│   │   │   └── validation.ts  # Zod schemas and validation logic
+│   │   ├── store/             # 🏪 Global State Management (Zustand/Redux)
+│   │   │   ├── {domain}-store.ts  # Domain state with persistence
+│   │   │   └── store.types.ts # Store-specific type definitions
+│   │   ├── components/        # UI Components (Hierarchical)
+│   │   │   ├── ui/           # Design system primitives (shadcn/ui)
+│   │   │   ├── layout/       # Layout components (Server First)
+│   │   │   └── features/     # Feature-specific components
+│   │   ├── features/          # 📁 Domain Features (Legacy Compatibility)
+│   │   │   └── {domain}/     # Feature domain
+│   │   │       ├── types/    # Feature-specific types (deprecated)
+│   │   │       ├── client/   # Client components
+│   │   │       ├── server/   # Server components
+│   │   │       └── index.ts  # Barrel exports for backward compatibility
+│   │   └── styles/           # Styling (if needed beyond Tailwind)
 │   ├── public/               # Static assets
 │   ├── next.config.ts        # Next.js configuration
 │   ├── package.json          # Frontend dependencies
-│   ├── tsconfig.json         # TypeScript configuration
-│   ├── biome.json           # Biome linting/formatting
-│   └── components.json       # shadcn/ui configuration
+│   ├── tsconfig.json         # TypeScript strict configuration
+│   ├── biome.json           # Biome formatting/linting config
+│   ├── components.json       # shadcn/ui configuration
+│   └── tailwind.config.ts    # Tailwind CSS configuration
 ├── .github/                  # CI/CD automation
-│   └── pull_request_template.md # PR template
 ├── docs/                     # Project documentation
 ├── package.json             # Root workspace configuration
-├── pnpm-workspace.yaml      # pnpm workspace setup
-├── vercel.json              # Deployment configuration
+├── pnpm-workspace.yaml      # Monorepo workspace setup
 └── README.md                # Project documentation
 ```
+
+### **Silicon Valley DDD Architecture Principles:**
+
+#### **1. Domain-Driven Design (DDD) Layers**
+- **`@/types`** 🏛️: Global types hub - single source of truth for all TypeScript interfaces
+- **`@/lib`** 🔧: Pure utilities, validation logic, and infrastructure concerns
+- **`@/store`** 🏪: Centralized state management (Zustand/Redux/Context)
+- **`@/components`** 🧩: Hierarchical UI organization (primitives → layout → features)
+- **`@/features`** 📁: Legacy compatibility layer with clear migration paths
+
+#### **2. Import Path Strategy (Universal Pattern)**
+```typescript
+// ✅ ALWAYS: Global types and utilities (single source of truth)
+import type { EntityType, ApiResponse } from '@/types';
+import { cn, validateInput } from '@/lib';
+
+// ✅ PREFERRED: Direct component imports (avoid circular dependencies)
+import { MainLayout } from '@/components/layout/main-layout';
+import { FeatureComponent } from '@/components/features/feature-component';
+
+// ✅ ACCEPTABLE: Feature barrel imports (external to feature only)
+import { FeatureShell } from '@/features/feature-name';
+
+// ❌ DEPRECATED: Feature-specific types (migrate to @/types)
+import type { LegacyType } from '@/features/*/types'; // Use @/types instead
+```
+
+#### **3. Type Architecture (Anti-Duplication Pattern)**
+- **Global Hub**: `@/types/index.ts` contains ALL shared interfaces
+- **Store Types**: `@/store/store.types.ts` for state management-specific types
+- **Legacy Types**: `@/features/*/types/*` with deprecation notices and re-exports to @/types
+- **Zero Duplication**: Single source of truth with strategic re-exports for backward compatibility
+
+#### **4. Component Hierarchy (Design System Pattern)**
+- **Design System**: Primitives (`@/components/ui`) - reusable atomic components
+- **Layout**: Structure (`@/components/layout`) - Server Components for page structure
+- **Features**: Domain logic (`@/components/features`) - business-specific components
+- **Legacy**: Compatibility (`@/features/*/client|server`) - backward compatibility layer
+
+#### **5. State Management Architecture (Modern React Pattern)**
+- **Global State**: Centralized store with persistence (`@/store/{domain}-store.ts`)
+- **React 19 Integration**: `useActionState`, `useOptimistic` for form handling
+- **Server-First**: Default to Server Components, minimal client state
+- **URL State**: Stateful URLs for shareable application state (`@nuqs` or similar)
+
+#### **6. Migration Strategy (Legacy Compatibility)**
+- **Phase 1**: Create new structure alongside legacy
+- **Phase 2**: Add deprecation notices and re-exports
+- **Phase 3**: Migrate consumers to new imports
+- **Phase 4**: Remove legacy structure completely
+
+### **Adapting This Pattern to Other Projects:**
+
+To use this **Silicon Valley DDD Frontend Architecture** in other projects:
+
+1. **Replace Placeholders**: Update `{PROJECT_ROOT}`, `{FRONTEND_DIR}`, `{BACKEND_DIR}`, `{domain}` with actual names
+2. **Technology Stack**: Adapt for your stack (Vue.js, Angular, React Native, etc.)
+3. **State Management**: Choose appropriate solution (Zustand, Redux, Pinia, etc.)
+4. **Design System**: Replace shadcn/ui references with your component library
+5. **Domain Names**: Replace example domains (`chats`, etc.) with your business domains
+6. **Rule References**: Update rule references to match your project's Cursor rules structure
+
+#### **Technology Stack Variations:**
+- **React**: Next.js 15+, Remix, Vite + React Router
+- **Vue**: Nuxt 3+, Vue 3 + Vite
+- **Angular**: Angular 17+ with standalone components
+- **Mobile**: React Native, Expo, Flutter (adapt folder structure)
+- **State**: Zustand, Redux Toolkit, Pinia, Context API, Jotai
+- **Styling**: Tailwind, Styled Components, CSS Modules, Sass
 
 ## Rule Hierarchy Understanding
 

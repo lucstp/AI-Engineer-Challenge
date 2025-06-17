@@ -1,13 +1,40 @@
-// TypeScript types for chat messages and chat state following React 19 patterns
-export interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: string;
-  showTimestamp?: boolean;
-  isOptimistic?: boolean; // For React 19 useOptimistic
-}
+/**
+ * Chat Feature Types - Legacy Compatibility Only
+ *
+ * @deprecated Most types have moved to @/types
+ *
+ * This file contains only legacy types that will be removed in Phase 4:
+ * - ChatContextType (legacy React Context pattern)
+ * - ChatActionResult (use ActionResult from @/types instead)
+ * - ChatFormState (use FormState from @/types instead)
+ *
+ * For new code, use:
+ * ✅ import type { Message, ChatApiResponse } from '@/types';
+ * ✅ import type { ChatState } from '@/store/store.types';
+ */
 
+// Import types for use in legacy interfaces
+import type { Message } from '@/types';
+
+// Re-export modern types from global types (avoid duplication)
+export type {
+  Message,
+  MessageRole,
+  MessageContent,
+  OptimisticMessage,
+  ChatApiResponse,
+  StreamingChatResponse,
+  ChatConfig,
+} from '@/types';
+
+// ============================================================================
+// LEGACY TYPES - Will be removed in Phase 4
+// ============================================================================
+
+/**
+ * Legacy ChatState for ChatContextType compatibility
+ * This is a simplified version that doesn't include Zustand actions
+ */
 export interface ChatState {
   messages: Message[];
   isLoading: boolean;
@@ -16,7 +43,9 @@ export interface ChatState {
   apiKey: string;
 }
 
-// React 19 Action result type for Server Actions
+/**
+ * @deprecated Use ActionResult<Message> from @/types instead
+ */
 export interface ChatActionResult {
   success: boolean;
   message?: string;
@@ -24,14 +53,19 @@ export interface ChatActionResult {
   data?: Message;
 }
 
-// Form state for React 19 useActionState
+/**
+ * @deprecated Use FormState from @/types instead
+ */
 export interface ChatFormState {
   message: string;
   errors?: Record<string, string[]>;
   success?: boolean;
 }
 
-// Context type with React 19 patterns
+/**
+ * @deprecated Legacy React Context pattern
+ * Modern replacement: useChatStore from @/store
+ */
 export interface ChatContextType extends ChatState {
   // State setters
   setApiKey: (key: string) => void;
@@ -44,30 +78,3 @@ export interface ChatContextType extends ChatState {
   // Optimistic updates
   addOptimisticMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
 }
-
-// API response types
-export interface ChatApiResponse {
-  message: string;
-  success?: boolean;
-  error?: string;
-}
-
-// Streaming response for real-time chat
-export interface StreamingChatResponse {
-  content: string;
-  done: boolean;
-  error?: string;
-}
-
-// Configuration types
-export interface ChatConfig {
-  apiEndpoint: string;
-  maxMessages?: number;
-  retryAttempts?: number;
-  streamingEnabled?: boolean;
-}
-
-// Utility types for message operations
-export type MessageRole = Message['role'];
-export type MessageContent = Pick<Message, 'content' | 'role'>;
-export type OptimisticMessage = Omit<Message, 'id' | 'timestamp'> & { isOptimistic: true };

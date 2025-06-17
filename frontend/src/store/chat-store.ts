@@ -1,7 +1,8 @@
+import { apiKeySchema } from '@/lib/validation';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
-import { apiKeySchema, type ChatState } from './store.types';
+import type { ChatState } from './store.types';
 
 // Chat functionality previously managed through useChat hook
 // has been migrated to this centralized store for better state management.
@@ -77,7 +78,10 @@ export const useChatStore = create<ChatState>()(
         // UI state actions
         setIsLoading: (loading) => set({ isLoading: loading }),
         setIsTyping: (typing) => set({ isTyping: typing }),
-        setShowTimestamps: (show) => set({ showTimestamps: show }),
+        setShowTimestamps: (show) =>
+          set((state) => ({
+            showTimestamps: typeof show === 'function' ? show(state.showTimestamps) : show,
+          })),
         setIsAnimating: (animating) => set({ isAnimating: animating }),
         setAnimatedContent: (content) => set({ animatedContent: content }),
         setIsExpanded: (expanded) => set({ isExpanded: expanded }),

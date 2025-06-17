@@ -1,6 +1,5 @@
+import { isKeyFormatValid } from '@/lib/validation';
 import { describe, expect, it } from 'vitest';
-
-import { isKeyFormatValid } from './store.types';
 
 describe('isKeyFormatValid', () => {
   it('accepts a valid all-lowercase key', () => {

@@ -1,33 +1,42 @@
-// Barrel exports for chat feature - clean public API
-//
-// PHASE 2 MIGRATION NOTE:
-// - React Context and useChat hook have been migrated to Zustand store
-// - New store location: @/store/chat-store
-// - This file now re-exports types and points to the new architecture
-//
-// IMPORT PATTERN GUIDELINES:
-// - External imports: Use @/store for chat state management
-//   Example: import { useChatStore, type Message } from '@/store'
-//
-// - For legacy compatibility, some types are still exported from here
-//   Example: import type { ChatState } from '@/features/chats'
+/**
+ * Chat Feature - Legacy Compatibility Layer
+ *
+ * @deprecated This module provides legacy compatibility only.
+ *
+ * Modern usage:
+ * ✅ import type { Message, ChatApiResponse } from '@/types';
+ * ✅ import { useChatStore } from '@/store';
+ *
+ * Legacy (being phased out):
+ * ❌ import type { Message } from '@/features/chats';
+ */
 
-// Re-export Message type from new store for compatibility
-export type { Message } from '@/store/store.types';
-
-// Legacy types still available from original location
+// PHASE 3 MIGRATION: Use @/types instead
 export type {
-  ChatState,
-  ChatContextType,
-  ChatActionResult,
-  ChatFormState,
-  ChatApiResponse,
-  StreamingChatResponse,
-  ChatConfig,
+  Message,
   MessageRole,
   MessageContent,
   OptimisticMessage,
-} from './types/chat';
+  ChatApiResponse,
+  StreamingChatResponse,
+  ChatConfig,
+} from '@/types';
 
-// Phase 2: Context and hooks have been replaced with Zustand store
-// Use: import { useChatStore } from '@/store' instead
+// Legacy types (will be removed in next phase)
+export type { ChatState, ChatContextType, ChatActionResult, ChatFormState } from './types/chat';
+
+/**
+ * MIGRATION GUIDE:
+ *
+ * 1. Replace chat feature imports:
+ *    Old: import type { Message } from '@/features/chats';
+ *    New: import type { Message } from '@/types';
+ *
+ * 2. Replace state management:
+ *    Old: useChatContext, ChatProvider
+ *    New: useChatStore from '@/store'
+ *
+ * 3. Replace form patterns:
+ *    Old: ChatFormState, ChatActionResult
+ *    New: FormState, ActionResult from '@/types'
+ */

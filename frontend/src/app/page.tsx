@@ -1,10 +1,18 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Avatar, AvatarFallback, Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
-import { Bot, Clock, Sparkles } from 'lucide-react';
 import { AnimatedBackground, ChatLayout, ChatShell } from '@/components/layout';
+import {
+  Avatar,
+  AvatarFallback,
+  Button,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui';
 import { useChatStore } from '@/store';
+import { Bot, Clock, Sparkles } from 'lucide-react';
 
 /**
  * Basic chat demo component showing Zustand integration.
@@ -47,7 +55,7 @@ export default function HomePage() {
 
   // Handler for toggling timestamps (using functional approach to avoid stale state)
   const onToggleTimestamps = () => {
-    setShowTimestamps(prev => !prev);
+    setShowTimestamps((prev) => !prev);
   };
 
   const headerContent = (
@@ -59,7 +67,7 @@ export default function HomePage() {
               <Bot className="size-9" />
             </AvatarFallback>
           </Avatar>
-          <div className="absolute right-0 top-0">
+          <div className="absolute top-0 right-0">
             <Sparkles className="h-4 w-4 animate-pulse text-yellow-300" />
           </div>
         </div>

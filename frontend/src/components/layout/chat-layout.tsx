@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Card, CardFooter, CardHeader } from '@/components/ui';
 
 interface ChatLayoutProps {
   children: ReactNode;
@@ -11,25 +12,26 @@ interface ChatLayoutProps {
  * Works beautifully with AnimatedBackground component.
  * Provides semantic structure with contained header/footer sections.
  * Matches the old project's beautiful card-based design.
+ * Now uses shadcn/ui Card components for better semantics and maintainability.
  */
 export function ChatLayout({ children, header, footer }: ChatLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col p-4">
-      {/* Header Section - Contained glassmorphism card */}
+      {/* Header Section - Semantic Card with glassmorphism styling */}
       {header && (
-        <header className="mb-6 w-full max-w-4xl mx-auto rounded-3xl border border-solid border-[rgba(255,255,255,0.1)] bg-white/5 shadow-[rgba(0,0,0,0.3)_0px_2px_4px_0px] backdrop-blur-xl">
-          <div className="py-4 pl-5 pr-6">{header}</div>
-        </header>
+        <Card className="mx-auto mb-6 w-full max-w-4xl">
+          <CardHeader>{header}</CardHeader>
+        </Card>
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1">{children}</main>
+      <main className="mx-auto w-full max-w-4xl flex-1">{children}</main>
 
-      {/* Footer Section - Contained glassmorphism card */}
+      {/* Footer Section - Semantic Card with glassmorphism styling */}
       {footer && (
-        <footer className="mt-6 w-full max-w-4xl mx-auto rounded-3xl border border-solid border-[rgba(255,255,255,0.1)] bg-white/5 shadow-[rgba(0,0,0,0.3)_0px_2px_4px_0px] backdrop-blur-xl">
-          <div className="py-4 pl-5 pr-6">{footer}</div>
-        </footer>
+        <Card className="mx-auto mt-6 w-full max-w-4xl">
+          <CardFooter>{footer}</CardFooter>
+        </Card>
       )}
     </div>
   );

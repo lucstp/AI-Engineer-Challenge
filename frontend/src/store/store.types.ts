@@ -1,35 +1,14 @@
-import { z } from 'zod';
-
-// Single source of truth for API key regex pattern
-const API_KEY_REGEX = /^sk-[A-Za-z0-9_-]{48}$/;
-
-// Zod schema for API key validation (OpenAI keys are exactly 51 characters as of 2025)
-export const apiKeySchema = z
-  .string()
-  .regex(API_KEY_REGEX, 'API key must start with "sk-" and be exactly 51 characters');
-
 /**
- * Checks if a string matches the required API key format.
+ * Store Type Definitions
  *
- * @param key - The string to validate as an API key.
- * @returns `true` if {@link key} matches the API key pattern; otherwise, `false`.
+ * Contains only TypeScript types for the Zustand store
  */
-export function isKeyFormatValid(key: string): boolean {
-  return API_KEY_REGEX.test(key);
-}
 
-// Export regex for potential reuse elsewhere
-export { API_KEY_REGEX };
+// Import types for use in this file
+import type { Message } from '@/types';
 
-// Core message interface
-export interface Message {
-  id: string;
-  content: string;
-  role: 'user' | 'assistant';
-  timestamp: string;
-  animated?: boolean;
-  showTimestamp?: boolean;
-}
+// Re-export core types from global types (single source of truth)
+export type { Message, MessageRole, MessageContent } from '@/types';
 
 // Complete chat state interface
 export interface ChatState {

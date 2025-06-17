@@ -61,7 +61,7 @@ export interface ChatState {
   isTyping: boolean;
   setIsTyping: (typing: boolean) => void;
   showTimestamps: boolean;
-  setShowTimestamps: (show: boolean) => void;
+  setShowTimestamps: (show: boolean | ((prev: boolean) => boolean)) => void;
   isAnimating: boolean;
   setIsAnimating: (animating: boolean) => void;
   animatedContent: string;

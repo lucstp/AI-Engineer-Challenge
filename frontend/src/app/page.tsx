@@ -45,9 +45,9 @@ export default function HomePage() {
   // Get timestamp state from store
   const { showTimestamps, setShowTimestamps } = useChatStore();
 
-  // Handler for toggling timestamps
+  // Handler for toggling timestamps (using functional approach to avoid stale state)
   const onToggleTimestamps = () => {
-    setShowTimestamps(!showTimestamps);
+    setShowTimestamps(prev => !prev);
   };
 
   const headerContent = (
@@ -81,7 +81,7 @@ export default function HomePage() {
                   onClick={onToggleTimestamps}
                   className="!h-10 !max-h-10 w-[85px] !rounded-2xl px-2 py-1 text-xs text-white hover:bg-transparent hover:text-yellow-300"
                 >
-                  {!showTimestamps ? 'Hide Times' : 'Show Times'}
+                  {showTimestamps ? 'Hide Times' : 'Show Times'}
                 </Button>
               </div>
             </TooltipTrigger>

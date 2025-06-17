@@ -1,0 +1,279 @@
+import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { AnimatedBackground } from './animated-background';
+
+// Mock the Zustand store
+const mockUseChatStore = vi.fn();
+vi.mock('@/store', () => ({
+  useChatStore: () => mockUseChatStore(),
+}));
+
+// Helper function to setup store state
+const setupMockStore = (apiKey = '', isApiKeyValid = false) => {
+  mockUseChatStore.mockReturnValue({
+    apiKey,
+    isApiKeyValid,
+  });
+};
+
+describe('AnimatedBackground', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('initial state', () => {
+    it('renders children correctly', () => {
+      setupMockStore();
+
+      render(
+        <AnimatedBackground>
+          <div data-testid="test-child">Test Content</div>
+        </AnimatedBackground>,
+      );
+
+      expect(screen.getByTestId('test-child')).toBeInTheDocument();
+    });
+
+    it('starts with invalid logo state by default', () => {
+      setupMockStore();
+
+      const { container } = render(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      // Gray logo should be visible (opacity-100), yellow logo hidden (opacity-0)
+      const grayLogo = container.querySelector('[class*="aimakerspace-gray-192.png"]');
+      const yellowLogo = container.querySelector('[class*="aimakerspace-i-192.png"]');
+
+      expect(grayLogo).toHaveClass('opacity-100');
+      expect(yellowLogo).toHaveClass('opacity-0');
+    });
+  });
+
+  describe('API key state transitions', () => {
+    it('shows valid state when API key is present and valid', async () => {
+      setupMockStore('sk-validapikey123456789012345678901234567890', true);
+
+      const { container, rerender } = render(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      // Force re-render to trigger useEffect
+      rerender(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      // After state update, yellow logo should be visible
+      const grayLogo = container.querySelector(
+        '[class*="opacity-100"][class*="aimakerspace-gray-192.png"]',
+      );
+      const yellowLogo = container.querySelector(
+        '[class*="opacity-100"][class*="aimakerspace-i-192.png"]',
+      );
+
+      expect(yellowLogo).toBeInTheDocument();
+      expect(grayLogo).not.toBeInTheDocument();
+    });
+
+    it('shows invalid state when API key is empty', () => {
+      setupMockStore('', false);
+
+      const { container } = render(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      const grayLogo = container.querySelector(
+        '[class*="opacity-100"][class*="aimakerspace-gray-192.png"]',
+      );
+      expect(grayLogo).toBeInTheDocument();
+    });
+
+    it('shows invalid state when API key is present but invalid', () => {
+      setupMockStore('invalid-key', false);
+
+      const { container } = render(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      const grayLogo = container.querySelector(
+        '[class*="opacity-100"][class*="aimakerspace-gray-192.png"]',
+      );
+      expect(grayLogo).toBeInTheDocument();
+    });
+
+    it('shows invalid state when API key is whitespace only', () => {
+      setupMockStore('   ', true);
+
+      const { container } = render(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      const grayLogo = container.querySelector(
+        '[class*="opacity-100"][class*="aimakerspace-gray-192.png"]',
+      );
+      expect(grayLogo).toBeInTheDocument();
+    });
+  });
+
+  describe('styling and layout', () => {
+    it('applies correct CSS classes for layout structure', () => {
+      setupMockStore();
+
+      const { container } = render(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      // Main container should be fixed positioned
+      const mainContainer = container.firstChild as HTMLElement;
+      expect(mainContainer).toHaveClass('fixed', 'inset-0', 'min-h-screen');
+
+      // Background should have gradient and scale transform
+      const backgroundDiv = mainContainer.querySelector('[class*="bg-gradient-to-bl"]');
+      expect(backgroundDiv).toHaveClass('[transform:scale(2.5)]');
+
+      // Content wrapper should have relative positioning and z-index
+      const contentWrapper = mainContainer.querySelector('[class*="relative"][class*="z-10"]');
+      expect(contentWrapper).toBeInTheDocument();
+    });
+
+    it('includes glassmorphism backdrop blur effect', () => {
+      setupMockStore();
+
+      const { container } = render(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      const backdropElement = container.querySelector('[class*="backdrop-blur-"]');
+      expect(backdropElement).toHaveClass('backdrop-blur-[2px]');
+    });
+
+    it('applies transition classes for smooth animations', () => {
+      setupMockStore();
+
+      const { container } = render(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      const grayLogo = container.querySelector('[class*="aimakerspace-gray-192.png"]');
+      const yellowLogo = container.querySelector('[class*="aimakerspace-i-192.png"]');
+
+      expect(grayLogo).toHaveClass('transition-opacity', 'duration-300', 'ease-in-out');
+      expect(yellowLogo).toHaveClass('transition-opacity', 'duration-300', 'ease-in-out');
+    });
+  });
+
+  describe('logo patterns', () => {
+    it('uses correct background image URLs for logos', () => {
+      setupMockStore();
+
+      const { container } = render(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      const grayLogo = container.querySelector('[class*="aimakerspace-gray-192.png"]');
+      const yellowLogo = container.querySelector('[class*="aimakerspace-i-192.png"]');
+
+      expect(grayLogo).toHaveClass("bg-[url('/assets/logos/aimakerspace-gray-192.png')]");
+      expect(yellowLogo).toHaveClass("bg-[url('/assets/logos/aimakerspace-i-192.png')]");
+    });
+
+    it('applies correct background sizing and positioning', () => {
+      setupMockStore();
+
+      const { container } = render(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      const grayLogo = container.querySelector('[class*="aimakerspace-gray-192.png"]');
+      const yellowLogo = container.querySelector('[class*="aimakerspace-i-192.png"]');
+
+      for (const logo of [grayLogo, yellowLogo]) {
+        expect(logo).toHaveClass('bg-[length:192px_192px]', 'bg-center', 'bg-repeat');
+      }
+    });
+  });
+
+  describe('accessibility and performance', () => {
+    it('does not interfere with content accessibility', () => {
+      setupMockStore();
+
+      render(
+        <AnimatedBackground>
+          <button type="button">Accessible Button</button>
+          <input aria-label="Test Input" />
+        </AnimatedBackground>,
+      );
+
+      expect(screen.getByRole('button')).toBeInTheDocument();
+      expect(screen.getByLabelText('Test Input')).toBeInTheDocument();
+    });
+
+    it('provides proper stacking context with z-index', () => {
+      setupMockStore();
+
+      const { container } = render(
+        <AnimatedBackground>
+          <div data-testid="content">Interactive Content</div>
+        </AnimatedBackground>,
+      );
+
+      const contentWrapper = container.querySelector('[class*="z-10"]');
+      const content = screen.getByTestId('content');
+
+      expect(contentWrapper).toContainElement(content);
+    });
+  });
+
+  describe('edge cases', () => {
+    it('handles store state updates gracefully', () => {
+      setupMockStore();
+
+      const { rerender } = render(
+        <AnimatedBackground>
+          <div>Content</div>
+        </AnimatedBackground>,
+      );
+
+      // Should not throw when store state changes
+      expect(() => {
+        setupMockStore('sk-newvalidkey123456789012345678901234567890', true);
+        rerender(
+          <AnimatedBackground>
+            <div>Updated Content</div>
+          </AnimatedBackground>,
+        );
+      }).not.toThrow();
+    });
+
+    it('handles missing children gracefully', () => {
+      setupMockStore();
+
+      expect(() => {
+        render(<AnimatedBackground>{null}</AnimatedBackground>);
+      }).not.toThrow();
+    });
+  });
+});

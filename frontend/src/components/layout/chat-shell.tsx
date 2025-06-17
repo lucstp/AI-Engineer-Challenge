@@ -12,9 +12,13 @@ interface ChatShellProps {
 }
 
 /**
- * Enhanced chat shell with glassmorphism effects.
- * Provides responsive container with beautiful styling that complements
- * the AnimatedBackground component.
+ * Renders a visually enhanced chat container with glassmorphism effects.
+ *
+ * Provides a responsive, accessible shell for chat content, featuring rounded corners, semi-transparent background, border, shadow, and backdrop blur. Complements the `AnimatedBackground` component for layered visual effects.
+ *
+ * @param children - The content to display inside the chat shell.
+ * @param className - Optional additional CSS classes for custom styling.
+ * @param maxWidth - If true, constrains the container to a maximum width for improved readability (default: true).
  */
 export function ChatShell({ children, className, maxWidth = true }: ChatShellProps) {
   return (

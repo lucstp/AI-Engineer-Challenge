@@ -35,6 +35,18 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * Renders a customizable button with variant and size options.
+ *
+ * Supports multiple visual styles and sizes via the {@link buttonVariants} system. The `asChild` prop allows rendering as a different element while preserving button styles, enhancing composability and accessibility.
+ *
+ * @param asChild - If true, renders as a child component (using Radix UI's Slot) instead of a native button.
+ * @param variant - Visual style of the button (e.g., default, destructive, outline, secondary, ghost, link).
+ * @param size - Size of the button (e.g., default, sm, lg, icon).
+ *
+ * @remark
+ * Includes accessibility features such as focus-visible outlines and support for aria-invalid states.
+ */
 function Button({
   className,
   variant,

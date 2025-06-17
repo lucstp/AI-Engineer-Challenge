@@ -7,8 +7,9 @@ import { AnimatedBackground, ChatLayout, ChatShell } from '@/components/layout';
 import { useChatStore } from '@/store';
 
 /**
- * Basic chat demo component showing Zustand integration.
- * Phase 3 will replace this with full chat interface.
+ * Displays the current Zustand chat store status and initialization phase.
+ *
+ * Shows whether the chat store is initialized, API key presence and validity, and the number of messages. Also indicates that the animated background and styling foundation are active as part of the current development phase.
  */
 function ChatDemo() {
   const { messages, isInitialized, initializeStore, apiKey, isApiKeyValid } = useChatStore();
@@ -41,6 +42,11 @@ function ChatDemo() {
   );
 }
 
+/**
+ * Renders the main chat application page with animated background, header, and footer.
+ *
+ * Integrates Zustand state to control the visibility of message timestamps and provides a toggle button in the header. The layout includes an animated background, a styled header with avatar and title, and a footer with technology stack information. The chat interface is rendered within the layout.
+ */
 export default function HomePage() {
   // Get timestamp state from store
   const { showTimestamps, setShowTimestamps } = useChatStore();

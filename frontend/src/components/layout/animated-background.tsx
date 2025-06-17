@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 import { useChatStore } from '@/store';
 
 /**
- * AnimatedBackground - Infrastructure component providing visual context
+ * Provides an animated, visually rich background with logo transitions and glassmorphism effects.
  *
- * Features:
- * - Logo animation: Orinal Gray → Yellow based on API key validation
- * - Glassmorphism backdrop-blur effect
- * - Gradient background with beautiful visual effects
- * - Integrates with Zustand store for API key state
- * - Prevents flickering during rehydration
+ * Renders a full-screen gradient background with animated logo overlays that reflect API key validation state. Prevents flickering during Zustand store hydration by delaying animation until initialization is complete. The `children` content is rendered above all background layers for accessibility and layout flexibility.
+ *
+ * @param children - React nodes to display above the animated background.
+ *
+ * @remark
+ * The background logo transitions from gray to yellow when the API key becomes valid. During store rehydration, a static gradient is shown to avoid visual flicker.
  */
 export function AnimatedBackground({ children }: { children: React.ReactNode }) {
   // Get API key validation state from Zustand store

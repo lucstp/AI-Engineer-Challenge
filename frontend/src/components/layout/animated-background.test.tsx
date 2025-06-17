@@ -3,6 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AnimatedBackground } from './animated-background';
 
+// Test token generator to avoid reusing secret-like strings
+const generateTestApiKey = (valid = true) => {
+  const randomSuffix = Math.random().toString(36).substring(2, 15);
+  return valid
+    ? `test-valid-key-${randomSuffix}${'x'.repeat(20)}` // 48+ chars but clearly fake
+    : `test-invalid-key-${randomSuffix}`;
+};
+
 // Mock the Zustand store
 const mockUseChatStore = vi.fn();
 vi.mock('@/store', () => ({
@@ -55,7 +63,7 @@ describe('AnimatedBackground', () => {
 
   describe('API key state transitions', () => {
     it('shows valid state when API key is present and valid', async () => {
-      setupMockStore('sk-validapikey123456789012345678901234567890', true);
+      setupMockStore(generateTestApiKey(true), true);
 
       const { container, rerender } = render(
         <AnimatedBackground>
@@ -98,7 +106,7 @@ describe('AnimatedBackground', () => {
     });
 
     it('shows invalid state when API key is present but invalid', () => {
-      setupMockStore('invalid-key', false);
+      setupMockStore(generateTestApiKey(false), false);
 
       const { container } = render(
         <AnimatedBackground>
@@ -259,7 +267,7 @@ describe('AnimatedBackground', () => {
 
       // Should not throw when store state changes
       expect(() => {
-        setupMockStore('sk-newvalidkey123456789012345678901234567890', true);
+        setupMockStore(generateTestApiKey(true), true);
         rerender(
           <AnimatedBackground>
             <div>Updated Content</div>

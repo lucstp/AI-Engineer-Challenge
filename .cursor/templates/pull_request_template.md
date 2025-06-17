@@ -13,15 +13,11 @@ Example:
 
 Brief summary of **what** changed and **why**.
 
----
-
 ## Details
 
 - Key changes or improvements
 - Rationale for the approach
 - How this aligns with project rules and best practices
-
----
 
 ## Checklist
 
@@ -30,9 +26,9 @@ Brief summary of **what** changed and **why**.
   [x] Code and documentation changes are thoroughly explained
   [x] No unrelated changes are included
 
----
-
 ## Notes (optional)
 
 - Special instructions for testing or verifying, but make sure testing was done if you add this
 - Contextual decisions worth remembering
+
+<!-- @cursor format: markdown -->

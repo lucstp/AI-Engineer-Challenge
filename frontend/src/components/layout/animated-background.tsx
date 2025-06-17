@@ -33,12 +33,12 @@ export function AnimatedBackground({ children }: { children: React.ReactNode }) 
       <div className="absolute inset-0 origin-center [transform:scale(2.5)] bg-gradient-to-bl from-[#0f172a] via-[#1e1a78] to-[#0f172a]">
         {/* Gray logo pattern - shown when API key is invalid */}
         <div
-          className={`absolute inset-0 bg-[url('/assets/logos/aimakerspace-gray-192.png')] bg-[length:192px_192px] bg-center bg-repeat transition-opacity duration-300 ease-in-out ${logoState === 'invalid' ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 bg-[url(/assets/logos/aimakerspace-gray-192.png)] bg-[length:192px_192px] bg-center bg-repeat transition-opacity duration-300 ease-in-out ${logoState === 'invalid' ? 'opacity-100' : 'opacity-0'}`}
         />
 
         {/* Yellow logo pattern - shown when API key is valid */}
         <div
-          className={`absolute inset-0 bg-[url('/assets/logos/aimakerspace-i-192.png')] bg-[length:192px_192px] bg-center bg-repeat transition-opacity duration-300 ease-in-out ${logoState === 'valid' ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 bg-[url(/assets/logos/aimakerspace-i-192.png)] bg-[length:192px_192px] bg-center bg-repeat transition-opacity duration-300 ease-in-out ${logoState === 'valid' ? 'opacity-100' : 'opacity-0'}`}
         />
 
         {/* Glassmorphism overlay */}

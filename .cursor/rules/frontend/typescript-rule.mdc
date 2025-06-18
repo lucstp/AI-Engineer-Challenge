@@ -3,7 +3,6 @@ description: TypeScript best practices and enterprise standards for type safety
 globs:
 alwaysApply: true
 ---
-
 # TypeScript Standards & Best Practices
 
 ## Core TypeScript Principles
@@ -19,6 +18,74 @@ alwaysApply: true
 - Use `type` for unions, utility types, and computed types
 - Prohibit `enum` - use literal types or const maps instead
 - Use the `satisfies` operator for literal type constraints
+
+## Type Organization Strategy (DDD Architecture)
+
+### Type Location Hierarchy
+Follow this decision matrix for where to place TypeScript interfaces and types:
+
+| Type Scope | Location | Example | When to Use |
+|------------|----------|---------|-------------|
+| **Global/Domain** | `src/types/*.types.ts` | `Message`, `User`, `ApiResponse` | Used across multiple features |
+| **Feature-Shared** | `src/features/*/[feature].types.ts` | `MessageBubbleProps`, `ChatInputProps` | Shared within one feature domain |
+| **Component-Only** | Inline in component | Simple interfaces (1-3 props) | Never reused elsewhere |
+| **Store-Related** | `src/store/*.types.ts` | `ChatState`, `StoreActions` | State management types |
+
+### Feature-Level Type Organization
+```ts
+// ✅ Feature types (src/components/features/chat/chat.types.ts)
+export interface MessageBubbleProps {
+  message: Message; // From global types
+  isAnimating?: boolean;
+  onAnimationComplete?: () => void;
+  showAvatar?: boolean;
+  className?: string;
+}
+
+export interface MessageListProps {
+  messages: Message[];
+  showTimestamps?: boolean;
+  isAnimating?: boolean;
+  animatedContent?: string;
+  className?: string;
+}
+
+// ✅ Component usage
+import type { MessageBubbleProps } from '../chat.types';
+export function MessageBubble({ ... }: MessageBubbleProps) {
+  // Component implementation
+}
+```
+
+### Type Organization Decision Rules
+
+**Move to Feature Types When:**
+- Props are shared between 2+ components in the same feature
+- Complex interfaces with 5+ properties
+- Props include callbacks or complex objects
+- Types will be extended/composed
+- Used in tests, stories, or component wrappers
+
+**Keep Inline When:**
+- Simple interfaces (1-4 primitive properties)
+- Component-specific only (never reused)
+- Basic primitives (`string`, `boolean`, etc.)
+- Internal helper interfaces
+
+### Import Patterns
+```ts
+// ✅ Global domain types
+import type { Message, User } from '@/types'
+
+// ✅ Store types
+import type { ChatState } from '@/store/store.types'
+
+// ✅ Feature types
+import type { MessageBubbleProps } from '../chat.types'
+
+// ✅ External library types
+import type { ComponentProps } from 'react'
+```
 
 ## Comprehensive Type Definitions
 
@@ -107,14 +174,15 @@ export type CreateItemData = z.infer<typeof createItemSchema>;
 
 ### Component Props with Strict Typing
 ```ts
-// Functional component with explicit props interface
-interface UserProfileProps {
+// ✅ Feature-level props (in chat.types.ts)
+export interface UserProfileProps {
   user: User;
   onUpdate?: (user: User) => void;
   className?: string;
   showActions?: boolean;
 }
 
+// ✅ Component usage
 export function UserProfile({
   user,
   onUpdate,
@@ -124,14 +192,14 @@ export function UserProfile({
   // Component implementation
 }
 
-// Children prop patterns
-interface ContainerProps {
+// ✅ Children prop patterns (global types)
+export interface ContainerProps {
   children: React.ReactNode;
   title?: string;
 }
 
-// Render prop patterns
-interface DataLoaderProps<T> {
+// ✅ Render prop patterns (feature types)
+export interface DataLoaderProps<T> {
   data: T[];
   render: (item: T, index: number) => React.ReactNode;
   loading?: boolean;
@@ -176,8 +244,8 @@ export async function createUserAction(
 
 ### Hook Type Safety
 ```ts
-// Custom hook with proper typing
-interface UseUserProfileReturn {
+// Custom hook with proper typing (feature types)
+export interface UseUserProfileReturn {
   user: User | null;
   isLoading: boolean;
   error: string | null;
@@ -230,15 +298,15 @@ export function validateFormInput(
   return { isValid: true };
 }
 
-// Supporting interfaces
-interface ValidationRules {
+// Supporting interfaces (feature types)
+export interface ValidationRules {
   minLength?: number;
   maxLength?: number;
   pattern?: RegExp;
   required?: boolean;
 }
 
-interface ValidationResult {
+export interface ValidationResult {
   isValid: boolean;
   error?: string;
 }
@@ -278,6 +346,7 @@ interface PriceBreakdown {
   total: number;
 }
 ```
+
 ## Utility Types and Advanced Patterns
 
 ### Custom Utility Types
@@ -445,4 +514,19 @@ export interface AuthConfig {
 }
 ```
 
-This TypeScript ruleset ensures type safety, developer productivity, and seamless integration with React 19, Next.js 15, and our testing infrastructure.
+## Type Organization Best Practices Summary
+
+### ✅ ALWAYS DO
+- Move component props to feature types when shared between 2+ components
+- Use feature-level types for complex interfaces (5+ properties)
+- Import from appropriate type locations (`@/types`, `../chat.types`, etc.)
+- Document complex types with JSDoc comments
+- Use proper type hierarchy (global → feature → component)
+
+### ❌ NEVER DO
+- Keep complex props inline when they'll be reused
+- Mix global types with feature-specific types in the same file
+- Use `any` or skip type definitions
+- Create duplicate interfaces across features
+- Place feature-specific types in global types folder
+This TypeScript ruleset ensures type safety, developer productivity, proper DDD organization, and seamless integration with React 19, Next.js 15, and our testing infrastructure.

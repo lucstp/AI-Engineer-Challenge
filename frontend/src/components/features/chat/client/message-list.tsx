@@ -37,7 +37,9 @@ export function MessageList({
   // Detect user scrolling to respect user control
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
+    if (!scrollContainer) {
+      return;
+    }
 
     const handleScroll = () => {
       setUserIsScrolling(true);
@@ -76,7 +78,7 @@ export function MessageList({
       animationFrameRef.current = requestAnimationFrame(() => {
         messagesEndRef.current?.scrollIntoView({
           behavior: userIsScrolling ? 'auto' : 'smooth',
-          block: 'end'
+          block: 'end',
         });
       });
 
@@ -125,7 +127,7 @@ export function MessageList({
               {/* Timestamp if enabled */}
               {message.showTimestamp && message.timestamp && (
                 <div className="ml-[92px] text-xs text-blue-300 opacity-50">
-                                    {(() => {
+                  {(() => {
                     const date = new Date(message.timestamp);
                     return !Number.isNaN(date.getTime())
                       ? date.toLocaleTimeString([], {

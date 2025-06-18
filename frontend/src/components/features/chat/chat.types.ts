@@ -56,6 +56,16 @@ export interface ChatInputProps {
   className?: string;
 }
 
+/**
+ * ModelSelector component props (4 properties)
+ */
+export interface ModelSelectorProps {
+  selectedModel: string;
+  onModelChange: (value: string) => void;
+  disabled?: boolean;
+  className?: string;
+}
+
 // ============================================================================
 // FEATURE-SPECIFIC CONFIGURATIONS
 // ============================================================================

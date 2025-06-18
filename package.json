@@ -1,7 +1,7 @@
 {
 	"name": "ai-engineer-challenge",
 	"private": true,
-	"packageManager": "pnpm@10.11.0",
+	"packageManager": "pnpm@10.12.1",
 	"scripts": {
 		"lint:md": "markdownlint \"**/*.md\"",
 		"lint:md:fix": "markdownlint --fix \"**/*.md\"",
@@ -13,10 +13,10 @@
 	},
 	"devDependencies": {
 		"husky": "^9.1.7",
-    "lint-staged": "^16.1.0",
+		"lint-staged": "^16.1.0",
 		"markdownlint-cli": "^0.45.0"
 	},
-  "lint-staged": {
+	"lint-staged": {
 		"frontend/**/*.{js,jsx,ts,tsx,json}": [
 			"cd frontend && pnpm biome check --write",
 			"cd frontend && pnpm format"

@@ -19,7 +19,7 @@
     "ci-full": "pnpm check && pnpm test:coverage && pnpm build",
     "generate:tests": "qodo-cli test generate --framework=vitest --location=colocated --output-format=typescript --config-file=vitest.config.ts",
     "shadcn-ui": "pnpm dlx shadcn@latest",
-    "clean": "rm -rf .next node_modules",
+    "clean": "rm -rf .next node_modules && find ../.. -maxdepth 2 -name 'node_modules' -type d -exec rm -rf {} + && find ../.. -maxdepth 2 -name 'pnpm-lock.yaml' -type f -delete",
     "reinstall": "pnpm run clean && pnpm install"
   },
   "dependencies": {
@@ -38,6 +38,7 @@
     "react-error-boundary": "^6.0.0",
     "shadcn-ui": "^0.9.5",
     "tailwind-merge": "^3.3.0",
+    "usehooks-ts": "^3.1.1",
     "zod": "^3.25.55",
     "zustand": "^5.0.5"
   },
@@ -63,5 +64,5 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.2"
   },
-  "packageManager": "pnpm@10.11.0"
+  "packageManager": "pnpm@10.12.1"
 }

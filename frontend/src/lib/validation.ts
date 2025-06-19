@@ -1,3 +1,9 @@
+/**
+ * Validation Schemas
+ * Zod schemas and validation logic
+ * Following Silicon Valley DDD - Pure Utilities & Infrastructure
+ */
+
 import { z } from 'zod';
 
 /**
@@ -28,3 +34,14 @@ export function isKeyFormatValid(key: string): boolean {
 
 // Export regex for potential reuse elsewhere
 export { API_KEY_REGEX };
+
+/**
+ * Chat message form validation schema
+ * Validates all required fields for chat message submission
+ */
+export const chatMessageSchema = z.object({
+  message: z.string().min(1, 'Message cannot be empty').max(4000, 'Message too long'),
+  model: z.string().min(1, 'Model is required'),
+  apiKey: z.string().min(20, 'Valid API key is required'),
+  developerMessage: z.string().optional().default('You are a helpful AI assistant.'),
+});

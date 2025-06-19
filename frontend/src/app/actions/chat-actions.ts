@@ -1,33 +1,13 @@
 'use server';
 
-import { z } from 'zod';
-
-// Form validation schema
-const chatMessageSchema = z.object({
-  message: z.string().min(1, 'Message cannot be empty').max(4000, 'Message too long'),
-  model: z.string().min(1, 'Model is required'),
-  apiKey: z.string().min(20, 'Valid API key is required'),
-  developerMessage: z.string().optional().default('You are a helpful AI assistant.'),
-});
-
-export type ChatFormData = z.infer<typeof chatMessageSchema>;
-
-export interface ActionResult<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  fieldErrors?: Record<string, string[]>;
-}
-
-export interface FormState {
-  message: string;
-  errors?: Record<string, string[]>;
-  success?: boolean;
-}
+import { secureFetch } from '@/lib/api-client';
+import { logSafeError, sanitizeString } from '@/lib/api-security';
+import { chatMessageSchema, isKeyFormatValid } from '@/lib/validation';
+import type { ActionResult, FormState } from '@/types';
 
 /**
  * Send a chat message to the FastAPI backend
- * Using modern Next.js 15 Server Action patterns
+ * Using modern Next.js 15 Server Action patterns with React 19 useActionState
  */
 export async function sendMessageAction(
   _prevState: FormState,
@@ -54,11 +34,11 @@ export async function sendMessageAction(
 
     const { message, model, apiKey, developerMessage } = validation.data;
 
-    // Get API URL from environment variables
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    // Get API URL from server-only environment variables
+    const apiUrl = process.env.API_URL || '/api';
 
-    // Make request to FastAPI backend
-    const response = await fetch(`${apiUrl}/api/chat`, {
+    // Make secure request to FastAPI backend
+    await secureFetch(`${apiUrl}/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -70,11 +50,8 @@ export async function sendMessageAction(
         model,
         api_key: apiKey,
       }),
+      timeout: 30000, // 30 second timeout
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
 
     // For now, just return success - streaming will be handled separately
     return {
@@ -82,10 +59,10 @@ export async function sendMessageAction(
       success: true,
     };
   } catch (error) {
-    console.error('Chat action error:', error);
+    logSafeError('Chat action error:', error);
 
     return {
-      message: error instanceof Error ? error.message : 'Unknown error occurred',
+      message: error instanceof Error ? sanitizeString(error.message) : 'Unknown error occurred',
       success: false,
     };
   }
@@ -97,8 +74,7 @@ export async function sendMessageAction(
  */
 export async function validateApiKeyAction(apiKey: string): Promise<ActionResult<boolean>> {
   try {
-    // Basic format validation (OpenAI keys start with 'sk-' and are ~51 chars)
-    const isValidFormat = /^sk-[A-Za-z0-9_-]{48}$/.test(apiKey.trim());
+    const isValidFormat = isKeyFormatValid(apiKey.trim());
 
     return {
       success: true,

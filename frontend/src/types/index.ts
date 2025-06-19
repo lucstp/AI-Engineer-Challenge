@@ -8,13 +8,11 @@
 import type { ReactNode } from 'react';
 
 /**
- * Global Types - Enterprise Type System
+ * Global Types Hub - Single Source of Truth
+ * Using modern DDD patterns Frontend Architecture
  *
- * Modern architecture following domain-driven design principles:
- * - Single source of truth for each type
- * - Clear separation between global and domain types
- * - Minimal abstraction, maximum clarity
- * - Zero circular dependencies
+ * All shared TypeScript interfaces and types are exported from here
+ * to maintain a single source of truth and prevent duplication.
  */
 
 // ============================================================================
@@ -27,12 +25,9 @@ import type { ReactNode } from 'react';
  */
 export interface Message {
   id: string;
+  role: 'user' | 'assistant' | 'system';
   content: string;
-  role: 'user' | 'assistant';
   timestamp: string;
-  animated?: boolean;
-  showTimestamp?: boolean;
-  isOptimistic?: boolean; // React 19 useOptimistic support
 }
 
 /**
@@ -138,3 +133,16 @@ export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
  * ❌ import type { Message } from '@/features/chats';
  * ❌ import type { Message } from '@/store/store.types';
  */
+
+// ============================================================================
+// API TYPES
+// ============================================================================
+
+// Re-export API types from dedicated API types file
+export * from './api.types';
+
+export interface User {
+  id: string;
+  name: string;
+  email?: string;
+}

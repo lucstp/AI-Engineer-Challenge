@@ -33,6 +33,7 @@ export function MessageList({
   const [userIsScrolling, setUserIsScrolling] = useState(false);
   const userScrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const setIsAnimating = useChatStore((state) => state.setIsAnimating);
+  const showTimestamps = useChatStore((state) => state.showTimestamps);
 
   // Detect user scrolling to respect user control
   useEffect(() => {
@@ -125,7 +126,7 @@ export function MessageList({
               </div>
 
               {/* Timestamp if enabled */}
-              {message.showTimestamp && message.timestamp && (
+              {showTimestamps && message.timestamp && (
                 <div className="ml-[92px] text-xs text-blue-300 opacity-50">
                   {(() => {
                     const date = new Date(message.timestamp);

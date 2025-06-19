@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { useChatStore } from '@/store';
 import { Bot, User } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -30,10 +31,11 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const isBot = message.role === 'assistant';
   const isWelcome = message.id === 'welcome';
+  const showTimestamps = useChatStore((state) => state.showTimestamps);
 
   // Memoized timestamp formatting for performance
   const formattedTime = useMemo(() => {
-    if (!message.showTimestamp) {
+    if (!showTimestamps || !message.timestamp) {
       return null;
     }
 
@@ -44,11 +46,11 @@ export function MessageBubble({
       }),
       full: new Date(message.timestamp).toLocaleString(),
     };
-  }, [message.timestamp, message.showTimestamp]);
+  }, [message.timestamp, showTimestamps]);
 
   // Use motion.div if message should be animated, regular div otherwise
-  const Container = message.animated ? motion.div : 'div';
-  const containerProps = message.animated
+  const Container = isAnimating ? motion.div : 'div';
+  const containerProps = isAnimating
     ? {
         initial: { opacity: 0, y: 10 },
         animate: { opacity: 1, y: 0 },
@@ -111,7 +113,7 @@ export function MessageBubble({
           {isBot || isWelcome ? (
             <TypewriterMessage
               message={message}
-              isAnimating={isAnimating && message.animated}
+              isAnimating={isAnimating}
               onAnimationComplete={onAnimationComplete}
               className="prose-sm text-white"
             />

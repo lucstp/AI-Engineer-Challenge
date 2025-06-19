@@ -15,7 +15,6 @@ import {
 import { useChatStore } from '@/store';
 import { Bot, Clock, Sparkles } from 'lucide-react';
 
-
 export default function HomePage() {
   const { messages, isInitialized, initializeStore, showTimestamps, setShowTimestamps } =
     useChatStore();

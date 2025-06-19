@@ -17,6 +17,13 @@ function SelectValue({ ...props }: React.ComponentProps<typeof SelectPrimitive.V
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
+/**
+ * Renders a styled trigger button for the Select component, displaying the selected value and a dropdown icon.
+ *
+ * Supports a `size` prop to adjust height and appearance. Forwards all props to the underlying Radix Select trigger and includes accessibility attributes for focus and invalid states.
+ *
+ * @param size - Controls the trigger's height and padding; accepts `'sm'` or `'default'`
+ */
 function SelectTrigger({
   className,
   size = 'default',
@@ -88,6 +95,11 @@ function SelectLabel({ className, ...props }: React.ComponentProps<typeof Select
   );
 }
 
+/**
+ * Renders a selectable item within the Select dropdown, displaying a checkmark icon when selected.
+ *
+ * Applies styling for focus, disabled state, and layout. The checkmark icon appears on the right when the item is selected. Supports custom content via children and forwards all additional props to the underlying primitive.
+ */
 function SelectItem({
   className,
   children,

@@ -9,6 +9,13 @@ import 'server-only';
 const algorithm = 'AES-GCM';
 const keyLength = 256;
 
+/**
+ * Derives an AES-256-GCM CryptoKey using PBKDF2 from a secret and a provided salt.
+ *
+ * @param salt - A 32-byte Uint8Array used as the dynamic salt for key derivation
+ * @returns A Promise that resolves to a CryptoKey suitable for AES-GCM encryption and decryption
+ * @throws If the ENCRYPTION_SECRET environment variable is missing
+ */
 async function getEncryptionKey(salt: Uint8Array): Promise<CryptoKey> {
   const secret = process.env.ENCRYPTION_SECRET;
   if (!secret) {
@@ -38,6 +45,14 @@ async function getEncryptionKey(salt: Uint8Array): Promise<CryptoKey> {
   );
 }
 
+/**
+ * Encrypts an API key string using AES-256-GCM with a randomly generated salt and IV.
+ *
+ * @param apiKey - The API key string to encrypt
+ * @returns A base64-encoded string containing the salt, IV, and encrypted API key
+ *
+ * Throws a generic error if encryption fails.
+ */
 export async function encryptApiKey(apiKey: string): Promise<string> {
   try {
     // Generate random salt for PBKDF2 (32 bytes)
@@ -64,6 +79,13 @@ export async function encryptApiKey(apiKey: string): Promise<string> {
   }
 }
 
+/**
+ * Decrypts a base64-encoded string containing an API key encrypted with AES-256-GCM.
+ *
+ * @param encryptedData - The base64-encoded string produced by the encryption utility, containing the salt, IV, and ciphertext.
+ * @returns The original decrypted API key string.
+ * @throws If the input is not properly formatted or decryption fails, a generic error is thrown without revealing sensitive details.
+ */
 export async function decryptApiKey(encryptedData: string): Promise<string> {
   try {
     const combined = Buffer.from(encryptedData, 'base64');

@@ -15,8 +15,13 @@ export interface FormState {
 }
 
 /**
- * Send a chat message using secure Server Action with streaming
- * Using modern Next.js 15 + React 19 patterns with encrypted API key storage
+ * Sends a chat message securely using a server action and returns a streaming response.
+ *
+ * Validates the user's API key session and message input, retrieves the decrypted API key, and sends the message to a FastAPI backend. Returns a `FormState` indicating success or failure, including any validation errors or a streaming response for successful requests.
+ *
+ * @param _prevState - The previous form state (unused)
+ * @param formData - The form data containing the chat message and optional parameters
+ * @returns A `FormState` object with success status, error messages, and optionally a streaming response
  */
 export async function sendMessageAction(
   _prevState: FormState,
@@ -110,8 +115,11 @@ export async function sendMessageAction(
 }
 
 /**
- * Validate API key format - Quick validation for immediate feedback
- * @deprecated Use validateAndStoreApiKey from api-key-actions instead
+ * Checks if the provided API key matches the expected format.
+ *
+ * @deprecated Use validateAndStoreApiKey from api-key-actions instead.
+ * @param apiKey - The API key string to validate
+ * @returns An ActionResult containing `true` if the API key format is valid, otherwise `false`
  */
 export async function validateApiKeyAction(apiKey: string): Promise<ActionResult<boolean>> {
   console.warn(

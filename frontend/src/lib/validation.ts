@@ -32,7 +32,10 @@ export interface ApiKeyValidationResult {
 }
 
 /**
- * Get detailed key type information for better user feedback
+ * Returns a descriptive label for the type of OpenAI API key based on its prefix.
+ *
+ * @param key - The API key string to analyze
+ * @returns The key type as a user-friendly string: "Project Service", "Project", "Service Account", "Admin", or "Legacy" if no known prefix is matched
  */
 export function getKeyType(key: string): string {
   if (key.startsWith('sk-proj-s-')) {
@@ -51,8 +54,12 @@ export function getKeyType(key: string): string {
 }
 
 /**
- * Validate OpenAI key format and return detailed information
- * Supports all current OpenAI key formats (2024-2025)
+ * Validates an OpenAI API key string and returns detailed information about its validity and format.
+ *
+ * Supports all current OpenAI key formats (2024-2025), including legacy and modern variants. Handles empty, non-string, or improperly formatted keys, and distinguishes between different key types based on their prefixes.
+ *
+ * @param key - The API key string to validate
+ * @returns An object describing whether the key is valid, its type, length, format (if applicable), and an error message if invalid
  */
 export function validateOpenAIKeyFormat(key: string): ApiKeyValidationResult {
   if (!key || typeof key !== 'string') {
@@ -137,10 +144,12 @@ export const apiKeySchema = z
   .regex(LEGACY_API_KEY_REGEX, 'API key must start with "sk-" and be exactly 51 characters');
 
 /**
- * Checks if a string matches any valid OpenAI API key format.
+ * Determines whether the provided string is a valid OpenAI API key in either legacy or modern format.
  *
- * @param key - The string to validate as an API key.
- * @returns `true` if {@link key} matches any valid OpenAI API key pattern; otherwise, `false`.
+ * @param key - The API key string to validate. Leading and trailing whitespace is ignored.
+ * @returns `true` if the key matches any recognized OpenAI API key format; otherwise, `false`.
+ *
+ * Returns `false` for empty, non-string, or incorrectly formatted keys.
  */
 export function isKeyFormatValid(key: string): boolean {
   return validateOpenAIKeyFormat(key).isValid;
@@ -181,7 +190,12 @@ export const ERROR_MESSAGES = {
 } as const;
 
 /**
- * Get error details based on error message content
+ * Returns structured error details based on the content of an error message.
+ *
+ * Analyzes the provided error string for keywords related to rate limiting, authorization, quota, format, or network issues, and maps them to user-friendly error details. If no known keywords are found, returns a generic validation error with the original message.
+ *
+ * @param error - The error message to analyze
+ * @returns An object containing a title, description, and optional action for user feedback
  */
 export function getErrorDetails(error: string): {
   title: string;

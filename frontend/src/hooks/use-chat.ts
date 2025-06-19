@@ -5,6 +5,13 @@ import { sendMessageAction } from '@/app/actions/chat-actions';
 import { useChatStore } from '@/store';
 import type { Message } from '@/types';
 
+/**
+ * React hook for managing chat state, message sending, and streaming assistant responses with animation.
+ *
+ * Integrates with a global chat store to provide chat messages, model selection, API key status, and UI state. Handles sending user messages to a secure server action, processes streaming assistant responses with a typewriter effect, and manages all related UI and animation states. No direct API key access occurs in the hook; all server communication is secure and streaming-enabled.
+ *
+ * @returns An object containing chat state variables and a `sendMessage` function for sending user messages and handling assistant responses.
+ */
 export function useChat() {
   const [isPending, startTransition] = useTransition();
 

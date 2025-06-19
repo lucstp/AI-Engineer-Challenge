@@ -26,6 +26,14 @@ interface ApiKeySession extends JWTPayload {
   expiresAt: number;
 }
 
+/**
+ * Validates an OpenAI API key, verifies it with the OpenAI API, and securely stores it in encrypted cookies along with a JWT session token.
+ *
+ * Performs multi-step validation including format checks, schema validation, and a live API request to ensure the key is valid and active. On success, the API key is encrypted and stored in an HTTP-only cookie, and a session token containing key metadata is set. Returns detailed error information if validation fails.
+ *
+ * @param apiKey - The OpenAI API key to validate and store
+ * @returns An object indicating success or failure, with key metadata on success or error details on failure
+ */
 export async function validateAndStoreApiKey(
   apiKey: string,
 ): Promise<
@@ -157,6 +165,11 @@ export async function validateAndStoreApiKey(
   }
 }
 
+/**
+ * Retrieves and verifies the current API key session from cookies.
+ *
+ * Returns the decoded session payload if a valid, unexpired JWT session token is present; otherwise, returns null.
+ */
 export async function getApiKeySession(): Promise<ApiKeySession | null> {
   try {
     const cookieStore = await cookies();
@@ -182,12 +195,20 @@ export async function getApiKeySession(): Promise<ApiKeySession | null> {
   }
 }
 
+/**
+ * Deletes the API key session and encrypted API key cookies, effectively logging out the user and removing stored credentials.
+ */
 export async function deleteApiKeySession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete('api-session');
   cookieStore.delete('api-key-enc');
 }
 
+/**
+ * Retrieves and decrypts the stored OpenAI API key if a valid session exists.
+ *
+ * @returns The decrypted API key, or `null` if no valid session or key is found.
+ */
 export async function getDecryptedApiKey(): Promise<string | null> {
   try {
     const session = await getApiKeySession();

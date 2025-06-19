@@ -10,10 +10,15 @@ import { z } from 'zod';
  * API Key Validation Utilities
  *
  * Centralized validation logic for OpenAI API keys
+ * Updated to support all 2024-2025 OpenAI key formats
  */
 
-// Single source of truth for API key regex pattern
-const API_KEY_REGEX = /^sk-[A-Za-z0-9_-]{48}$/;
+// Legacy API key pattern (exactly 51 chars)
+const LEGACY_API_KEY_REGEX = /^sk-[A-Za-z0-9]{48}$/;
+
+// Modern API key pattern with T3BlbkFJ signature (2024-2025)
+const MODERN_API_KEY_REGEX =
+  /^sk-(?:proj-|svcacct-|admin-)?[A-Za-z0-9_-]{20,74}T3BlbkFJ[A-Za-z0-9_-]{20,74}$/;
 
 /**
  * Enhanced OpenAI API key validation with format details
@@ -22,23 +27,44 @@ export interface ApiKeyValidationResult {
   isValid: boolean;
   keyType: string;
   length: number;
+  format?: 'legacy' | 'project' | 'service' | 'admin' | 'modern';
   error?: string;
 }
 
 /**
+ * Get detailed key type information for better user feedback
+ */
+export function getKeyType(key: string): string {
+  if (key.startsWith('sk-proj-s-')) {
+    return 'Project Service';
+  }
+  if (key.startsWith('sk-proj-')) {
+    return 'Project';
+  }
+  if (key.startsWith('sk-svcacct-')) {
+    return 'Service Account';
+  }
+  if (key.startsWith('sk-admin-')) {
+    return 'Admin';
+  }
+  return 'Legacy';
+}
+
+/**
  * Validate OpenAI key format and return detailed information
+ * Supports all current OpenAI key formats (2024-2025)
  */
 export function validateOpenAIKeyFormat(key: string): ApiKeyValidationResult {
-  const trimmedKey = key.trim();
-
-  if (!trimmedKey) {
+  if (!key || typeof key !== 'string') {
     return {
       isValid: false,
       keyType: 'unknown',
       length: 0,
-      error: 'API key is required',
+      error: 'API key is required and must be a string',
     };
   }
+
+  const trimmedKey = key.trim();
 
   if (!trimmedKey.startsWith('sk-')) {
     return {
@@ -49,28 +75,41 @@ export function validateOpenAIKeyFormat(key: string): ApiKeyValidationResult {
     };
   }
 
-  if (trimmedKey.length !== 51) {
+  // Check for modern format with T3BlbkFJ signature
+  if (MODERN_API_KEY_REGEX.test(trimmedKey)) {
+    const format = trimmedKey.startsWith('sk-proj-')
+      ? 'project'
+      : trimmedKey.startsWith('sk-svcacct-')
+        ? 'service'
+        : trimmedKey.startsWith('sk-admin-')
+          ? 'admin'
+          : 'modern';
+
     return {
-      isValid: false,
-      keyType: 'openai',
+      isValid: true,
+      keyType: getKeyType(trimmedKey),
       length: trimmedKey.length,
-      error: `OpenAI API keys must be exactly 51 characters (found ${trimmedKey.length})`,
+      format,
     };
   }
 
-  if (!API_KEY_REGEX.test(trimmedKey)) {
+  // Check for legacy format (exactly 51 chars)
+  if (LEGACY_API_KEY_REGEX.test(trimmedKey)) {
     return {
-      isValid: false,
-      keyType: 'openai',
+      isValid: true,
+      keyType: 'Legacy',
       length: trimmedKey.length,
-      error: 'API key contains invalid characters',
+      format: 'legacy',
     };
   }
 
+  // Invalid format
   return {
-    isValid: true,
-    keyType: 'openai',
+    isValid: false,
+    keyType: 'invalid',
     length: trimmedKey.length,
+    error:
+      'Invalid OpenAI API key format. Keys should start with "sk-", "sk-proj-", or "sk-svcacct-"',
   };
 }
 
@@ -93,20 +132,86 @@ export const modernApiKeySchema = z
  */
 export const apiKeySchema = z
   .string()
-  .regex(API_KEY_REGEX, 'API key must start with "sk-" and be exactly 51 characters');
+  .regex(LEGACY_API_KEY_REGEX, 'API key must start with "sk-" and be exactly 51 characters');
 
 /**
- * Checks if a string matches the required API key format.
+ * Checks if a string matches any valid OpenAI API key format.
  *
  * @param key - The string to validate as an API key.
- * @returns `true` if {@link key} matches the API key pattern; otherwise, `false`.
+ * @returns `true` if {@link key} matches any valid OpenAI API key pattern; otherwise, `false`.
  */
 export function isKeyFormatValid(key: string): boolean {
-  return API_KEY_REGEX.test(key);
+  return validateOpenAIKeyFormat(key).isValid;
 }
 
-// Export regex for potential reuse elsewhere
-export { API_KEY_REGEX };
+// Export regex patterns for potential reuse elsewhere
+export { LEGACY_API_KEY_REGEX, MODERN_API_KEY_REGEX };
+
+/**
+ * Enhanced Error Messages for User-Friendly Feedback
+ */
+export const ERROR_MESSAGES = {
+  INVALID_FORMAT: {
+    title: 'Invalid format',
+    description: 'API key should start with "sk-", "sk-proj-", or "sk-svcacct-".',
+    action: 'Double-check your API key from the OpenAI dashboard.',
+  },
+  UNAUTHORIZED: {
+    title: 'Invalid API key',
+    description: 'The API key is not valid or has been revoked.',
+    action: 'Generate a new API key from your OpenAI account.',
+  },
+  RATE_LIMITED: {
+    title: 'Too many requests',
+    description: 'Validation requests are being rate limited.',
+    action: 'Please wait a moment before trying again.',
+  },
+  INSUFFICIENT_QUOTA: {
+    title: 'Quota exceeded',
+    description: 'Your API key has exceeded its usage quota.',
+    action: 'Check your billing settings or upgrade your plan.',
+  },
+  NETWORK_ERROR: {
+    title: 'Network error',
+    description: 'Unable to validate API key due to network issues.',
+    action: 'Check your internet connection and try again.',
+  },
+} as const;
+
+/**
+ * Get error details based on error message content
+ */
+export function getErrorDetails(error: string): {
+  title: string;
+  description: string;
+  action?: string;
+} {
+  if (error.includes('rate limit') || error.includes('429')) {
+    return ERROR_MESSAGES.RATE_LIMITED;
+  }
+  if (
+    error.includes('unauthorized') ||
+    error.includes('401') ||
+    error.includes('Invalid API key')
+  ) {
+    return ERROR_MESSAGES.UNAUTHORIZED;
+  }
+  if (error.includes('quota') || error.includes('billing')) {
+    return ERROR_MESSAGES.INSUFFICIENT_QUOTA;
+  }
+  if (error.includes('format') || error.includes('Invalid format')) {
+    return ERROR_MESSAGES.INVALID_FORMAT;
+  }
+  if (error.includes('network') || error.includes('fetch')) {
+    return ERROR_MESSAGES.NETWORK_ERROR;
+  }
+
+  return {
+    title: 'Validation Error',
+    description: error,
+    action: 'Please try again or check your API key.',
+  };
+}
 
 /**
  * Enhanced chat message form validation schema for secure implementation

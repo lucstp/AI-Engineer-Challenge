@@ -1,8 +1,3 @@
-import {
-  deleteApiKeySession,
-  getApiKeySession,
-  validateAndStoreApiKey,
-} from '@/app/actions/api-key-actions';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
@@ -21,10 +16,8 @@ const INITIAL_STATE: Partial<ChatState> = {
   apiKeyType: null,
   apiKeyLength: null,
   apiKeyError: null,
-  // Initialization state
   isInitialized: false,
-  // Model state
-  selectedModel: 'gpt-4o-mini',
+  selectedModel: 'gpt-4.1-mini',
   // UI state
   isLoading: false,
   isTyping: false,
@@ -49,8 +42,11 @@ export const useChatStore = create<ChatState>()(
           })),
         clearMessages: () => set({ messages: [] }),
 
-        // SECURE API Key actions (no client storage)
-        setApiKey: async (key: string): Promise<boolean> => {
+        // SECURE API Key actions (async - no hydration issues)
+        setApiKey: async (key: string) => {
+          // Dynamic import to avoid hydration issues
+          const { validateAndStoreApiKey } = await import('@/app/actions/api-key-actions');
+
           set({ isLoading: true, apiKeyError: null });
 
           try {
@@ -64,17 +60,15 @@ export const useChatStore = create<ChatState>()(
                 apiKeyError: null,
                 isLoading: false,
               });
-              return true; // Success
+            } else {
+              set({
+                hasValidApiKey: false,
+                apiKeyType: null,
+                apiKeyLength: null,
+                apiKeyError: result.error || 'Validation failed',
+                isLoading: false,
+              });
             }
-
-            set({
-              hasValidApiKey: false,
-              apiKeyType: null,
-              apiKeyLength: null,
-              apiKeyError: result.error || 'Validation failed',
-              isLoading: false,
-            });
-            return false; // Validation failed
           } catch (error) {
             set({
               hasValidApiKey: false,
@@ -83,11 +77,13 @@ export const useChatStore = create<ChatState>()(
               apiKeyError: 'Failed to validate API key',
               isLoading: false,
             });
-            return false; // Exception occurred
           }
         },
 
         deleteApiKey: async () => {
+          // Dynamic import to avoid hydration issues
+          const { deleteApiKeySession } = await import('@/app/actions/api-key-actions');
+
           try {
             await deleteApiKeySession();
             set({
@@ -102,38 +98,47 @@ export const useChatStore = create<ChatState>()(
           }
         },
 
-        // Check session on initialization
-        initializeStore: async () => {
+        // FIXED: Safe initialization - no Server Actions during hydration
+        initializeStore: () => {
+          // Just mark as initialized - session check happens on user interaction
+          set({ isInitialized: true });
+        },
+
+        // NEW: Separate session check method (called after hydration)
+        checkSession: async () => {
+          // Dynamic import to avoid hydration issues
+          const { getApiKeySession } = await import('@/app/actions/api-key-actions');
+
           try {
             const session = await getApiKeySession();
             set({
               hasValidApiKey: session?.hasValidKey || false,
               apiKeyType: session?.keyType || null,
               apiKeyLength: session?.keyLength || null,
-              isInitialized: true,
             });
           } catch (error) {
-            console.error('Store initialization failed:', error);
-            set({ isInitialized: true });
+            console.error('Session check failed:', error);
+            set({
+              hasValidApiKey: false,
+              apiKeyType: null,
+              apiKeyLength: null,
+            });
           }
         },
 
-        // Model actions
+        // Other actions
         setSelectedModel: (model) => set({ selectedModel: model }),
-
-        // UI state actions
         setIsLoading: (loading) => set({ isLoading: loading }),
         setIsTyping: (typing) => set({ isTyping: typing }),
-        setShowTimestamps: (show) =>
-          set((state) => ({
-            showTimestamps: typeof show === 'function' ? show(state.showTimestamps) : show,
-          })),
+        setShowTimestamps: (show) => set({ showTimestamps: show }),
         setIsAnimating: (animating) => set({ isAnimating: animating }),
         setAnimatedContent: (content) => set({ animatedContent: content }),
         setIsExpanded: (expanded) => set({ isExpanded: expanded }),
 
-        // Testing utilities - public reset method for test usage
         reset: async () => {
+          // Dynamic import to avoid hydration issues
+          const { deleteApiKeySession } = await import('@/app/actions/api-key-actions');
+
           try {
             await deleteApiKeySession();
             set(INITIAL_STATE);
@@ -152,9 +157,10 @@ export const useChatStore = create<ChatState>()(
           isExpanded: state.isExpanded,
           showTimestamps: state.showTimestamps,
         }),
+        // FIXED: Safe rehydration - no Server Actions
         onRehydrateStorage: () => (state) => {
           if (state) {
-            // Validate the API key when the store is rehydrated
+            // Just initialize - don't call Server Actions during hydration
             state.initializeStore();
           }
         },

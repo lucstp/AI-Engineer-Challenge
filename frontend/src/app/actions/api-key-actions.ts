@@ -2,7 +2,12 @@
 
 import { cookies } from 'next/headers';
 import { decryptApiKey, encryptApiKey } from '@/lib/encryption';
-import { modernApiKeySchema, validateOpenAIKeyFormat } from '@/lib/validation';
+import {
+  ERROR_MESSAGES,
+  getErrorDetails,
+  modernApiKeySchema,
+  validateOpenAIKeyFormat,
+} from '@/lib/validation';
 import type { ActionResult } from '@/types';
 import { jwtVerify, SignJWT, type JWTPayload } from 'jose';
 
@@ -23,59 +28,75 @@ interface ApiKeySession extends JWTPayload {
 
 export async function validateAndStoreApiKey(
   apiKey: string,
-): Promise<ActionResult<{ success: boolean; keyInfo?: { type: string; length: number } }>> {
+): Promise<
+  ActionResult<{ success: boolean; keyInfo?: { type: string; length: number; format?: string } }>
+> {
   try {
-    // 1. Format validation
-    const validation = modernApiKeySchema.safeParse(apiKey);
-    if (!validation.success) {
-      // Safely extract error message with multiple fallbacks
-      const errorMessage =
-        validation.error?.issues?.[0]?.message ??
-        validation.error?.message ??
-        'Invalid OpenAI API key format';
-
+    // 1. Enhanced format validation with specific error messages
+    const formatValidation = validateOpenAIKeyFormat(apiKey);
+    if (!formatValidation.isValid) {
+      const errorDetails = getErrorDetails(formatValidation.error || 'Invalid format');
       return {
         success: false,
-        error: 'Invalid API key format',
+        error: errorDetails.description,
         fieldErrors: {
-          apiKey: [errorMessage],
+          apiKey: [errorDetails.action || 'Please check your API key format'],
         },
       };
     }
 
-    // 2. Get key format details
-    const keyInfo = validateOpenAIKeyFormat(apiKey);
-    if (!keyInfo.isValid) {
+    // 2. Zod schema validation as secondary check
+    const validation = modernApiKeySchema.safeParse(apiKey);
+    if (!validation.success) {
+      const errorMessage = validation.error?.issues?.[0]?.message ?? 'Invalid API key format';
       return {
         success: false,
-        error: 'Invalid API key format',
-        fieldErrors: { apiKey: ['Key format not recognized'] },
+        error: ERROR_MESSAGES.INVALID_FORMAT.description,
+        fieldErrors: {
+          apiKey: [ERROR_MESSAGES.INVALID_FORMAT.action],
+        },
       };
     }
 
-    // 3. Test with OpenAI API (server-side only)
+    // 3. Enhanced OpenAI API test with timeout and proper error handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
     const testResponse = await fetch('https://api.openai.com/v1/models', {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      // Add timeout to prevent hanging
-      signal: AbortSignal.timeout(10000), // 10 second timeout
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!testResponse.ok) {
       const errorText = await testResponse.text().catch(() => 'Unknown error');
       console.error('OpenAI API validation failed:', testResponse.status, errorText);
 
+      // Enhanced error handling with specific messages
+      let errorDetails: { title: string; description: string; action: string };
+      if (testResponse.status === 401) {
+        errorDetails = ERROR_MESSAGES.UNAUTHORIZED;
+      } else if (testResponse.status === 429) {
+        errorDetails = ERROR_MESSAGES.RATE_LIMITED;
+      } else if (testResponse.status === 403) {
+        errorDetails = ERROR_MESSAGES.INSUFFICIENT_QUOTA;
+      } else {
+        errorDetails = {
+          title: 'Validation Failed',
+          description: `API validation failed (${testResponse.status})`,
+          action: 'Please check your API key and try again.',
+        };
+      }
+
       return {
         success: false,
-        error: 'API key validation failed',
+        error: errorDetails.description,
         fieldErrors: {
-          apiKey: [
-            testResponse.status === 401
-              ? 'Invalid or expired API key'
-              : 'API key verification failed',
-          ],
+          apiKey: [errorDetails.action],
         },
       };
     }
@@ -86,8 +107,8 @@ export async function validateAndStoreApiKey(
     // 5. Create secure session
     const sessionData: ApiKeySession = {
       hasValidKey: true,
-      keyType: keyInfo.keyType,
-      keyLength: keyInfo.length,
+      keyType: formatValidation.keyType,
+      keyLength: formatValidation.length,
       expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
     };
 
@@ -121,8 +142,9 @@ export async function validateAndStoreApiKey(
       data: {
         success: true,
         keyInfo: {
-          type: keyInfo.keyType,
-          length: keyInfo.length,
+          type: formatValidation.keyType,
+          length: formatValidation.length,
+          format: formatValidation.format,
         },
       },
     };

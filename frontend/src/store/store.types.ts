@@ -29,12 +29,13 @@ export interface ChatState {
   apiKeyType: string | null;
   apiKeyLength: number | null;
   apiKeyError: string | null;
-  setApiKey: (key: string) => Promise<boolean>;
+  setApiKey: (key: string) => Promise<void>;
   deleteApiKey: () => Promise<void>;
 
   // Initialization
   isInitialized: boolean;
-  initializeStore: () => Promise<void>;
+  initializeStore: () => void;
+  checkSession: () => Promise<void>;
 
   // Model state
   selectedModel: string;
@@ -46,7 +47,7 @@ export interface ChatState {
   isTyping: boolean;
   setIsTyping: (typing: boolean) => void;
   showTimestamps: boolean;
-  setShowTimestamps: (show: boolean | ((prev: boolean) => boolean)) => void;
+  setShowTimestamps: (show: boolean) => void;
   isAnimating: boolean;
   setIsAnimating: (animating: boolean) => void;
   animatedContent: string;

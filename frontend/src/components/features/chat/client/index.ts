@@ -11,4 +11,5 @@ export { MessageList } from './message-list';
 export { TypingIndicator } from './typing-indicator';
 export { EmptyState } from './empty-state';
 export { ChatInput } from './chat-input';
+export { ApiKeySection } from './api-key-section';
 export { ModelSelector } from './model-selector';

@@ -14,19 +14,21 @@ import { useChatStore } from '@/store';
  * - Prevents flickering during rehydration
  */
 export function AnimatedBackground({ children }: { children: React.ReactNode }) {
-  // SECURE: Get validation state from store (no direct API key access)
-  const { hasValidApiKey, apiKeyType, apiKeyLength } = useChatStore();
-
-  // Force logo to start as invalid and only change after explicit validation
+  const { hasValidApiKey, apiKeyType, apiKeyLength, checkSession, isInitialized } = useChatStore();
   const [logoState, setLogoState] = useState<'valid' | 'invalid'>('invalid');
 
-  // Update logo state based on secure validation
+  // Check session after hydration
   useEffect(() => {
-    // Show valid state only when we have confirmed validation from server
+    if (isInitialized) {
+      checkSession(); // Safe to call after hydration
+    }
+  }, [isInitialized, checkSession]);
+
+  // Update logo state
+  useEffect(() => {
     const shouldBeValid = hasValidApiKey && apiKeyType && apiKeyLength;
     setLogoState(shouldBeValid ? 'valid' : 'invalid');
 
-    // Optional: Log key info for debugging (no sensitive data)
     if (hasValidApiKey && apiKeyType) {
       console.log(`🔑 Valid ${apiKeyType} key detected (${apiKeyLength} chars)`);
     }

@@ -26,7 +26,7 @@ export default function HomePage() {
   }, [isInitialized, initializeStore]);
 
   const onToggleTimestamps = () => {
-    setShowTimestamps((prev) => !prev);
+    setShowTimestamps(!showTimestamps);
   };
 
   const headerContent = (

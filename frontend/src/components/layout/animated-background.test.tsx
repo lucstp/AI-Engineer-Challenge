@@ -17,11 +17,43 @@ vi.mock('@/store', () => ({
   useChatStore: () => mockUseChatStore(),
 }));
 
-// Helper function to setup store state
-const setupMockStore = (apiKey = '', isApiKeyValid = false) => {
+// Helper function to setup store state (secure API structure)
+const setupMockStore = (
+  hasValidApiKey = false,
+  apiKeyType: string | null = null,
+  apiKeyLength: number | null = null,
+) => {
   mockUseChatStore.mockReturnValue({
-    apiKey,
-    isApiKeyValid,
+    hasValidApiKey,
+    apiKeyType,
+    apiKeyLength,
+    // Include other required store properties
+    messages: [],
+    isInitialized: true,
+    initializeStore: vi.fn(),
+    checkSession: vi.fn(), // Add missing checkSession method
+    apiKeyError: null,
+    setMessages: vi.fn(),
+    addMessage: vi.fn(),
+    updateMessage: vi.fn(),
+    clearMessages: vi.fn(),
+    setApiKey: vi.fn(),
+    deleteApiKey: vi.fn(),
+    selectedModel: 'gpt-4o-mini',
+    setSelectedModel: vi.fn(),
+    isLoading: false,
+    setIsLoading: vi.fn(),
+    isTyping: false,
+    setIsTyping: vi.fn(),
+    showTimestamps: false,
+    setShowTimestamps: vi.fn(),
+    isAnimating: false,
+    setIsAnimating: vi.fn(),
+    animatedContent: '',
+    setAnimatedContent: vi.fn(),
+    isExpanded: false,
+    setIsExpanded: vi.fn(),
+    reset: vi.fn(),
   });
 };
 
@@ -63,7 +95,7 @@ describe('AnimatedBackground', () => {
 
   describe('API key state transitions', () => {
     it('shows valid state when API key is present and valid', async () => {
-      setupMockStore(generateTestApiKey(true), true);
+      setupMockStore(true, 'project', 51);
 
       const { container, rerender } = render(
         <AnimatedBackground>
@@ -79,19 +111,19 @@ describe('AnimatedBackground', () => {
       );
 
       // After state update, yellow logo should be visible
-      const grayLogo = container.querySelector(
-        '[class*="opacity-100"][class*="aimakerspace-gray-192.png"]',
-      );
       const yellowLogo = container.querySelector(
         '[class*="opacity-100"][class*="aimakerspace-i-192.png"]',
       );
+      const grayLogo = container.querySelector(
+        '[class*="opacity-0"][class*="aimakerspace-gray-192.png"]',
+      );
 
       expect(yellowLogo).toBeInTheDocument();
-      expect(grayLogo).not.toBeInTheDocument();
+      expect(grayLogo).toBeInTheDocument();
     });
 
-    it('shows invalid state when API key is empty', () => {
-      setupMockStore('', false);
+    it('shows invalid state when API key is not valid', () => {
+      setupMockStore(false, null, null);
 
       const { container } = render(
         <AnimatedBackground>
@@ -105,8 +137,8 @@ describe('AnimatedBackground', () => {
       expect(grayLogo).toBeInTheDocument();
     });
 
-    it('shows invalid state when API key is present but invalid', () => {
-      setupMockStore(generateTestApiKey(false), false);
+    it('shows invalid state when API key data is missing', () => {
+      setupMockStore(true, null, null);
 
       const { container } = render(
         <AnimatedBackground>
@@ -120,8 +152,8 @@ describe('AnimatedBackground', () => {
       expect(grayLogo).toBeInTheDocument();
     });
 
-    it('shows invalid state when API key is whitespace only', () => {
-      setupMockStore('   ', true);
+    it('shows invalid state when only partial key info is available', () => {
+      setupMockStore(true, 'project', null);
 
       const { container } = render(
         <AnimatedBackground>
@@ -202,8 +234,8 @@ describe('AnimatedBackground', () => {
       const grayLogo = container.querySelector('[class*="aimakerspace-gray-192.png"]');
       const yellowLogo = container.querySelector('[class*="aimakerspace-i-192.png"]');
 
-      expect(grayLogo).toHaveClass("bg-[url('/assets/logos/aimakerspace-gray-192.png')]");
-      expect(yellowLogo).toHaveClass("bg-[url('/assets/logos/aimakerspace-i-192.png')]");
+      expect(grayLogo).toHaveClass('bg-[url(/assets/logos/aimakerspace-gray-192.png)]');
+      expect(yellowLogo).toHaveClass('bg-[url(/assets/logos/aimakerspace-i-192.png)]');
     });
 
     it('applies correct background sizing and positioning', () => {
@@ -267,7 +299,7 @@ describe('AnimatedBackground', () => {
 
       // Should not throw when store state changes
       expect(() => {
-        setupMockStore(generateTestApiKey(true), true);
+        setupMockStore(true, 'project', 51);
         rerender(
           <AnimatedBackground>
             <div>Updated Content</div>

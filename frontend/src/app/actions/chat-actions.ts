@@ -1,83 +1,126 @@
 'use server';
 
-import { secureFetch } from '@/lib/api-client';
-import { logSafeError, sanitizeString } from '@/lib/api-security';
-import { chatMessageSchema, isKeyFormatValid } from '@/lib/validation';
-import type { ActionResult, FormState } from '@/types';
+import type { ActionResult } from '@/types';
 
-// Re-export FormState for components that import from this actions file
-export type { FormState };
+import { getApiKeySession, getDecryptedApiKey } from './api-key-actions';
+
+export interface FormState {
+  success: boolean;
+  message?: string;
+  streamingResponse?: ReadableStream;
+  errors?: {
+    message?: string[];
+    apiKey?: string[];
+  };
+}
 
 /**
- * Send a chat message to the FastAPI backend
- * Using modern Next.js 15 Server Action patterns with React 19 useActionState
+ * Send a chat message using secure Server Action with streaming
+ * Using modern Next.js 15 + React 19 patterns with encrypted API key storage
  */
 export async function sendMessageAction(
   _prevState: FormState,
   formData: FormData,
 ): Promise<FormState> {
   try {
-    // Extract and validate form data
-    const rawData = {
-      message: formData.get('message') as string,
-      model: formData.get('model') as string,
-      apiKey: formData.get('apiKey') as string,
-      developerMessage: formData.get('developerMessage') as string,
-    };
-
-    // Validate with Zod
-    const validation = chatMessageSchema.safeParse(rawData);
-    if (!validation.success) {
+    // 1. Verify session exists (SECURE)
+    const session = await getApiKeySession();
+    if (!session?.hasValidKey) {
       return {
-        message: 'Validation failed',
         success: false,
-        errors: validation.error.flatten().fieldErrors,
+        errors: { apiKey: ['API key session expired. Please re-authenticate.'] },
       };
     }
 
-    const { message, model, apiKey, developerMessage } = validation.data;
+    // 2. Get decrypted API key (SECURE - server-side only)
+    const apiKey = await getDecryptedApiKey();
+    if (!apiKey) {
+      return {
+        success: false,
+        errors: { apiKey: ['Failed to retrieve API key. Please re-authenticate.'] },
+      };
+    }
 
-    // Get API URL from server-only environment variables
-    const apiUrl = process.env.API_URL || '/api';
+    // 3. Extract form data
+    const message = formData.get('message') as string;
+    const model = (formData.get('model') as string) || 'gpt-4o-mini';
+    const developerMessage =
+      (formData.get('developerMessage') as string) || 'You are a helpful AI assistant.';
 
-    // Make secure request to FastAPI backend
-    await secureFetch(`${apiUrl}/chat`, {
+    // 4. Validate inputs
+    if (!message?.trim()) {
+      return {
+        success: false,
+        errors: { message: ['Message is required'] },
+      };
+    }
+
+    if (message.length > 4000) {
+      return {
+        success: false,
+        errors: { message: ['Message too long (max 4000 characters)'] },
+      };
+    }
+
+    // 5. CHALLENGE COMPLIANT: Call FastAPI backend with streaming
+    const apiUrl = process.env.API_URL || 'http://localhost:8000';
+
+    const response = await fetch(`${apiUrl}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
       },
       body: JSON.stringify({
         developer_message: developerMessage,
-        user_message: message,
+        user_message: message.trim(),
         model,
-        api_key: apiKey,
+        api_key: apiKey, // SECURE: Only sent server-to-server
       }),
-      timeout: 30000, // 30 second timeout
     });
 
-    // For now, just return success - streaming will be handled separately
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error('FastAPI backend error:', response.status, errorText);
+
+      return {
+        success: false,
+        errors: {
+          message: [
+            response.status === 401
+              ? 'Invalid API key. Please re-authenticate.'
+              : `Backend error: ${response.status}`,
+          ],
+        },
+      };
+    }
+
+    // 6. MODERN: Return streaming response directly from Server Action
     return {
-      message: 'Message sent successfully',
       success: true,
+      message: 'Message sent successfully',
+      streamingResponse: response.body || undefined,
     };
   } catch (error) {
-    logSafeError('Chat action error:', error);
-
+    console.error('Send message action error:', error);
     return {
-      message: error instanceof Error ? sanitizeString(error.message) : 'Unknown error occurred',
       success: false,
+      errors: { message: ['Failed to send message. Please try again.'] },
     };
   }
 }
 
 /**
- * Validate API key format
- * Quick validation server action for immediate feedback
+ * Validate API key format - Quick validation for immediate feedback
+ * @deprecated Use validateAndStoreApiKey from api-key-actions instead
  */
 export async function validateApiKeyAction(apiKey: string): Promise<ActionResult<boolean>> {
+  console.warn(
+    'validateApiKeyAction is deprecated. Use validateAndStoreApiKey from api-key-actions instead.',
+  );
+
   try {
-    const isValidFormat = isKeyFormatValid(apiKey.trim());
+    // Basic format check only - no actual validation
+    const isValidFormat = /^sk-[A-Za-z0-9_-]{48}$/.test(apiKey.trim());
 
     return {
       success: true,

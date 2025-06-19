@@ -1,10 +1,17 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useChatStore, type Message } from './index';
 
+// Mock the server actions
+vi.mock('@/app/actions/api-key-actions', () => ({
+  validateAndStoreApiKey: vi.fn(),
+  getApiKeySession: vi.fn(),
+  deleteApiKeySession: vi.fn(),
+}));
+
 // Helper to reset Zustand store state between tests using public API
-const resetStore = () => {
-  useChatStore.getState().reset();
+const resetStore = async () => {
+  await useChatStore.getState().reset();
 };
 
 // Clearly fake/mock API keys for testing (51 chars total, 48 after prefix sk-)
@@ -17,10 +24,11 @@ const invalidCharKey = 'sk-abc$%^defghijklmnopqrstuvwxyz1234567890ABCDEFghij'; /
 const uppercaseOnlyKey = 'sk-ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKL'; // 48 uppercase after sk-
 
 describe('chat-store Zustand store', () => {
-  beforeEach(() => {
-    resetStore();
+  beforeEach(async () => {
+    await resetStore();
     // Clear localStorage mocks
     localStorage.clear();
+    vi.clearAllMocks();
   });
 
   describe('messages state', () => {
@@ -45,78 +53,104 @@ describe('chat-store Zustand store', () => {
     });
   });
 
-  describe('API key state', () => {
-    it('sets and validates a valid API key', () => {
-      useChatStore.getState().setApiKey(validKey);
-      expect(useChatStore.getState().apiKey).toBe(validKey);
-      expect(useChatStore.getState().isApiKeyValid).toBe(true);
+  describe('API key state (secure)', () => {
+    it('sets and validates a valid API key', async () => {
+      const { validateAndStoreApiKey } = await import('@/app/actions/api-key-actions');
+      vi.mocked(validateAndStoreApiKey).mockResolvedValue({
+        success: true,
+        data: {
+          success: true,
+          keyInfo: { type: 'project', length: 51 },
+        },
+      });
+
+      await useChatStore.getState().setApiKey(validKey);
+      expect(useChatStore.getState().hasValidApiKey).toBe(true);
+      expect(useChatStore.getState().apiKeyType).toBe('project');
+      expect(useChatStore.getState().apiKeyLength).toBe(51);
       expect(useChatStore.getState().apiKeyError).toBeNull();
     });
 
-    it('sets and validates a realistic format API key', () => {
-      useChatStore.getState().setApiKey(realisticKey);
-      expect(useChatStore.getState().apiKey).toBe(realisticKey);
-      expect(useChatStore.getState().isApiKeyValid).toBe(true);
-      expect(useChatStore.getState().apiKeyError).toBeNull();
+    it('rejects an invalid API key', async () => {
+      const { validateAndStoreApiKey } = await import('@/app/actions/api-key-actions');
+      vi.mocked(validateAndStoreApiKey).mockResolvedValue({
+        success: false,
+        error: 'Invalid API key format',
+        fieldErrors: { apiKey: ['Invalid OpenAI API key format'] },
+      });
+
+      await useChatStore.getState().setApiKey('invalid-key');
+      expect(useChatStore.getState().hasValidApiKey).toBe(false);
+      expect(useChatStore.getState().apiKeyType).toBeNull();
+      expect(useChatStore.getState().apiKeyLength).toBeNull();
+      expect(useChatStore.getState().apiKeyError).toBe('Invalid API key format');
     });
 
-    it('rejects a key with correct prefix but wrong length', () => {
-      useChatStore.getState().setApiKey(wrongLengthKey);
-      expect(useChatStore.getState().apiKey).toBe(wrongLengthKey);
-      expect(useChatStore.getState().isApiKeyValid).toBe(false);
-      expect(useChatStore.getState().apiKeyError).toBeDefined();
-    });
+    it('deletes API key and clears related state', async () => {
+      const { deleteApiKeySession } = await import('@/app/actions/api-key-actions');
+      vi.mocked(deleteApiKeySession).mockResolvedValue();
 
-    it('rejects a key with invalid characters', () => {
-      useChatStore.getState().setApiKey(invalidCharKey);
-      expect(useChatStore.getState().apiKey).toBe(invalidCharKey);
-      expect(useChatStore.getState().isApiKeyValid).toBe(false);
-      expect(useChatStore.getState().apiKeyError).toBeDefined();
-    });
+      // First set a valid key
+      const { validateAndStoreApiKey } = await import('@/app/actions/api-key-actions');
+      vi.mocked(validateAndStoreApiKey).mockResolvedValue({
+        success: true,
+        data: {
+          success: true,
+          keyInfo: { type: 'project', length: 51 },
+        },
+      });
+      await useChatStore.getState().setApiKey(validKey);
 
-    it('accepts an uppercase-only API key (current regex allows it)', () => {
-      useChatStore.getState().setApiKey(uppercaseOnlyKey);
-      expect(useChatStore.getState().apiKey).toBe(uppercaseOnlyKey);
-      expect(useChatStore.getState().isApiKeyValid).toBe(true);
-      expect(useChatStore.getState().apiKeyError).toBeNull();
-    });
-
-    it('sets and validates an invalid API key', () => {
-      const invalidKey = 'invalid-key';
-      useChatStore.getState().setApiKey(invalidKey);
-      expect(useChatStore.getState().apiKey).toBe(invalidKey);
-      expect(useChatStore.getState().isApiKeyValid).toBe(false);
-      expect(useChatStore.getState().apiKeyError).toBeDefined();
-    });
-
-    it('deletes API key and clears related state', () => {
-      useChatStore.getState().setApiKey(validKey);
-      useChatStore.getState().deleteApiKey();
-      expect(useChatStore.getState().apiKey).toBe('');
-      expect(useChatStore.getState().isApiKeyValid).toBe(false);
+      // Then delete it
+      await useChatStore.getState().deleteApiKey();
+      expect(useChatStore.getState().hasValidApiKey).toBe(false);
+      expect(useChatStore.getState().apiKeyType).toBeNull();
+      expect(useChatStore.getState().apiKeyLength).toBeNull();
       expect(useChatStore.getState().apiKeyError).toBeNull();
       expect(useChatStore.getState().messages).toEqual([]);
     });
 
-    it('validateApiKey sets error for invalid key', () => {
-      useChatStore.getState().validateApiKey('bad');
-      expect(useChatStore.getState().isApiKeyValid).toBe(false);
-      expect(useChatStore.getState().apiKeyError).toBeDefined();
+    it('handles server action errors gracefully', async () => {
+      const { validateAndStoreApiKey } = await import('@/app/actions/api-key-actions');
+      vi.mocked(validateAndStoreApiKey).mockRejectedValue(new Error('Network error'));
+
+      await useChatStore.getState().setApiKey(validKey);
+      expect(useChatStore.getState().hasValidApiKey).toBe(false);
+      expect(useChatStore.getState().apiKeyError).toBe('Failed to validate API key');
     });
   });
 
   describe('initialization', () => {
-    it('initializes and validates API key if present', () => {
-      useChatStore.getState().setApiKey(validKey);
-      useChatStore.setState({ isApiKeyValid: false });
+    it('initializes with valid session', async () => {
+      const { getApiKeySession } = await import('@/app/actions/api-key-actions');
+      vi.mocked(getApiKeySession).mockResolvedValue({
+        hasValidKey: true,
+        keyType: 'project',
+        keyLength: 51,
+        expiresAt: Date.now() + 86400000,
+      });
+
+      // Initialize store (synchronous)
       useChatStore.getState().initializeStore();
       expect(useChatStore.getState().isInitialized).toBe(true);
-      expect(useChatStore.getState().isApiKeyValid).toBe(true);
+
+      // Then check session (asynchronous)
+      await useChatStore.getState().checkSession();
+      expect(useChatStore.getState().hasValidApiKey).toBe(true);
+      expect(useChatStore.getState().apiKeyType).toBe('project');
     });
 
-    it('initializes without API key', () => {
+    it('initializes without valid session', async () => {
+      const { getApiKeySession } = await import('@/app/actions/api-key-actions');
+      vi.mocked(getApiKeySession).mockResolvedValue(null);
+
+      // Initialize store (synchronous)
       useChatStore.getState().initializeStore();
       expect(useChatStore.getState().isInitialized).toBe(true);
+
+      // Then check session (asynchronous)
+      await useChatStore.getState().checkSession();
+      expect(useChatStore.getState().hasValidApiKey).toBe(false);
     });
   });
 
@@ -155,8 +189,7 @@ describe('chat-store Zustand store', () => {
   });
 
   describe('persistence', () => {
-    it('persists apiKey, selectedModel, messages, isExpanded', async () => {
-      useChatStore.getState().setApiKey(anotherValidKey);
+    it('persists only safe data (no API keys)', async () => {
       useChatStore.getState().setSelectedModel('gpt-4.2');
       useChatStore
         .getState()
@@ -167,10 +200,13 @@ describe('chat-store Zustand store', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       const persisted = JSON.parse(localStorage.getItem('chat-storage') || '{}');
-      expect(persisted.state.apiKey).toBe(anotherValidKey);
       expect(persisted.state.selectedModel).toBe('gpt-4.2');
       expect(persisted.state.messages).toHaveLength(1);
       expect(persisted.state.isExpanded).toBe(true);
+      // Ensure API key data is NOT persisted for security
+      expect(persisted.state.hasValidApiKey).toBeUndefined();
+      expect(persisted.state.apiKeyType).toBeUndefined();
+      expect(persisted.state.apiKeyLength).toBeUndefined();
     });
   });
 });

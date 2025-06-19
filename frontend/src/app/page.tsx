@@ -15,6 +15,12 @@ import {
 import { useChatStore } from '@/store';
 import { Bot, Clock, Sparkles } from 'lucide-react';
 
+/**
+ * Renders the main chat page with an animated background, chat interface, and controls.
+ *
+ * Initializes chat state on mount and manages the display of message timestamps using Zustand state management.
+ * The page includes a header with bot branding and a timestamp toggle, a chat area displaying messages and input, and a footer with technology stack information.
+ */
 export default function HomePage() {
   const { messages, isInitialized, initializeStore, showTimestamps, setShowTimestamps } =
     useChatStore();

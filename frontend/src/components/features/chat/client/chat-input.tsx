@@ -9,7 +9,11 @@ import { useFormStatus } from 'react-dom';
 
 import { ApiKeySection } from './api-key-section';
 
-// Submit button component using useFormStatus
+/**
+ * Renders a submit button for the chat input form, disabling it when a submission is pending or the API key is invalid.
+ *
+ * The button includes a send icon and applies conditional styling based on its enabled state. It is accessible and communicates its disabled state to assistive technologies.
+ */
 function SubmitButton() {
   const { pending } = useFormStatus();
   const { hasValidApiKey } = useChatStore(); // SECURE: Use boolean flag
@@ -29,7 +33,11 @@ function SubmitButton() {
   );
 }
 
-// Chat Input Form Component
+/**
+ * Renders a chat input form with secure API key validation, message sending, and user feedback.
+ *
+ * The component manages input state, handles secure message submission using a protected API key, and provides accessibility features such as auto-focus, auto-resizing, and keyboard shortcuts. Displays contextual status messages for errors, missing API key, or usage instructions.
+ */
 export function ChatInput() {
   const [input, setInput] = useState('');
   const [sendError, setSendError] = useState<string | null>(null);

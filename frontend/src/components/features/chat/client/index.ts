@@ -10,3 +10,5 @@ export { MessageBubble } from './message-bubble';
 export { MessageList } from './message-list';
 export { TypingIndicator } from './typing-indicator';
 export { EmptyState } from './empty-state';
+export { ChatInput } from './chat-input';
+export { ModelSelector } from './model-selector';

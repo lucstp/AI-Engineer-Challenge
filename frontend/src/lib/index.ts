@@ -1,8 +1,19 @@
 /**
- * Utility Library Exports
+ * Utility Library - Barrel Exports
+ * Using modern DDD patterns - Pure Utilities & Infrastructure
  *
- * Centralized exports for all utility functions
+ * All utility functions and helpers are exported from here
+ * for clean imports across the application.
  */
 
-export { cn } from './utils';
-export { apiKeySchema, isKeyFormatValid, API_KEY_REGEX } from './validation';
+// Framework utilities
+export * from './utils';
+
+// Validation utilities
+export * from './validation';
+
+// API security utilities
+export * from './api-security';
+
+// API client utilities
+export * from './api-client';

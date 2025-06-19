@@ -23,6 +23,8 @@ export {
   MessageList,
   TypingIndicator,
   EmptyState,
+  ChatInput,
+  ModelSelector,
 } from './client';
 
 // ============================================================================

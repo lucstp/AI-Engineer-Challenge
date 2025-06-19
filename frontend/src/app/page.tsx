@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { ChatInput, MessageList } from '@/components/features/chat';
 import { AnimatedBackground, ChatLayout, ChatShell } from '@/components/layout';
 import {
   Avatar,
@@ -14,12 +15,9 @@ import {
 import { useChatStore } from '@/store';
 import { Bot, Clock, Sparkles } from 'lucide-react';
 
-/**
- * Basic chat demo component showing Zustand integration.
- * Phase 3 will replace this with full chat interface.
- */
-function ChatDemo() {
-  const { messages, isInitialized, initializeStore, apiKey, isApiKeyValid } = useChatStore();
+export default function HomePage() {
+  const { messages, isInitialized, initializeStore, showTimestamps, setShowTimestamps } =
+    useChatStore();
 
   useEffect(() => {
     if (!isInitialized) {
@@ -27,33 +25,6 @@ function ChatDemo() {
     }
   }, [isInitialized, initializeStore]);
 
-  return (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
-        <h2 className="text-lg font-semibold text-white">Chat Store Status</h2>
-        <div className="mt-2 space-y-2 text-sm text-blue-100">
-          <p>Initialized: {isInitialized ? '✅' : '❌'}</p>
-          <p>API Key: {apiKey ? '✅ Set' : '❌ Not set'}</p>
-          <p>API Key Valid: {isApiKeyValid ? '✅' : '❌'}</p>
-          <p>Messages: {messages.length}</p>
-        </div>
-      </div>
-
-      <div className="rounded-lg border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
-        <h3 className="font-medium text-white">Phase 3 Started ✅</h3>
-        <p className="mt-1 text-sm text-blue-200">
-          Animated background active, beautiful styling foundation ready.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-export default function HomePage() {
-  // Get timestamp state from store
-  const { showTimestamps, setShowTimestamps } = useChatStore();
-
-  // Handler for toggling timestamps (using functional approach to avoid stale state)
   const onToggleTimestamps = () => {
     setShowTimestamps((prev) => !prev);
   };
@@ -72,7 +43,7 @@ export default function HomePage() {
           </div>
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">AI Assistant</h1>
+          <h1 className="text-2xl font-bold text-white">AI Chat Assistant</h1>
           <p className="text-sm text-yellow-300">Always ready to help</p>
         </div>
       </div>
@@ -114,7 +85,18 @@ export default function HomePage() {
     <AnimatedBackground>
       <ChatLayout header={headerContent} footer={footerContent}>
         <ChatShell>
-          <ChatDemo />
+          <div className="flex h-full flex-col">
+            <div className="flex-1 overflow-y-auto">
+              <MessageList
+                messages={messages}
+                isLoading={false}
+                isTyping={false}
+                animatedContent=""
+                isAnimating={false}
+              />
+            </div>
+            <ChatInput />
+          </div>
         </ChatShell>
       </ChatLayout>
     </AnimatedBackground>

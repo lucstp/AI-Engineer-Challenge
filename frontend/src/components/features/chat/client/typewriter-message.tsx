@@ -108,7 +108,7 @@ export function TypewriterMessage({
   // Use our typewriter hook
   const { displayText, isComplete } = useTypewriter(
     message.content,
-    isAnimating && message.animated === true,
+    isAnimating === true,
     10, // Base speed in ms
   );
 
@@ -121,11 +121,7 @@ export function TypewriterMessage({
 
   return (
     <div className={cn('prose prose-invert max-w-none', className)}>
-      {message.animated && isAnimating ? (
-        <span>{displayText}</span>
-      ) : (
-        <span>{message.content}</span>
-      )}
+      {isAnimating ? <span>{displayText}</span> : <span>{message.content}</span>}
     </div>
   );
 }
@@ -158,7 +154,7 @@ export function AnimatedMessageContainer({
       />
 
       {/* Animated cursor - only shown if isTyping is explicitly true */}
-      {message.animated && isAnimating && isTyping && (
+      {isAnimating && isTyping && (
         <motion.div
           className="absolute ml-1 inline-block h-4 w-2 bg-blue-400"
           animate={{ opacity: [1, 0, 1] }}

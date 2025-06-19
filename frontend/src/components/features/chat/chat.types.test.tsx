@@ -24,12 +24,9 @@ describe('modern chat types', () => {
       role: 'assistant',
       content: 'hello',
       timestamp: new Date().toISOString(),
-      showTimestamp: true,
-      animated: true,
     };
     expect(userMsg.role).toBe('user');
     expect(assistantMsg.role).toBe('assistant');
-    expect(assistantMsg.animated).toBe(true);
   });
 
   it('defines proper component prop interfaces', () => {
@@ -42,10 +39,8 @@ describe('modern chat types', () => {
       content: 'test',
       role: 'assistant',
       timestamp: new Date().toISOString(),
-      animated: true,
     };
 
-    expect(message.animated).toBe(true);
     expect(message.role).toBe('assistant');
   });
 

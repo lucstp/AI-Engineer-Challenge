@@ -1,26 +1,35 @@
 'use client';
 
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Input, Textarea } from '@/components/ui';
-import { sendMessageAction, type FormState } from '@/app/actions/chat-actions';
+import { useChat } from '@/hooks/use-chat';
 import { useChatStore } from '@/store';
-import { Send, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, Send, Trash2 } from 'lucide-react';
 import { useFormStatus } from 'react-dom';
-import { useDebounceCallback } from 'usehooks-ts';
 
 import { ModelSelector } from './model-selector';
+
+// Updated form state for secure implementation
+interface SecureFormState {
+  success: boolean;
+  message?: string;
+  errors?: {
+    apiKey?: string[];
+    message?: string[];
+  };
+}
 
 // Submit button component using useFormStatus
 function SubmitButton() {
   const { pending } = useFormStatus();
-  const { isApiKeyValid } = useChatStore();
+  const { hasValidApiKey } = useChatStore(); // SECURE: Use boolean flag
 
   return (
     <Button
       type="submit"
-      disabled={pending || !isApiKeyValid}
+      disabled={pending || !hasValidApiKey}
       className={`flex size-8 items-center justify-center rounded-lg border border-solid border-white/30 bg-transparent p-0 text-white/70 shadow-[rgba(0,0,0,0.3)_0px_2px_4px_0px] disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-white/30 disabled:hover:bg-transparent ${
-        !pending && isApiKeyValid
+        !pending && hasValidApiKey
           ? 'hover:border-white/40 hover:bg-white/20'
           : 'hover:bg-transparent'
       }`}
@@ -30,100 +39,194 @@ function SubmitButton() {
   );
 }
 
-// API Key section component
+// SECURE API Key section component
 function ApiKeySection() {
+  // Local state for API key input (not persisted)
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const [apiKeyTouched, setApiKeyTouched] = useState(false);
+
   const { pending } = useFormStatus();
 
+  // SECURE: Get session state from store (no actual keys)
   const {
-    apiKey,
+    hasValidApiKey,
+    apiKeyType,
+    apiKeyLength,
     selectedModel,
     apiKeyError,
     setApiKey,
     setSelectedModel,
     deleteApiKey,
     setIsExpanded,
-    isApiKeyValid,
+    isLoading,
   } = useChatStore();
 
-  // Debounced API key validation to avoid excessive re-renders
-  const debounceApiKeyChange = useDebounceCallback((key: string) => {
-    setApiKey(key);
-  }, 300);
-
-  // Handle API key input changes
+  // Handle API key input changes (immediate UI feedback)
   const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    debounceApiKeyChange(value);
+    setApiKeyInput(value);
     setApiKeyTouched(true);
+  };
+
+  // Handle API key validation (server-side)
+  const handleApiKeyValidation = async () => {
+    if (!apiKeyInput.trim() || isValidating) {
+      return;
+    }
+
+    setIsValidating(true);
+    try {
+      // This calls the secure server action
+      await setApiKey(apiKeyInput.trim());
+      // Clear input on successful validation
+      if (hasValidApiKey) {
+        setApiKeyInput('');
+        setShowApiKey(false);
+      }
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  // Handle Enter key for validation
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleApiKeyValidation();
+    }
   };
 
   // Handle chat expansion based on API key validity
   useEffect(() => {
-    setIsExpanded(isApiKeyValid);
-  }, [isApiKeyValid, setIsExpanded]);
+    setIsExpanded(hasValidApiKey);
+  }, [hasValidApiKey, setIsExpanded]);
 
-  // Handle deleting API key
-  const handleDeleteApiKey = () => {
-    deleteApiKey();
+  // Handle deleting API key session
+  const handleDeleteApiKey = async () => {
+    await deleteApiKey();
+    setApiKeyInput('');
     setApiKeyTouched(false);
+    setShowApiKey(false);
   };
+
+  // Show validation status
+  const getValidationStatus = () => {
+    if (isValidating || isLoading) {
+      return 'validating';
+    }
+    if (hasValidApiKey) {
+      return 'valid';
+    }
+    if (apiKeyError && apiKeyTouched) {
+      return 'error';
+    }
+    return 'pending';
+  };
+
+  const validationStatus = getValidationStatus();
 
   return (
     <>
       {/* API Key and Model Selector Row */}
       <div className="mb-1.5 rounded-t-xl">
         <div className="flex flex-col items-stretch gap-y-2 sm:flex-row sm:items-center sm:gap-x-1">
-          {/* API Key Input */}
+          {/* SECURE API Key Input */}
           <div className="relative flex-1 rounded-lg rounded-tl-lg rounded-r-none rounded-b-none bg-white/10 transition-colors duration-200 ease-in-out focus-within:bg-white/20">
-            <Input
-              type={apiKey.trim() ? 'password' : 'text'}
-              name="apiKey"
-              value={apiKey}
-              onChange={handleApiKeyChange}
-              onBlur={() => setApiKeyTouched(true)}
-              placeholder="Enter your OpenAI API key..."
-              disabled={pending}
-              className="h-12 w-full border-none bg-transparent pr-8 font-sans font-light text-white shadow-none ring-0 outline-none placeholder:text-white/50 focus:border-none focus:ring-0 focus:outline-none"
-              required
-              minLength={20}
-              aria-describedby="apiKey-error"
-            />
-            <div
-              className={`absolute top-1/2 right-3 size-2.5 -translate-y-1/2 transform rounded-full transition-colors duration-300 ${
-                !apiKeyError && apiKey.trim() ? 'bg-green-400' : 'animate-slow-pulse bg-yellow-300'
-              }`}
-            />
+            {hasValidApiKey ? (
+              // Show key info when validated (no actual key)
+              <div className="flex h-12 items-center px-3 text-white/80">
+                <span className="text-sm">
+                  🔑 {apiKeyType} key ({apiKeyLength} chars) - Valid
+                </span>
+              </div>
+            ) : (
+              // Show input when no valid key
+              <div className="relative">
+                <Input
+                  type={showApiKey ? 'text' : 'password'}
+                  value={apiKeyInput}
+                  onChange={handleApiKeyChange}
+                  onKeyDown={handleKeyDown}
+                  onBlur={() => setApiKeyTouched(true)}
+                  placeholder="Enter your OpenAI API key..."
+                  disabled={pending || isValidating}
+                  className="h-12 w-full border-none bg-transparent pr-16 font-sans font-light text-white shadow-none ring-0 outline-none placeholder:text-white/50 focus:border-none focus:ring-0 focus:outline-none"
+                  minLength={20}
+                  aria-describedby="apiKey-error"
+                />
+
+                {/* Show/Hide API Key Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="absolute top-1/2 right-8 -translate-y-1/2 text-white/50 hover:text-white/70"
+                  tabIndex={-1}
+                >
+                  {showApiKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+
+                {/* Validation Status Indicator */}
+                <div
+                  className={`absolute top-1/2 right-3 size-2.5 -translate-y-1/2 transform rounded-full transition-colors duration-300 ${
+                    validationStatus === 'valid'
+                      ? 'bg-green-400'
+                      : validationStatus === 'validating'
+                        ? 'animate-pulse bg-blue-400'
+                        : validationStatus === 'error'
+                          ? 'bg-red-400'
+                          : 'animate-slow-pulse bg-yellow-300'
+                  }`}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Model Selector and Delete Button */}
+          {/* Model Selector and Action Buttons */}
           <div className="flex h-12 items-center">
-            <div className="flex h-full w-full items-center rounded-lg rounded-tl-none rounded-tr-lg rounded-b-none bg-white/10 transition-colors duration-200 ease-in-out focus-within:bg-white/20 hover:bg-white/20">
-              <div className="flex flex-grow items-center [&>*]:bg-transparent [&>*]:focus-within:bg-transparent [&>*]:hover:bg-transparent [&>*]:focus:bg-transparent">
-                <input type="hidden" name="model" value={selectedModel} />
+            <div className="flex h-full w-full rounded-lg rounded-tl-none rounded-tr-lg rounded-b-none bg-white/10 transition-colors duration-200 ease-in-out focus-within:bg-white/20 hover:bg-white/20">
+              {/* Model Selector */}
+              <div className="flex-grow [&>*]:bg-transparent [&>*]:focus-within:bg-transparent [&>*]:hover:bg-transparent [&>*]:focus:bg-transparent">
                 <ModelSelector
                   selectedModel={selectedModel}
                   onModelChange={setSelectedModel}
-                  disabled={pending}
-                  className="h-12 rounded-none border-none"
+                  disabled={pending || isValidating}
+                  className="h-full rounded-none border-none"
                 />
               </div>
 
-              <div className="flex h-full items-center px-2">
-                <Button
-                  type="button"
-                  onClick={handleDeleteApiKey}
-                  disabled={!apiKey.trim() || pending}
-                  className={`flex size-8 items-center justify-center rounded-lg border border-solid border-white/30 bg-transparent p-0 text-white/70 shadow-[rgba(0,0,0,0.3)_0px_2px_4px_0px] disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-white/30 disabled:hover:bg-transparent ${
-                    apiKey.trim() && !pending
-                      ? 'hover:border-white/40 hover:bg-white/20'
-                      : 'cursor-not-allowed text-white/30 opacity-50'
-                  }`}
-                  title="Delete API Key"
-                  tabIndex={0}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+              {/* Action Buttons */}
+              <div className="flex h-full items-center gap-1 px-2">
+                {!hasValidApiKey && apiKeyInput.trim() && (
+                  // Validate Button
+                  <Button
+                    type="button"
+                    onClick={handleApiKeyValidation}
+                    disabled={isValidating || pending}
+                    className="flex size-8 items-center justify-center rounded-lg border border-solid border-green-500/50 bg-green-500/20 p-0 text-green-300 hover:border-green-400 hover:bg-green-500/30"
+                    title="Validate API Key"
+                  >
+                    {isValidating ? (
+                      <div className="size-3 animate-spin rounded-full border border-green-300 border-t-transparent" />
+                    ) : (
+                      <span className="text-xs">✓</span>
+                    )}
+                  </Button>
+                )}
+
+                {hasValidApiKey && (
+                  // Delete Button
+                  <Button
+                    type="button"
+                    onClick={handleDeleteApiKey}
+                    disabled={pending}
+                    className="flex size-8 items-center justify-center rounded-lg border border-solid border-white/30 bg-transparent p-0 text-white/70 shadow-[rgba(0,0,0,0.3)_0px_2px_4px_0px] hover:border-red-400 hover:bg-red-500/20 hover:text-red-300"
+                    title="Delete API Key"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -135,34 +238,37 @@ function ApiKeySection() {
             {apiKeyError}
           </p>
         )}
+
+        {/* Validation Help Text */}
+        {!hasValidApiKey && apiKeyInput.trim() && (
+          <p className="mt-1 text-center text-xs text-blue-300">
+            Press Enter or click ✓ to validate your API key
+          </p>
+        )}
       </div>
     </>
   );
 }
 
-// Main chat input form component
+// UPDATED Chat Input Form Component
 export function ChatInput() {
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { isLoading, isApiKeyValid } = useChatStore();
+  // SECURE: Use session state instead of direct key access
+  const { isLoading, hasValidApiKey } = useChatStore();
 
-  // Initial form state matching our Server Action
-  const initialState: FormState = {
-    message: '',
-    success: false,
-  };
-
-  const [state, formAction] = useActionState(sendMessageAction, initialState);
+  // Import useChat for the secure sendMessage function
+  const { sendMessage: secureSendMessage } = useChat();
 
   // Auto-focus textarea when API key is valid
   useEffect(() => {
-    if (!isLoading && isApiKeyValid) {
+    if (!isLoading && hasValidApiKey) {
       textareaRef.current?.focus();
     }
-  }, [isLoading, isApiKeyValid]);
+  }, [isLoading, hasValidApiKey]);
 
-  // Auto-resize textarea based on content
+  // Auto-resize textarea
   useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) {
@@ -176,34 +282,46 @@ export function ChatInput() {
     textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
   });
 
-  // Handle Enter key press for form submission
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!input.trim() || !hasValidApiKey || isLoading) {
+      return;
+    }
+
+    const message = input.trim();
+    setInput(''); // Clear input immediately
+
+    // Use secure send message from useChat hook
+    await secureSendMessage(message);
+
+    // Refocus textarea
+    textareaRef.current?.focus();
+  };
+
+  // Handle Enter key for submission
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-
-      // Submit the form programmatically
-      const form = e.currentTarget.closest('form');
-      if (form) {
-        const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-        form.dispatchEvent(submitEvent);
+      if (!input.trim() || !hasValidApiKey || isLoading) {
+        return;
       }
+
+      const message = input.trim();
+      setInput(''); // Clear input immediately
+
+      // Use secure send message from useChat hook
+      await secureSendMessage(message);
+
+      // Refocus textarea
+      textareaRef.current?.focus();
     }
   };
 
-  // Clear input on successful submission
-  useEffect(() => {
-    if (state?.success) {
-      setInput('');
-      textareaRef.current?.focus();
-    }
-  }, [state?.success]);
-
   return (
     <div className="mt-auto pt-4">
-      <form action={formAction} className="space-y-0">
-        {/* Hidden developer message field */}
-        <input type="hidden" name="developerMessage" value="You are a helpful AI assistant." />
-
+      <form onSubmit={handleSubmit} className="space-y-0">
+        {/* SECURE API Key Section */}
         <ApiKeySection />
 
         {/* Message Input Area */}
@@ -217,7 +335,7 @@ export function ChatInput() {
               onKeyDown={handleKeyDown}
               placeholder="Type your message here..."
               className="min-h-[48px] w-full flex-1 resize-none rounded-lg rounded-t-none border-none bg-white/10 py-3.5 pr-16 font-sans text-base leading-none text-white placeholder:text-white/40 focus:border-none focus:bg-white/20 focus:ring-0 focus:outline-none"
-              disabled={!isApiKeyValid}
+              disabled={!hasValidApiKey}
               required
               minLength={1}
               maxLength={4000}
@@ -229,29 +347,13 @@ export function ChatInput() {
           </div>
         </div>
 
-        {/* Form Error Messages */}
-        {state?.errors?.message && (
-          <p id="message-error" className="text-center text-xs text-red-400">
-            {state.errors.message[0]}
-          </p>
-        )}
-
-        {state?.errors?.apiKey && (
-          <p className="text-center text-xs text-red-400">{state.errors.apiKey[0]}</p>
-        )}
-
-        {/* General error message */}
-        {!state?.success && state?.message && (
-          <p className="text-center text-xs text-red-400">{state.message}</p>
-        )}
-
         {/* Helper Text */}
         <p className="mb-1 text-center text-xs text-blue-200">
           Press Enter to send, Shift + Enter for new line
         </p>
 
         {/* Status Messages */}
-        {!isApiKeyValid ? (
+        {!hasValidApiKey ? (
           <p className="animate-slow-pulse mb-1 text-center text-xs text-yellow-300">
             ⚠️ An OpenAI API key is required to use this assistant
           </p>

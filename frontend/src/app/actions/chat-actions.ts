@@ -5,6 +5,9 @@ import { logSafeError, sanitizeString } from '@/lib/api-security';
 import { chatMessageSchema, isKeyFormatValid } from '@/lib/validation';
 import type { ActionResult, FormState } from '@/types';
 
+// Re-export FormState for components that import from this actions file
+export type { FormState };
+
 /**
  * Send a chat message to the FastAPI backend
  * Using modern Next.js 15 Server Action patterns with React 19 useActionState

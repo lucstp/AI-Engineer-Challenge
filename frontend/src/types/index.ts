@@ -75,6 +75,56 @@ export interface FormState {
   success?: boolean;
 }
 
+/**
+ * Enhanced form state for secure chat implementation
+ */
+export interface SecureChatFormState {
+  success: boolean;
+  message?: string;
+  errors?: {
+    message?: string[];
+    apiKey?: string[];
+    general?: string[];
+  };
+  streamingResponse?: ReadableStream;
+}
+
+// ============================================================================
+// SECURE API KEY TYPES - Production Security
+// ============================================================================
+
+/**
+ * API Key session information (server-side only data)
+ * Used for secure session management without exposing actual keys
+ */
+export interface ApiKeySessionInfo {
+  hasValidKey: boolean;
+  keyType?: string;
+  keyLength?: number;
+  expiresAt?: number;
+}
+
+/**
+ * API Key validation result with detailed information
+ */
+export interface ApiKeyValidationResult {
+  isValid: boolean;
+  keyType: string;
+  length: number;
+  error?: string;
+}
+
+/**
+ * Secure API key storage response
+ */
+export interface SecureApiKeyResponse {
+  success: boolean;
+  keyInfo?: {
+    type: string;
+    length: number;
+  };
+}
+
 // ============================================================================
 // CHAT DOMAIN TYPES
 // ============================================================================

@@ -8,27 +8,33 @@
 import type { Message } from '@/types';
 
 // Re-export core types from global types (single source of truth)
-export type { Message, MessageRole, MessageContent } from '@/types';
+export type { Message } from '@/types';
 
-// Complete chat state interface
+/**
+ * Secure Chat State Interface - Updated for Production Security
+ * Following Silicon Valley DDD - Single Source of Truth for Store Types
+ *
+ * SECURITY: No direct API key storage on client-side
+ */
 export interface ChatState {
   // Messages state
   messages: Message[];
   setMessages: (messages: Message[]) => void;
   addMessage: (message: Message) => void;
+  updateMessage: (id: string, updates: Partial<Message>) => void;
   clearMessages: () => void;
 
-  // API Key state
-  apiKey: string;
-  setApiKey: (key: string) => void;
-  deleteApiKey: () => void;
-  isApiKeyValid: boolean;
+  // SECURE API Key state (session-based, no direct storage)
+  hasValidApiKey: boolean;
+  apiKeyType: string | null;
+  apiKeyLength: number | null;
   apiKeyError: string | null;
-  validateApiKey: (key: string) => void;
+  setApiKey: (key: string) => Promise<void>;
+  deleteApiKey: () => Promise<void>;
 
   // Initialization
   isInitialized: boolean;
-  initializeStore: () => void;
+  initializeStore: () => Promise<void>;
 
   // Model state
   selectedModel: string;
@@ -49,5 +55,44 @@ export interface ChatState {
   setIsExpanded: (expanded: boolean) => void;
 
   // Testing utilities
-  reset: () => void;
+  reset: () => Promise<void>;
+}
+
+/**
+ * API Key Session State (server-side only information)
+ * Used for secure session management
+ */
+export interface ApiKeySessionInfo {
+  hasValidKey: boolean;
+  keyType?: string;
+  keyLength?: number;
+  expiresAt?: number;
+}
+
+/**
+ * Form state types for secure chat implementation
+ */
+export interface SecureChatFormState {
+  success: boolean;
+  message?: string;
+  errors?: {
+    message?: string[];
+    apiKey?: string[];
+    general?: string[];
+  };
+}
+
+/**
+ * @deprecated - Direct API key storage removed for security
+ *
+ * Legacy interface maintained for backward compatibility during migration
+ * MIGRATION PATH: Remove after all components updated to secure patterns
+ */
+export interface LegacyChatState {
+  /** @deprecated Direct API key storage is a security risk */
+  apiKey: string;
+  /** @deprecated Use hasValidApiKey instead */
+  isApiKeyValid: boolean;
+  /** @deprecated Use secure session-based validation */
+  validateApiKey: (key: string) => void;
 }

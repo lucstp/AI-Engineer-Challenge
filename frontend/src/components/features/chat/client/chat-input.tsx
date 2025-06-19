@@ -98,14 +98,14 @@ function ApiKeySection() {
 
           {/* Model Selector and Delete Button */}
           <div className="flex h-12 items-center">
-            <div className="flex h-full w-full rounded-lg rounded-tl-none rounded-tr-lg rounded-b-none bg-white/10 transition-colors duration-200 ease-in-out focus-within:bg-white/20 hover:bg-white/20">
-              <div className="flex-grow [&>*]:bg-transparent [&>*]:focus-within:bg-transparent [&>*]:hover:bg-transparent [&>*]:focus:bg-transparent">
+            <div className="flex h-full w-full items-center rounded-lg rounded-tl-none rounded-tr-lg rounded-b-none bg-white/10 transition-colors duration-200 ease-in-out focus-within:bg-white/20 hover:bg-white/20">
+              <div className="flex flex-grow items-center [&>*]:bg-transparent [&>*]:focus-within:bg-transparent [&>*]:hover:bg-transparent [&>*]:focus:bg-transparent">
                 <input type="hidden" name="model" value={selectedModel} />
                 <ModelSelector
                   selectedModel={selectedModel}
                   onModelChange={setSelectedModel}
                   disabled={pending}
-                  className="h-full rounded-none border-none"
+                  className="h-12 rounded-none border-none"
                 />
               </div>
 

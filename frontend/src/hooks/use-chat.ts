@@ -8,18 +8,19 @@ import type { Message } from '@/types';
 export function useChat() {
   const [isPending, startTransition] = useTransition();
 
-  // Store state and actions
+  // SECURE: No direct API key access
   const {
     messages,
-    apiKey,
+    hasValidApiKey,
+    apiKeyType,
     selectedModel,
     isLoading,
     isTyping,
     animatedContent,
     isAnimating,
     apiKeyError,
-    isApiKeyValid,
     addMessage,
+    updateMessage,
     setIsLoading,
     setIsTyping,
     setAnimatedContent,
@@ -27,11 +28,11 @@ export function useChat() {
   } = useChatStore();
 
   /**
-   * Send a message with streaming response handling
+   * MODERN + SECURE + CHALLENGE COMPLIANT: Direct Server Action streaming
    */
   const sendMessage = useCallback(
     async (messageText: string) => {
-      if (!messageText.trim() || !isApiKeyValid || isLoading) {
+      if (!messageText.trim() || !hasValidApiKey || isLoading) {
         return;
       }
 
@@ -39,7 +40,7 @@ export function useChat() {
         setIsLoading(true);
         setIsTyping(false);
 
-        // Add user message to store
+        // Add user message
         const userMessage: Message = {
           id: `user-${Date.now()}`,
           role: 'user',
@@ -48,7 +49,7 @@ export function useChat() {
         };
         addMessage(userMessage);
 
-        // Prepare assistant message placeholder
+        // Add assistant placeholder
         const assistantMessageId = `assistant-${Date.now()}`;
         const assistantMessage: Message = {
           id: assistantMessageId,
@@ -58,35 +59,43 @@ export function useChat() {
         };
         addMessage(assistantMessage);
 
-        // Start streaming animation
+        // Start animation
         setIsAnimating(true);
         setAnimatedContent('');
 
-        // Use server action for sending
         startTransition(async () => {
-          const formData = new FormData();
-          formData.append('message', messageText.trim());
-          formData.append('model', selectedModel);
-          formData.append('apiKey', apiKey);
-          formData.append('developerMessage', 'You are a helpful AI assistant.');
-
           try {
-            const result = await sendMessageAction({ message: '', success: false }, formData);
+            // MODERN: Direct Server Action call (no API route)
+            const formData = new FormData();
+            formData.append('message', messageText.trim());
+            formData.append('model', selectedModel);
+            formData.append('developerMessage', 'You are a helpful AI assistant.');
 
-            if (result.success) {
-              // Message sent successfully
-              console.log('Message sent:', result.message);
+            const result = await sendMessageAction({ success: false, message: '' }, formData);
+
+            if (result.success && result.streamingResponse) {
+              // MODERN: Handle streaming directly from Server Action
+              await handleStreamingResponse(result.streamingResponse, assistantMessageId);
             } else {
-              throw new Error(result.message || 'Failed to send message');
+              // Handle errors
+              const errorMessage =
+                result.errors?.message?.[0] ||
+                result.errors?.apiKey?.[0] ||
+                'Failed to send message';
+
+              updateMessage(assistantMessageId, { content: errorMessage });
+              setIsAnimating(false);
+              setAnimatedContent('');
             }
           } catch (error) {
             console.error('Message sending failed:', error);
-            // Update the assistant message with error
-            const errorMessage: Message = {
-              ...assistantMessage,
+            updateMessage(assistantMessageId, {
               content: 'Sorry, I encountered an error. Please try again.',
-            };
-            // You would update the message in the store here
+            });
+            setIsAnimating(false);
+            setAnimatedContent('');
+          } finally {
+            setIsLoading(false);
           }
         });
       } catch (error) {
@@ -96,11 +105,11 @@ export function useChat() {
       }
     },
     [
-      apiKey,
+      hasValidApiKey,
       selectedModel,
-      isApiKeyValid,
       isLoading,
       addMessage,
+      updateMessage,
       setIsLoading,
       setIsTyping,
       setIsAnimating,
@@ -109,10 +118,10 @@ export function useChat() {
   );
 
   /**
-   * Handle streaming response from the server
+   * Handle streaming response with typewriter effect
    */
   const handleStreamingResponse = useCallback(
-    async (stream: ReadableStream, _messageId: string) => {
+    async (stream: ReadableStream, messageId: string) => {
       try {
         const reader = stream.getReader();
         const decoder = new TextDecoder();
@@ -129,42 +138,38 @@ export function useChat() {
 
           const chunk = decoder.decode(value, { stream: true });
           fullContent += chunk;
-
-          // Update animated content for typewriter effect
           setAnimatedContent(fullContent);
         }
 
-        // Finalize the message
+        // Finalize message
+        updateMessage(messageId, { content: fullContent });
         setIsTyping(false);
         setIsAnimating(false);
         setAnimatedContent('');
-
-        // Update the message in the store with final content
-        // This would require an updateMessage action in the store
-        console.log('Final message content:', fullContent);
       } catch (error) {
         console.error('Streaming error:', error);
+        updateMessage(messageId, {
+          content: 'Error occurred while receiving response.',
+        });
         setIsTyping(false);
         setIsAnimating(false);
         setAnimatedContent('');
-      } finally {
-        setIsLoading(false);
       }
     },
-    [setIsTyping, setIsAnimating, setAnimatedContent, setIsLoading],
+    [updateMessage, setIsTyping, setIsAnimating, setAnimatedContent],
   );
 
   return {
-    // State
+    // SECURE State
     messages,
-    apiKey,
+    hasValidApiKey,
+    apiKeyType,
     selectedModel,
     isLoading: isLoading || isPending,
     isTyping,
     animatedContent,
     isAnimating,
     apiKeyError,
-    isApiKeyValid,
 
     // Actions
     sendMessage,

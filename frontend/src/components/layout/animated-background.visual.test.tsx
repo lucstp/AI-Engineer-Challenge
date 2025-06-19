@@ -17,6 +17,45 @@ vi.mock('@/store', () => ({
   useChatStore: () => mockUseChatStore(),
 }));
 
+// Helper function to setup secure store state
+const setupSecureMockStore = (
+  hasValidApiKey = false,
+  apiKeyType: string | null = null,
+  apiKeyLength: number | null = null,
+) => {
+  mockUseChatStore.mockReturnValue({
+    hasValidApiKey,
+    apiKeyType,
+    apiKeyLength,
+    // Include other required store properties
+    messages: [],
+    isInitialized: true,
+    initializeStore: vi.fn(),
+    apiKeyError: null,
+    setMessages: vi.fn(),
+    addMessage: vi.fn(),
+    updateMessage: vi.fn(),
+    clearMessages: vi.fn(),
+    setApiKey: vi.fn(),
+    deleteApiKey: vi.fn(),
+    selectedModel: 'gpt-4o-mini',
+    setSelectedModel: vi.fn(),
+    isLoading: false,
+    setIsLoading: vi.fn(),
+    isTyping: false,
+    setIsTyping: vi.fn(),
+    showTimestamps: false,
+    setShowTimestamps: vi.fn(),
+    isAnimating: false,
+    setIsAnimating: vi.fn(),
+    animatedContent: '',
+    setAnimatedContent: vi.fn(),
+    isExpanded: false,
+    setIsExpanded: vi.fn(),
+    reset: vi.fn(),
+  });
+};
+
 describe('AnimatedBackground Visual Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -24,10 +63,7 @@ describe('AnimatedBackground Visual Tests', () => {
 
   describe('CSS class application', () => {
     it('applies correct Tailwind classes for invalid state', () => {
-      mockUseChatStore.mockReturnValue({
-        apiKey: '',
-        isApiKeyValid: false,
-      });
+      setupSecureMockStore(false, null, null);
 
       const { container } = render(
         <AnimatedBackground>
@@ -57,7 +93,7 @@ describe('AnimatedBackground Visual Tests', () => {
       expect(grayLogo).toHaveClass(
         'absolute',
         'inset-0',
-        "bg-[url('/assets/logos/aimakerspace-gray-192.png')]",
+        'bg-[url(/assets/logos/aimakerspace-gray-192.png)]',
         'bg-[length:192px_192px]',
         'bg-center',
         'bg-repeat',
@@ -73,11 +109,7 @@ describe('AnimatedBackground Visual Tests', () => {
     });
 
     it('applies correct Tailwind classes for valid state', () => {
-      const testApiKey = generateTestApiKey(true);
-      mockUseChatStore.mockReturnValue({
-        apiKey: testApiKey,
-        isApiKeyValid: true,
-      });
+      setupSecureMockStore(true, 'project', 51);
 
       const { container, rerender } = render(
         <AnimatedBackground>
@@ -99,7 +131,7 @@ describe('AnimatedBackground Visual Tests', () => {
       expect(yellowLogo).toHaveClass(
         'absolute',
         'inset-0',
-        "bg-[url('/assets/logos/aimakerspace-i-192.png')]",
+        'bg-[url(/assets/logos/aimakerspace-i-192.png)]',
         'bg-[length:192px_192px]',
         'bg-center',
         'bg-repeat',
@@ -117,10 +149,7 @@ describe('AnimatedBackground Visual Tests', () => {
     });
 
     it('applies glassmorphism backdrop blur correctly', () => {
-      mockUseChatStore.mockReturnValue({
-        apiKey: '',
-        isApiKeyValid: false,
-      });
+      setupSecureMockStore(false, null, null);
 
       const { container } = render(
         <AnimatedBackground>
@@ -133,10 +162,7 @@ describe('AnimatedBackground Visual Tests', () => {
     });
 
     it('applies proper z-index layering', () => {
-      mockUseChatStore.mockReturnValue({
-        apiKey: '',
-        isApiKeyValid: false,
-      });
+      setupSecureMockStore(false, null, null);
 
       const { container } = render(
         <AnimatedBackground>
@@ -158,10 +184,7 @@ describe('AnimatedBackground Visual Tests', () => {
 
   describe('responsive design compliance', () => {
     it('uses fixed positioning for full-screen coverage', () => {
-      mockUseChatStore.mockReturnValue({
-        apiKey: '',
-        isApiKeyValid: false,
-      });
+      setupSecureMockStore(false, null, null);
 
       const { container } = render(
         <AnimatedBackground>
@@ -178,10 +201,7 @@ describe('AnimatedBackground Visual Tests', () => {
     });
 
     it('maintains minimum height for content coverage', () => {
-      mockUseChatStore.mockReturnValue({
-        apiKey: '',
-        isApiKeyValid: false,
-      });
+      setupSecureMockStore(false, null, null);
 
       const { container } = render(
         <AnimatedBackground>
@@ -196,10 +216,7 @@ describe('AnimatedBackground Visual Tests', () => {
 
   describe('animation and transition classes', () => {
     it('applies correct CSS transition properties', () => {
-      mockUseChatStore.mockReturnValue({
-        apiKey: '',
-        isApiKeyValid: false,
-      });
+      setupSecureMockStore(false, null, null);
 
       const { container } = render(
         <AnimatedBackground>
@@ -215,10 +232,7 @@ describe('AnimatedBackground Visual Tests', () => {
     });
 
     it('follows animation patterns rule - no conflicting CSS animations', () => {
-      mockUseChatStore.mockReturnValue({
-        apiKey: '',
-        isApiKeyValid: false,
-      });
+      setupSecureMockStore(false, null, null);
 
       const { container } = render(
         <AnimatedBackground>
@@ -241,10 +255,7 @@ describe('AnimatedBackground Visual Tests', () => {
     });
 
     it('uses correct background image properties', () => {
-      mockUseChatStore.mockReturnValue({
-        apiKey: '',
-        isApiKeyValid: false,
-      });
+      setupSecureMockStore(false, null, null);
 
       const { container } = render(
         <AnimatedBackground>

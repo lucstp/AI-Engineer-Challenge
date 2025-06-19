@@ -13,6 +13,36 @@ vi.mock('next/font/google', () => ({
   default: () => ({ className: '' }),
 }));
 
+// Mock server-only modules for client-side tests
+vi.mock('server-only', () => ({}));
+
+// Mock Next.js server components and actions
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(() => ({
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+  })),
+}));
+
+// Mock server actions
+vi.mock('@/app/actions/api-key-actions', () => ({
+  validateAndStoreApiKey: vi.fn(),
+  getApiKeySession: vi.fn(),
+  deleteApiKeySession: vi.fn(),
+  getDecryptedApiKey: vi.fn(),
+}));
+
+vi.mock('@/app/actions/chat-actions', () => ({
+  sendMessageAction: vi.fn(),
+}));
+
+// Mock encryption utilities
+vi.mock('@/lib/encryption', () => ({
+  encryptApiKey: vi.fn(),
+  decryptApiKey: vi.fn(),
+}));
+
 // Cleanup after each test case (e.g. clearing jsdom)
 afterEach(() => {
   cleanup();

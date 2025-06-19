@@ -4,13 +4,36 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HomePage from './page';
 
-// Mock Zustand store
+// Mock Zustand store with secure API structure
 const mockStore = {
-  messages: [{ id: 1, text: 'Hello' }],
+  messages: [{ id: '1', content: 'Hello', role: 'user', timestamp: new Date().toISOString() }],
   isInitialized: true,
   initializeStore: vi.fn(),
-  apiKey: 'test-key',
-  isApiKeyValid: true,
+  hasValidApiKey: true,
+  apiKeyType: 'project',
+  apiKeyLength: 51,
+  apiKeyError: null,
+  setMessages: vi.fn(),
+  addMessage: vi.fn(),
+  updateMessage: vi.fn(),
+  clearMessages: vi.fn(),
+  setApiKey: vi.fn(),
+  deleteApiKey: vi.fn(),
+  selectedModel: 'gpt-4o-mini',
+  setSelectedModel: vi.fn(),
+  isLoading: false,
+  setIsLoading: vi.fn(),
+  isTyping: false,
+  setIsTyping: vi.fn(),
+  showTimestamps: false,
+  setShowTimestamps: vi.fn(),
+  isAnimating: false,
+  setIsAnimating: vi.fn(),
+  animatedContent: '',
+  setAnimatedContent: vi.fn(),
+  isExpanded: false,
+  setIsExpanded: vi.fn(),
+  reset: vi.fn(),
 };
 
 describe('HomePage Integration', () => {
@@ -25,44 +48,44 @@ describe('HomePage Integration', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders ChatLayout, ChatShell, and ChatDemo', () => {
+  it('renders ChatLayout, ChatShell, and chat interface', () => {
     render(<HomePage />);
     // Header
-    expect(screen.getByText('AI Chat Application')).toBeInTheDocument();
+    expect(screen.getByText('AI Chat Assistant')).toBeInTheDocument();
     // Footer
     expect(screen.getByText(/Enterprise Architecture/)).toBeInTheDocument();
-    // ChatShell content
-    expect(screen.getByText('Chat Store Status')).toBeInTheDocument();
-    expect(screen.getByText('Phase 2 Complete ✅')).toBeInTheDocument();
+    // Check for chat components
+    expect(screen.getByRole('main')).toBeInTheDocument();
   });
 
-  it('displays Zustand store values', () => {
-    render(<HomePage />);
-    expect(screen.getByText(/Initialized:\s*✅/)).toBeInTheDocument();
-    expect(screen.getByText(/API Key:\s*✅ Set/)).toBeInTheDocument();
-    expect(screen.getByText(/API Key Valid:\s*✅/)).toBeInTheDocument();
-    expect(screen.getByText('Messages: 1')).toBeInTheDocument();
-  });
-
-  it('renders not initialized state', () => {
-    // Update the existing spy's behavior instead of creating a new spy
+  it('initializes store on mount', () => {
+    const initializeStoreSpy = vi.fn();
     useChatStoreSpy.mockImplementation(() => ({
       ...mockStore,
       isInitialized: false,
+      initializeStore: initializeStoreSpy,
     }));
+
     render(<HomePage />);
-    expect(screen.getByText(/Initialized:\s*❌/)).toBeInTheDocument();
+    expect(initializeStoreSpy).toHaveBeenCalled();
   });
 
-  it('renders API Key not set and invalid state', () => {
-    // Update the existing spy's behavior instead of creating a new spy
+  it('renders timestamp toggle button', () => {
+    render(<HomePage />);
+    expect(screen.getByText('Show Times')).toBeInTheDocument();
+  });
+
+  it('toggles timestamp display', () => {
+    const setShowTimestampsSpy = vi.fn();
     useChatStoreSpy.mockImplementation(() => ({
       ...mockStore,
-      apiKey: '',
-      isApiKeyValid: false,
+      showTimestamps: false,
+      setShowTimestamps: setShowTimestampsSpy,
     }));
+
     render(<HomePage />);
-    expect(screen.getByText(/API Key:\s*❌ Not set/)).toBeInTheDocument();
-    expect(screen.getByText(/API Key Valid:\s*❌/)).toBeInTheDocument();
+    const toggleButton = screen.getByText('Show Times');
+    toggleButton.click();
+    expect(setShowTimestampsSpy).toHaveBeenCalled();
   });
 });

@@ -19,11 +19,15 @@ describe('ChatShell', () => {
         <div>Content</div>
       </ChatShell>,
     );
-    const container = screen.getByText('Content').parentElement;
-    expect(container).toHaveClass('mx-auto');
-    expect(container).toHaveClass('w-full');
-    expect(container).toHaveClass('space-y-4');
-    expect(container).toHaveClass('max-w-4xl');
+    // The Card element (grandparent) has the layout classes
+    const cardContent = screen.getByText('Content').parentElement;
+    const cardElement = cardContent?.parentElement;
+    expect(cardElement).toHaveClass('mx-auto');
+    expect(cardElement).toHaveClass('w-full');
+    expect(cardElement).toHaveClass('max-w-4xl');
+
+    // The CardContent element has the content classes
+    expect(cardContent).toHaveClass('space-y-4');
   });
 
   it('does not apply max-w-4xl when maxWidth is false', () => {
@@ -32,8 +36,9 @@ describe('ChatShell', () => {
         <div>Content</div>
       </ChatShell>,
     );
-    const container = screen.getByText('Content').parentElement;
-    expect(container).not.toHaveClass('max-w-4xl');
+    const cardContent = screen.getByText('Content').parentElement;
+    const cardElement = cardContent?.parentElement;
+    expect(cardElement).not.toHaveClass('max-w-4xl');
   });
 
   it('merges custom className', () => {
@@ -42,7 +47,8 @@ describe('ChatShell', () => {
         <div>Content</div>
       </ChatShell>,
     );
-    const container = screen.getByText('Content').parentElement;
-    expect(container).toHaveClass('custom-class');
+    const cardContent = screen.getByText('Content').parentElement;
+    const cardElement = cardContent?.parentElement;
+    expect(cardElement).toHaveClass('custom-class');
   });
 });

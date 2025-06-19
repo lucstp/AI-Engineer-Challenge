@@ -13,12 +13,12 @@ import { z } from 'zod';
  * Updated to support all 2024-2025 OpenAI key formats
  */
 
-// Legacy API key pattern (exactly 51 chars)
-const LEGACY_API_KEY_REGEX = /^sk-[A-Za-z0-9]{48}$/;
+// Legacy API key pattern (exactly 51 chars) - allows underscores and dashes
+const LEGACY_API_KEY_REGEX = /^sk-[A-Za-z0-9_-]{48}$/;
 
 // Modern API key pattern with T3BlbkFJ signature (2024-2025)
 const MODERN_API_KEY_REGEX =
-  /^sk-(?:proj-|svcacct-|admin-)?[A-Za-z0-9_-]{20,74}T3BlbkFJ[A-Za-z0-9_-]{20,74}$/;
+  /^sk-(?:proj-s-|proj-|svcacct-|admin-)?[A-Za-z0-9_-]{20,74}T3BlbkFJ[A-Za-z0-9_-]{20,74}$/;
 
 /**
  * Enhanced OpenAI API key validation with format details
@@ -27,7 +27,7 @@ export interface ApiKeyValidationResult {
   isValid: boolean;
   keyType: string;
   length: number;
-  format?: 'legacy' | 'project' | 'service' | 'admin' | 'modern';
+  format?: 'legacy' | 'project' | 'project-service' | 'service' | 'admin' | 'modern';
   error?: string;
 }
 
@@ -77,13 +77,15 @@ export function validateOpenAIKeyFormat(key: string): ApiKeyValidationResult {
 
   // Check for modern format with T3BlbkFJ signature
   if (MODERN_API_KEY_REGEX.test(trimmedKey)) {
-    const format = trimmedKey.startsWith('sk-proj-')
-      ? 'project'
-      : trimmedKey.startsWith('sk-svcacct-')
-        ? 'service'
-        : trimmedKey.startsWith('sk-admin-')
-          ? 'admin'
-          : 'modern';
+    const format = trimmedKey.startsWith('sk-proj-s-')
+      ? 'project-service'
+      : trimmedKey.startsWith('sk-proj-')
+        ? 'project'
+        : trimmedKey.startsWith('sk-svcacct-')
+          ? 'service'
+          : trimmedKey.startsWith('sk-admin-')
+            ? 'admin'
+            : 'modern';
 
     return {
       isValid: true,
@@ -109,7 +111,7 @@ export function validateOpenAIKeyFormat(key: string): ApiKeyValidationResult {
     keyType: 'invalid',
     length: trimmedKey.length,
     error:
-      'Invalid OpenAI API key format. Keys should start with "sk-", "sk-proj-", or "sk-svcacct-"',
+      'Invalid OpenAI API key format. Keys should start with "sk-", "sk-proj-", "sk-proj-s-", or "sk-svcacct-"',
   };
 }
 
@@ -153,7 +155,7 @@ export { LEGACY_API_KEY_REGEX, MODERN_API_KEY_REGEX };
 export const ERROR_MESSAGES = {
   INVALID_FORMAT: {
     title: 'Invalid format',
-    description: 'API key should start with "sk-", "sk-proj-", or "sk-svcacct-".',
+    description: 'API key should start with "sk-", "sk-proj-", "sk-proj-s-", or "sk-svcacct-".',
     action: 'Double-check your API key from the OpenAI dashboard.',
   },
   UNAUTHORIZED: {

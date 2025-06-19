@@ -9,6 +9,7 @@ const mockStore = {
   messages: [{ id: '1', content: 'Hello', role: 'user', timestamp: new Date().toISOString() }],
   isInitialized: true,
   initializeStore: vi.fn(),
+  checkSession: vi.fn(), // Add missing checkSession method
   hasValidApiKey: true,
   apiKeyType: 'project',
   apiKeyLength: 51,

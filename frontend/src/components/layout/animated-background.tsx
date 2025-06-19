@@ -29,7 +29,8 @@ export function AnimatedBackground({ children }: { children: React.ReactNode }) 
     const shouldBeValid = hasValidApiKey && apiKeyType && apiKeyLength;
     setLogoState(shouldBeValid ? 'valid' : 'invalid');
 
-    if (hasValidApiKey && apiKeyType) {
+    // Only log API key metadata in development environment
+    if (process.env.NODE_ENV === 'development' && hasValidApiKey && apiKeyType) {
       console.log(`🔑 Valid ${apiKeyType} key detected (${apiKeyLength} chars)`);
     }
   }, [hasValidApiKey, apiKeyType, apiKeyLength]);

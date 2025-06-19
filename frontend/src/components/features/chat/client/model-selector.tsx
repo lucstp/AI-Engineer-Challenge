@@ -26,7 +26,7 @@ export function ModelSelector({
           <SelectItem
             key={model.id}
             value={model.id}
-            className="datmy-1 cursor-pointer rounded-md text-white/90 hover:text-white focus:bg-white/10 focus:text-white data-[highlighted]:text-white [highlighted]:bg-white/10"
+            className="my-1 cursor-pointer rounded-md text-white/90 hover:text-white focus:bg-white/10 focus:text-white data-[highlighted]:text-white [highlighted]:bg-white/10"
           >
             {model.name}
           </SelectItem>

@@ -32,6 +32,7 @@ function SubmitButton() {
 // Chat Input Form Component
 export function ChatInput() {
   const [input, setInput] = useState('');
+  const [sendError, setSendError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // SECURE: Use session state instead of direct key access
@@ -61,39 +62,54 @@ export function ChatInput() {
     textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
   });
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  // Auto-clear send errors after 5 seconds
+  useEffect(() => {
+    if (sendError) {
+      const timer = setTimeout(() => {
+        setSendError(null);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [sendError]);
+
+  // Shared message sending logic
+  const sendMessageHandler = async () => {
     if (!input.trim() || !hasValidApiKey || isLoading) {
       return;
     }
 
     const message = input.trim();
     setInput(''); // Clear input immediately
+    setSendError(null); // Clear any previous errors
 
-    // Use secure send message from useChat hook
-    await secureSendMessage(message);
+    try {
+      // Use secure send message from useChat hook
+      await secureSendMessage(message);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      setSendError(
+        error instanceof Error ? error.message : 'Failed to send message. Please try again.',
+      );
+      // Restore the message to input if sending failed
+      setInput(message);
+    }
 
     // Refocus textarea
     textareaRef.current?.focus();
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await sendMessageHandler();
   };
 
   // Handle Enter key for submission
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!input.trim() || !hasValidApiKey || isLoading) {
-        return;
-      }
-
-      const message = input.trim();
-      setInput(''); // Clear input immediately
-
-      // Use secure send message from useChat hook
-      await secureSendMessage(message);
-
-      // Refocus textarea
-      textareaRef.current?.focus();
+      await sendMessageHandler();
     }
   };
 
@@ -127,7 +143,9 @@ export function ChatInput() {
         </div>
 
         {/* Status Messages */}
-        {!hasValidApiKey ? (
+        {sendError ? (
+          <p className="mb-1 text-center text-xs text-red-300">❌ {sendError}</p>
+        ) : !hasValidApiKey ? (
           <p className="mb-1 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] text-center text-xs text-yellow-300">
             ⚠️ An OpenAI API key is required to use this assistant
           </p>

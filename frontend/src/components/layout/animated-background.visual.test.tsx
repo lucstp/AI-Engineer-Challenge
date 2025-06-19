@@ -31,6 +31,7 @@ const setupSecureMockStore = (
     messages: [],
     isInitialized: true,
     initializeStore: vi.fn(),
+    checkSession: vi.fn(), // Add missing checkSession method
     apiKeyError: null,
     setMessages: vi.fn(),
     addMessage: vi.fn(),

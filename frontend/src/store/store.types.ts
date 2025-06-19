@@ -29,7 +29,7 @@ export interface ChatState {
   apiKeyType: string | null;
   apiKeyLength: number | null;
   apiKeyError: string | null;
-  setApiKey: (key: string) => Promise<void>;
+  setApiKey: (key: string) => Promise<{ success: boolean; error: string | null }>;
   deleteApiKey: () => Promise<void>;
 
   // Initialization

@@ -60,23 +60,27 @@ export const useChatStore = create<ChatState>()(
                 apiKeyError: null,
                 isLoading: false,
               });
-            } else {
-              set({
-                hasValidApiKey: false,
-                apiKeyType: null,
-                apiKeyLength: null,
-                apiKeyError: result.error || 'Validation failed',
-                isLoading: false,
-              });
+              return { success: true, error: null };
             }
-          } catch (error) {
+
             set({
               hasValidApiKey: false,
               apiKeyType: null,
               apiKeyLength: null,
-              apiKeyError: 'Failed to validate API key',
+              apiKeyError: result.error || 'Validation failed',
               isLoading: false,
             });
+            return { success: false, error: result.error || 'Validation failed' };
+          } catch (error) {
+            const errorMessage = 'Failed to validate API key';
+            set({
+              hasValidApiKey: false,
+              apiKeyType: null,
+              apiKeyLength: null,
+              apiKeyError: errorMessage,
+              isLoading: false,
+            });
+            return { success: false, error: errorMessage };
           }
         },
 

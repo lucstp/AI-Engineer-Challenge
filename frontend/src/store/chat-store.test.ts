@@ -130,8 +130,12 @@ describe('chat-store Zustand store', () => {
         expiresAt: Date.now() + 86400000,
       });
 
-      await useChatStore.getState().initializeStore();
+      // Initialize store (synchronous)
+      useChatStore.getState().initializeStore();
       expect(useChatStore.getState().isInitialized).toBe(true);
+
+      // Then check session (asynchronous)
+      await useChatStore.getState().checkSession();
       expect(useChatStore.getState().hasValidApiKey).toBe(true);
       expect(useChatStore.getState().apiKeyType).toBe('project');
     });
@@ -140,8 +144,12 @@ describe('chat-store Zustand store', () => {
       const { getApiKeySession } = await import('@/app/actions/api-key-actions');
       vi.mocked(getApiKeySession).mockResolvedValue(null);
 
-      await useChatStore.getState().initializeStore();
+      // Initialize store (synchronous)
+      useChatStore.getState().initializeStore();
       expect(useChatStore.getState().isInitialized).toBe(true);
+
+      // Then check session (asynchronous)
+      await useChatStore.getState().checkSession();
       expect(useChatStore.getState().hasValidApiKey).toBe(false);
     });
   });

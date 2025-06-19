@@ -97,10 +97,10 @@ export function ApiKeySection() {
     setIsValidating(true);
     try {
       // This calls the secure server action and updates store state
-      await setApiKey(apiKeyInput.trim());
+      const result = await setApiKey(apiKeyInput.trim());
 
-      // Clear input on successful validation (check store state)
-      if (hasValidApiKey && !apiKeyError) {
+      // Clear input on successful validation (use return value to avoid race condition)
+      if (result.success) {
         setApiKeyInput('');
         setShowApiKey(false);
       }

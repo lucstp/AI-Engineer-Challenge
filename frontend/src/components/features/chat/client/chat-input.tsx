@@ -78,10 +78,11 @@ function ApiKeySection() {
 
     setIsValidating(true);
     try {
-      // This calls the secure server action
-      await setApiKey(apiKeyInput.trim());
-      // Clear input on successful validation
-      if (hasValidApiKey) {
+      // This calls the secure server action and returns success status
+      const isValid = await setApiKey(apiKeyInput.trim());
+
+      // Clear input on successful validation (check the actual result)
+      if (isValid) {
         setApiKeyInput('');
         setShowApiKey(false);
       }

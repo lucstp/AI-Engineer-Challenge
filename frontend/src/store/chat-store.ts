@@ -50,7 +50,7 @@ export const useChatStore = create<ChatState>()(
         clearMessages: () => set({ messages: [] }),
 
         // SECURE API Key actions (no client storage)
-        setApiKey: async (key: string) => {
+        setApiKey: async (key: string): Promise<boolean> => {
           set({ isLoading: true, apiKeyError: null });
 
           try {
@@ -64,15 +64,17 @@ export const useChatStore = create<ChatState>()(
                 apiKeyError: null,
                 isLoading: false,
               });
-            } else {
-              set({
-                hasValidApiKey: false,
-                apiKeyType: null,
-                apiKeyLength: null,
-                apiKeyError: result.error || 'Validation failed',
-                isLoading: false,
-              });
+              return true; // Success
             }
+
+            set({
+              hasValidApiKey: false,
+              apiKeyType: null,
+              apiKeyLength: null,
+              apiKeyError: result.error || 'Validation failed',
+              isLoading: false,
+            });
+            return false; // Validation failed
           } catch (error) {
             set({
               hasValidApiKey: false,
@@ -81,6 +83,7 @@ export const useChatStore = create<ChatState>()(
               apiKeyError: 'Failed to validate API key',
               isLoading: false,
             });
+            return false; // Exception occurred
           }
         },
 

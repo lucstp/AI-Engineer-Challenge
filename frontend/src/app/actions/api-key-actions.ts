@@ -28,11 +28,17 @@ export async function validateAndStoreApiKey(
     // 1. Format validation
     const validation = modernApiKeySchema.safeParse(apiKey);
     if (!validation.success) {
+      // Safely extract error message with multiple fallbacks
+      const errorMessage =
+        validation.error?.issues?.[0]?.message ??
+        validation.error?.message ??
+        'Invalid OpenAI API key format';
+
       return {
         success: false,
         error: 'Invalid API key format',
         fieldErrors: {
-          apiKey: [validation.error.issues[0]?.message || 'Invalid OpenAI API key format'],
+          apiKey: [errorMessage],
         },
       };
     }
@@ -141,8 +147,8 @@ export async function getApiKeySession(): Promise<ApiKeySession | null> {
     const { payload } = await jwtVerify(sessionToken, getSessionSecret());
     const session = payload as ApiKeySession;
 
-    // Check if session is expired
-    if (session.expiresAt && session.expiresAt < Date.now()) {
+    // Check if session is expired (defensive check)
+    if (session?.expiresAt && session.expiresAt < Date.now()) {
       await deleteApiKeySession();
       return null;
     }

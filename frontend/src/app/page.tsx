@@ -43,7 +43,7 @@ export default function HomePage() {
           </div>
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">AI Assistant</h1>
+          <h1 className="text-2xl font-bold text-white">AI Chat Assistant</h1>
           <p className="text-sm text-yellow-300">Always ready to help</p>
         </div>
       </div>

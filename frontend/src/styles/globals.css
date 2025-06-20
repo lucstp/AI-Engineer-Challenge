@@ -154,4 +154,58 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Custom Scrollbar Styles - Only for non-Radix elements */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Firefox scrollbar support */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+  }
+
+  /* Exclude Radix ScrollArea from custom scrollbar styles */
+  [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Custom scrollbar for specific elements */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }

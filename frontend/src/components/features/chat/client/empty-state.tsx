@@ -45,9 +45,11 @@ export function EmptyState({ className }: EmptyStateProps) {
       }
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🎬 EmptyState initial check:', { hasSeenBefore, storage: !!storage });
-    }
+    logger.debug('EmptyState initial check', {
+      component: 'EmptyState',
+      hasSeenBefore,
+      hasStorage: !!storage
+    });
 
     if (hasSeenBefore) {
       // Returning user - show "ready to help" immediately WITHOUT animation

@@ -14,6 +14,9 @@ import { jwtVerify, SignJWT, type JWTPayload } from 'jose';
 const getSessionSecret = (): Uint8Array => {
   const secret = process.env.SESSION_SECRET;
   if (!secret) {
+    console.error('🚨 SESSION_SECRET environment variable is missing!');
+    console.error('💡 If using Doppler: ensure `doppler run -- npm run dev`');
+    console.error('💡 If using .env.local: add SESSION_SECRET=your-secret-here');
     throw new Error('SESSION_SECRET environment variable is required');
   }
   return new TextEncoder().encode(secret);

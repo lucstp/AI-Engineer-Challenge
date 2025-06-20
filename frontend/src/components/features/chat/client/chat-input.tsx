@@ -88,7 +88,21 @@ export function ChatInput() {
     try {
       await sendMessage(message);
     } catch (error) {
-      console.error('Failed to send message:', error);
+// Add at top with other imports
+import { logger } from '@/lib';
+
+// …
+
+// In the catch block where the error is currently logged:
+-      console.error('Failed to send message:', error);
++      logger.error(
++        'Failed to send message',
++        error instanceof Error ? error : new Error(String(error)),
++        {
++          component: 'ChatInput',
++          action: 'sendMessage',
++        }
++      );
       setSendError(
         error instanceof Error ? error.message : 'Failed to send message. Please try again.',
       );

@@ -5,49 +5,45 @@ import { Button, Textarea } from '@/components/ui';
 import { useChat } from '@/hooks/use-chat';
 import { useChatStore } from '@/store';
 import { Send } from 'lucide-react';
-import { useFormStatus } from 'react-dom';
 
 import { ApiKeySection } from './api-key-section';
 
 /**
- * Renders a submit button for the chat input form, disabling it when a submission is pending or the API key is invalid.
- *
- * The button includes a send icon and applies conditional styling based on its enabled state. It is accessible and communicates its disabled state to assistive technologies.
+ * Submit button with proper loading and validation states
  */
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  const { hasValidApiKey } = useChatStore(); // SECURE: Use boolean flag
+function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {
+  const { hasValidApiKey } = useChatStore();
 
   return (
     <Button
       type="submit"
-      disabled={pending || !hasValidApiKey}
+      disabled={isSubmitting || !hasValidApiKey}
       className={`flex size-8 items-center justify-center rounded-lg border border-solid border-white/30 bg-transparent p-0 text-white/70 shadow-[rgba(0,0,0,0.3)_0px_2px_4px_0px] disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-white/30 disabled:hover:bg-transparent ${
-        !pending && hasValidApiKey
+        !isSubmitting && hasValidApiKey
           ? 'hover:border-white/40 hover:bg-white/20'
           : 'hover:bg-transparent'
       }`}
     >
-      <Send className="size-4" />
+      {isSubmitting ? (
+        <div className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white/70" />
+      ) : (
+        <Send className="size-4" />
+      )}
     </Button>
   );
 }
 
 /**
- * Renders a chat input form with secure API key validation, message sending, and user feedback.
- *
- * The component manages input state, handles secure message submission using a protected API key, and provides accessibility features such as auto-focus, auto-resizing, and keyboard shortcuts. Displays contextual status messages for errors, missing API key, or usage instructions.
+ * Enhanced chat input with streaming support via route handler
  */
 export function ChatInput() {
   const [input, setInput] = useState('');
   const [sendError, setSendError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // SECURE: Use session state instead of direct key access
-  const { isLoading, hasValidApiKey } = useChatStore();
-
-  // Import useChat for the secure sendMessage function
-  const { sendMessage: secureSendMessage } = useChat();
+  const { hasValidApiKey, isLoading } = useChatStore();
+  const { sendMessage } = useChat();
 
   // Auto-focus textarea when API key is valid
   useEffect(() => {
@@ -73,27 +69,24 @@ export function ChatInput() {
   // Auto-clear send errors after 5 seconds
   useEffect(() => {
     if (sendError) {
-      const timer = setTimeout(() => {
-        setSendError(null);
-      }, 5000);
-
+      const timer = setTimeout(() => setSendError(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [sendError]);
 
-  // Shared message sending logic
+  // Message sending logic
   const sendMessageHandler = async () => {
-    if (!input.trim() || !hasValidApiKey || isLoading) {
+    if (!input.trim() || !hasValidApiKey || isSubmitting) {
       return;
     }
 
     const message = input.trim();
     setInput(''); // Clear input immediately
-    setSendError(null); // Clear any previous errors
+    setSendError(null);
+    setIsSubmitting(true);
 
     try {
-      // Use secure send message from useChat hook
-      await secureSendMessage(message);
+      await sendMessage(message);
     } catch (error) {
       console.error('Failed to send message:', error);
       setSendError(
@@ -101,10 +94,11 @@ export function ChatInput() {
       );
       // Restore the message to input if sending failed
       setInput(message);
+    } finally {
+      setIsSubmitting(false);
+      // Refocus textarea
+      textareaRef.current?.focus();
     }
-
-    // Refocus textarea
-    textareaRef.current?.focus();
   };
 
   // Handle form submission
@@ -124,7 +118,7 @@ export function ChatInput() {
   return (
     <div className="mt-auto pt-4">
       <form onSubmit={handleSubmit} className="space-y-0">
-        {/* SECURE API Key Section */}
+        {/* API Key Section */}
         <ApiKeySection />
 
         {/* Message Input Area */}
@@ -137,8 +131,8 @@ export function ChatInput() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type your message here..."
-              className="min-h-[48px] w-full flex-1 resize-none rounded-lg rounded-t-none border-none bg-white/10 py-3.5 pr-16 font-sans text-base leading-none text-white placeholder:text-white/40 focus:border-none focus:bg-white/20 focus:ring-0 focus:outline-none"
-              disabled={!hasValidApiKey}
+              className="min-h-[48px] w-full flex-1 resize-none rounded-lg rounded-t-none border-none bg-white/10 py-3.5 pr-16 font-sans text-base leading-relaxed text-white placeholder:text-white/40 focus:border-none focus:bg-white/20 focus:ring-0 focus:outline-none"
+              disabled={!hasValidApiKey || isSubmitting}
               required
               minLength={1}
               maxLength={4000}
@@ -146,7 +140,7 @@ export function ChatInput() {
             />
           </div>
           <div className="absolute right-2 bottom-2">
-            <SubmitButton />
+            <SubmitButton isSubmitting={isSubmitting} />
           </div>
         </div>
 
@@ -157,6 +151,8 @@ export function ChatInput() {
           <p className="mb-1 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] text-center text-xs text-yellow-300">
             ⚠️ An OpenAI API key is required to use this assistant
           </p>
+        ) : isSubmitting ? (
+          <p className="mb-1 text-center text-xs text-blue-200">🤖 Sending message...</p>
         ) : (
           <p className="mb-1 text-center text-xs text-blue-200">
             Press Enter to send, Shift + Enter for new line

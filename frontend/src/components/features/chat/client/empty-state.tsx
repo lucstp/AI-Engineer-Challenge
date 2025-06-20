@@ -65,9 +65,9 @@ export function EmptyState({ className }: EmptyStateProps) {
       setShouldAnimate(true);
 
       const timer = setTimeout(() => {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🎬 Marking welcome animation as seen');
-        }
+        logger.debug('Marking welcome animation as seen', {
+          component: 'EmptyState'
+        });
         setHasSeenWelcomeAnimation(true);
       }, 2000); // Give user time to read the welcome
 

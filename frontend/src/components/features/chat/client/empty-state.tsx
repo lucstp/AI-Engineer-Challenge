@@ -37,10 +37,12 @@ export function EmptyState({ className }: EmptyStateProps) {
 
     if (storage) {
       try {
-        const parsed = JSON.parse(storage);
+        const parsed = JSON.parse(storage) as { state?: { hasSeenWelcomeAnimation?: boolean } };
         hasSeenBefore = parsed?.state?.hasSeenWelcomeAnimation === true;
       } catch (error) {
-        console.warn('Failed to parse localStorage data, treating as first-time user:', error);
+        logger.warn('Failed to parse localStorage data, treating as first-time user', error, {
+          component: 'EmptyState'
+        });
         hasSeenBefore = false;
       }
     }

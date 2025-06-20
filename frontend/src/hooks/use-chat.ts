@@ -1,184 +1,167 @@
 'use client';
 
-import { useCallback, useTransition } from 'react';
-import { sendMessageAction } from '@/app/actions/chat-actions';
+import { useCallback, useState } from 'react';
+import { chatLogger } from '@/lib';
 import { useChatStore } from '@/store';
 import type { Message } from '@/types';
 
 /**
- * React hook for managing chat state, message sending, and streaming assistant responses with animation.
- *
- * Integrates with a global chat store to provide chat messages, model selection, API key status, and UI state. Handles sending user messages to a secure server action, processes streaming assistant responses with a typewriter effect, and manages all related UI and animation states. No direct API key access occurs in the hook; all server communication is secure and streaming-enabled.
- *
- * @returns An object containing chat state variables and a `sendMessage` function for sending user messages and handling assistant responses.
+ * Enhanced useChat hook that integrates with the streaming route handler
+ * and provides secure message sending with proper error handling.
  */
 export function useChat() {
-  const [isPending, startTransition] = useTransition();
-
-  // SECURE: No direct API key access
+  const [isStreaming, setIsStreaming] = useState(false);
   const {
-    messages,
-    hasValidApiKey,
-    apiKeyType,
-    selectedModel,
-    isLoading,
-    isTyping,
-    animatedContent,
-    isAnimating,
-    apiKeyError,
     addMessage,
     updateMessage,
     setIsLoading,
     setIsTyping,
-    setAnimatedContent,
     setIsAnimating,
+    setAnimatedContent,
+    selectedModel,
   } = useChatStore();
 
-  /**
-   * MODERN + SECURE + CHALLENGE COMPLIANT: Direct Server Action streaming
-   */
   const sendMessage = useCallback(
-    async (messageText: string) => {
-      if (!messageText.trim() || !hasValidApiKey || isLoading) {
-        return;
+    async (content: string) => {
+      if (!content.trim()) {
+        throw new Error('Message cannot be empty');
       }
 
-      try {
-        setIsLoading(true);
-        setIsTyping(false);
+      setIsLoading(true);
+      setIsTyping(true);
+      setIsStreaming(true);
 
-        // Add user message
+      try {
+        // Add user message immediately
         const userMessage: Message = {
           id: `user-${Date.now()}`,
+          content: content.trim(),
           role: 'user',
-          content: messageText.trim(),
           timestamp: new Date().toISOString(),
         };
         addMessage(userMessage);
 
-        // Add assistant placeholder
+        // Prepare assistant message for streaming
         const assistantMessageId = `assistant-${Date.now()}`;
         const assistantMessage: Message = {
           id: assistantMessageId,
-          role: 'assistant',
           content: '',
+          role: 'assistant',
           timestamp: new Date().toISOString(),
         };
         addMessage(assistantMessage);
 
-        // Start animation
+        // Start animation state
         setIsAnimating(true);
         setAnimatedContent('');
 
-        startTransition(async () => {
+        // Call the streaming route handler
+        const response = await fetch('/api/chat-stream', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: content.trim(),
+            model: selectedModel,
+            developerMessage: 'You are a helpful AI assistant.',
+          }),
+        });
+
+        if (!response.ok) {
+          // Handle error response
+          let errorMessage = 'Failed to send message';
           try {
-            // MODERN: Direct Server Action call (no API route)
-            const formData = new FormData();
-            formData.append('message', messageText.trim());
-            formData.append('model', selectedModel);
-            formData.append('developerMessage', 'You are a helpful AI assistant.');
-
-            const result = await sendMessageAction({ success: false, message: '' }, formData);
-
-            if (result.success && result.streamingResponse) {
-              // MODERN: Handle streaming directly from Server Action
-              await handleStreamingResponse(result.streamingResponse, assistantMessageId);
-            } else {
-              // Handle errors
-              const errorMessage =
-                result.errors?.message?.[0] ||
-                result.errors?.apiKey?.[0] ||
-                'Failed to send message';
-
-              updateMessage(assistantMessageId, { content: errorMessage });
-              setIsAnimating(false);
-              setAnimatedContent('');
-            }
-          } catch (error) {
-            console.error('Message sending failed:', error);
-            updateMessage(assistantMessageId, {
-              content: 'Sorry, I encountered an error. Please try again.',
-            });
-            setIsAnimating(false);
-            setAnimatedContent('');
-          } finally {
-            setIsLoading(false);
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            errorMessage = `Server error: ${response.status}`;
           }
+          throw new Error(errorMessage);
+        }
+
+        // Handle streaming response
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('No response stream available');
+        }
+
+        const decoder = new TextDecoder();
+        let accumulatedContent = '';
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              break;
+            }
+
+            // Decode the chunk
+            const chunk = decoder.decode(value, { stream: true });
+            accumulatedContent += chunk;
+
+            // Update the message with accumulated content
+            updateMessage(assistantMessageId, { content: accumulatedContent });
+
+            // Update animated content for typewriter effect
+            setAnimatedContent(accumulatedContent);
+          }
+        } finally {
+          reader.releaseLock();
+        }
+
+        // Final update to ensure message is complete
+        updateMessage(assistantMessageId, {
+          content: accumulatedContent,
+          timestamp: new Date().toISOString(),
+        });
+
+        chatLogger.success('Message sent and streamed successfully', {
+          action: 'sendMessage',
+          messageLength: content.length,
+          model: selectedModel,
         });
       } catch (error) {
-        console.error('Send message error:', error);
+        chatLogger.error(
+          'Failed to send message',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            action: 'sendMessage',
+          },
+        );
+
+        // Add error message to chat
+        const errorMessage: Message = {
+          id: `error-${Date.now()}`,
+          content: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+          role: 'assistant',
+          timestamp: new Date().toISOString(),
+        };
+        addMessage(errorMessage);
+
+        // Re-throw for the component to handle
+        throw error;
+      } finally {
         setIsLoading(false);
+        setIsTyping(false);
+        setIsStreaming(false);
         setIsAnimating(false);
       }
     },
     [
-      hasValidApiKey,
-      selectedModel,
-      isLoading,
       addMessage,
       updateMessage,
       setIsLoading,
       setIsTyping,
       setIsAnimating,
       setAnimatedContent,
+      selectedModel,
     ],
   );
 
-  /**
-   * Handle streaming response with typewriter effect
-   */
-  const handleStreamingResponse = useCallback(
-    async (stream: ReadableStream, messageId: string) => {
-      try {
-        const reader = stream.getReader();
-        const decoder = new TextDecoder();
-        let fullContent = '';
-
-        setIsTyping(true);
-
-        while (true) {
-          const { done, value } = await reader.read();
-
-          if (done) {
-            break;
-          }
-
-          const chunk = decoder.decode(value, { stream: true });
-          fullContent += chunk;
-          setAnimatedContent(fullContent);
-        }
-
-        // Finalize message
-        updateMessage(messageId, { content: fullContent });
-        setIsTyping(false);
-        setIsAnimating(false);
-        setAnimatedContent('');
-      } catch (error) {
-        console.error('Streaming error:', error);
-        updateMessage(messageId, {
-          content: 'Error occurred while receiving response.',
-        });
-        setIsTyping(false);
-        setIsAnimating(false);
-        setAnimatedContent('');
-      }
-    },
-    [updateMessage, setIsTyping, setIsAnimating, setAnimatedContent],
-  );
-
   return {
-    // SECURE State
-    messages,
-    hasValidApiKey,
-    apiKeyType,
-    selectedModel,
-    isLoading: isLoading || isPending,
-    isTyping,
-    animatedContent,
-    isAnimating,
-    apiKeyError,
-
-    // Actions
     sendMessage,
+    isStreaming,
   };
 }

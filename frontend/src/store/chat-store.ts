@@ -1,50 +1,68 @@
+// src/store/chat-store.ts
+import { chatLogger, logger, toast } from '@/lib';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
 import type { ChatState } from './store.types';
 
-// Chat functionality previously managed through useChat hook
-// has been migrated to this centralized store for better state management.
-// SECURITY UPDATE: Removed direct API key storage for production security
+// Welcome message constants to avoid duplication
+const WELCOME_MESSAGE =
+  "Hello! I'm your AI assistant. To get started, please enter your OpenAI API key in the field below. I'll be ready to help once you've added your key.";
 
-// Initial state constant to ensure DRY principle and consistency
-const INITIAL_STATE: Partial<ChatState> = {
-  // Messages state
+/**
+ * Creates a consistent welcome message object
+ */
+function createWelcomeMessage() {
+  return {
+    id: 'welcome',
+    content: WELCOME_MESSAGE,
+    role: 'assistant' as const,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+// Initial state for data only (without action functions)
+const INITIAL_DATA_STATE = {
   messages: [],
-  // SECURE API Key state (NO direct storage)
   hasValidApiKey: false,
-  apiKeyType: null,
-  apiKeyLength: null,
-  apiKeyError: null,
+  apiKeyType: null as string | null,
+  apiKeyLength: null as number | null,
+  apiKeyError: null as string | null,
   isInitialized: false,
+  isRehydrated: false, // Track Zustand persistence rehydration completion
   selectedModel: 'gpt-4.1-mini',
-  // UI state
   isLoading: false,
   isTyping: false,
   showTimestamps: false,
   isAnimating: false,
   animatedContent: '',
   isExpanded: false,
+  hasSeenWelcomeAnimation: false,
+  hasCompletedInitialSetup: false,
+  lastSuccessfulKeyType: null as string | null,
 };
 
 export const useChatStore = create<ChatState>()(
   devtools(
     persist(
-      (set, _get) => ({
-        ...(INITIAL_STATE as ChatState),
+      (set, get) => ({
+        // Initialize with data state
+        ...INITIAL_DATA_STATE,
 
         // Messages actions
         setMessages: (messages) => set({ messages }),
-        addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
+        addMessage: (message) =>
+          set((state) => ({
+            messages: [...state.messages, message],
+          })),
         updateMessage: (id, updates) =>
           set((state) => ({
             messages: state.messages.map((msg) => (msg.id === id ? { ...msg, ...updates } : msg)),
           })),
         clearMessages: () => set({ messages: [] }),
 
-        // SECURE API Key actions (async - no hydration issues)
+        // API Key actions
         setApiKey: async (key: string) => {
-          // Dynamic import to avoid hydration issues
           const { validateAndStoreApiKey } = await import('@/app/actions/api-key-actions');
 
           set({ isLoading: true, apiKeyError: null });
@@ -53,13 +71,39 @@ export const useChatStore = create<ChatState>()(
             const result = await validateAndStoreApiKey(key);
 
             if (result.success && result.data) {
+              const keyType = result.data.keyInfo?.type || null;
+              const keyLength = result.data.keyInfo?.length || null;
+
+              const confirmationMessage = {
+                id: `key-confirmation-${Date.now()}`,
+                content: 'Thank you for adding your API key! How can I help you today?',
+                role: 'assistant' as const,
+                timestamp: new Date().toISOString(),
+              };
+
+              const currentState = get();
+
+              // Single atomic state update
               set({
                 hasValidApiKey: true,
-                apiKeyType: result.data.keyInfo?.type || null,
-                apiKeyLength: result.data.keyInfo?.length || null,
+                apiKeyType: keyType,
+                apiKeyLength: keyLength,
                 apiKeyError: null,
                 isLoading: false,
+                hasCompletedInitialSetup: true,
+                lastSuccessfulKeyType: keyType,
+                isExpanded: true,
+                messages: [...currentState.messages, confirmationMessage],
+                isAnimating: true,
+                animatedContent: confirmationMessage.content,
               });
+
+              chatLogger.success('API Key validated and setup complete', {
+                action: 'setApiKey',
+                keyType,
+                keyLength,
+              });
+              toast.success('API key added successfully!');
               return { success: true, error: null };
             }
 
@@ -85,47 +129,149 @@ export const useChatStore = create<ChatState>()(
         },
 
         deleteApiKey: async () => {
-          // Dynamic import to avoid hydration issues
           const { deleteApiKeySession } = await import('@/app/actions/api-key-actions');
 
           try {
             await deleteApiKeySession();
+
+            const welcomeMessage = createWelcomeMessage();
+
             set({
               hasValidApiKey: false,
               apiKeyType: null,
               apiKeyLength: null,
               apiKeyError: null,
-              messages: [],
+              messages: [welcomeMessage],
+              isExpanded: false,
+              isAnimating: true,
+              animatedContent: welcomeMessage.content,
             });
           } catch (error) {
-            console.error('Failed to delete API key:', error);
+            logger.error(
+              'Failed to delete API key',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                component: 'ChatStore',
+                action: 'deleteApiKey',
+              },
+            );
+            toast.error('Failed to delete API key');
           }
         },
 
-        // FIXED: Safe initialization - no Server Actions during hydration
+        // Fixed initialization with proper type safety
         initializeStore: () => {
-          // Just mark as initialized - session check happens on user interaction
-          set({ isInitialized: true });
+          const state = get();
+
+          logger.debug('Store initialization check', {
+            component: 'ChatStore',
+            action: 'initializeStore',
+            isInitialized: state.isInitialized,
+            hasCompletedInitialSetup: state.hasCompletedInitialSetup,
+            messagesCount: state.messages.length,
+          });
+
+          // Skip if already initialized
+          if (state.isInitialized) {
+            logger.debug('Store already initialized from persistence', {
+              component: 'ChatStore',
+              action: 'initializeStore',
+            });
+            return;
+          }
+
+          // Only run first-time initialization for truly new users
+          if (
+            state.messages.length === 0 &&
+            !state.hasValidApiKey &&
+            !state.hasSeenWelcomeAnimation &&
+            !state.hasCompletedInitialSetup
+          ) {
+            const welcomeMessage = createWelcomeMessage();
+
+            logger.info('First-time user initialization', {
+              component: 'ChatStore',
+              action: 'initializeStore',
+            });
+            set({
+              messages: [welcomeMessage],
+              isAnimating: true,
+              animatedContent: welcomeMessage.content,
+              hasSeenWelcomeAnimation: true,
+              isInitialized: true,
+            });
+          } else {
+            logger.debug('Marking as initialized without changes', {
+              component: 'ChatStore',
+              action: 'initializeStore',
+            });
+            set({
+              isInitialized: true,
+            });
+          }
         },
 
-        // NEW: Separate session check method (called after hydration)
+        // Session check with proper array handling
         checkSession: async () => {
-          // Dynamic import to avoid hydration issues
           const { getApiKeySession } = await import('@/app/actions/api-key-actions');
 
           try {
             const session = await getApiKeySession();
-            set({
-              hasValidApiKey: session?.hasValidKey || false,
-              apiKeyType: session?.keyType || null,
-              apiKeyLength: session?.keyLength || null,
-            });
+            const currentState = get();
+
+            if (session?.hasValidKey) {
+              set({
+                hasValidApiKey: true,
+                apiKeyType: session.keyType || currentState.lastSuccessfulKeyType,
+                apiKeyLength: session.keyLength,
+                hasCompletedInitialSetup: true,
+                lastSuccessfulKeyType: session.keyType || currentState.lastSuccessfulKeyType,
+                isExpanded: true,
+              });
+              chatLogger.success('Session restored with valid API key', {
+                action: 'checkSession',
+                keyType: session.keyType,
+              });
+            } else {
+              const shouldShowWelcome =
+                currentState.messages.length === 0 && !currentState.hasCompletedInitialSetup;
+
+              if (shouldShowWelcome) {
+                const welcomeMessage = createWelcomeMessage();
+
+                set({
+                  hasValidApiKey: false,
+                  apiKeyType: null,
+                  apiKeyLength: null,
+                  messages: [welcomeMessage],
+                  isExpanded: false,
+                  isAnimating: true,
+                  animatedContent: welcomeMessage.content,
+                  hasSeenWelcomeAnimation: true,
+                });
+              } else {
+                set({
+                  hasValidApiKey: false,
+                  apiKeyType: null,
+                  apiKeyLength: null,
+                  isExpanded: false,
+                });
+              }
+            }
           } catch (error) {
-            console.error('Session check failed:', error);
+            logger.error(
+              'Session check failed',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                component: 'ChatStore',
+                action: 'checkSession',
+              },
+            );
             set({
               hasValidApiKey: false,
               apiKeyType: null,
               apiKeyLength: null,
+              isExpanded: false,
             });
           }
         },
@@ -138,37 +284,115 @@ export const useChatStore = create<ChatState>()(
         setIsAnimating: (animating) => set({ isAnimating: animating }),
         setAnimatedContent: (content) => set({ animatedContent: content }),
         setIsExpanded: (expanded) => set({ isExpanded: expanded }),
+        setHasSeenWelcomeAnimation: (seen) => set({ hasSeenWelcomeAnimation: seen }),
+        setHasCompletedInitialSetup: (completed) => set({ hasCompletedInitialSetup: completed }),
 
+        // Reset with proper array initialization
         reset: async () => {
-          // Dynamic import to avoid hydration issues
-          const { deleteApiKeySession } = await import('@/app/actions/api-key-actions');
-
           try {
+            const { deleteApiKeySession } = await import('@/app/actions/api-key-actions');
             await deleteApiKeySession();
-            set(INITIAL_STATE);
+            // Note: Removed direct localStorage.removeItem() - Zustand's persistence middleware handles cleanup
           } catch (error) {
-            console.error('Store reset failed:', error);
-            set(INITIAL_STATE);
+            logger.error(
+              'Reset cleanup failed',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                component: 'ChatStore',
+                action: 'reset',
+              },
+            );
           }
+
+          const welcomeMessage = createWelcomeMessage();
+
+          // Reset state - Zustand persistence middleware will handle storage cleanup automatically
+          set({
+            ...INITIAL_DATA_STATE,
+            messages: [welcomeMessage],
+            isAnimating: true,
+            animatedContent: welcomeMessage.content,
+            isInitialized: true,
+          });
         },
       }),
       {
         name: 'chat-storage',
-        partialize: (state) => ({
-          // Only persist safe UI state - NO API KEYS
+        partialize: (state: ChatState) => ({
           selectedModel: state.selectedModel,
           messages: state.messages,
-          isExpanded: state.isExpanded,
           showTimestamps: state.showTimestamps,
+          hasSeenWelcomeAnimation: state.hasSeenWelcomeAnimation,
+          hasCompletedInitialSetup: state.hasCompletedInitialSetup,
+          lastSuccessfulKeyType: state.lastSuccessfulKeyType,
+          isInitialized: state.isInitialized,
+          // Note: isExpanded is NOT persisted - it's derived from hasValidApiKey for proper animations
         }),
-        // FIXED: Safe rehydration - no Server Actions
-        onRehydrateStorage: () => (state) => {
-          if (state) {
-            // Just initialize - don't call Server Actions during hydration
-            state.initializeStore();
+        onRehydrateStorage: () => (state?: ChatState, error?: unknown) => {
+          if (error) {
+            logger.error(
+              'Store rehydration failed',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                component: 'ChatStore',
+                action: 'rehydrate',
+              },
+            );
+            // Mark as rehydrated even on error to prevent indefinite waiting
+            useChatStore.setState({ isRehydrated: true });
+            return;
           }
+
+          if (state) {
+            logger.debug('Store rehydrated successfully', {
+              component: 'ChatStore',
+              action: 'rehydrate',
+              messagesCount: state.messages.length,
+              hasCompletedInitialSetup: state.hasCompletedInitialSetup,
+              isInitialized: state.isInitialized,
+            });
+          }
+
+          // Mark rehydration as complete and trigger initialization if needed
+          useChatStore.setState((currentState) => {
+            const newState = { ...currentState, isRehydrated: true };
+
+            // Auto-trigger initialization after rehydration if not already initialized
+            if (!currentState.isInitialized) {
+              logger.info('Auto-triggering store initialization after rehydration', {
+                component: 'ChatStore',
+                action: 'postRehydrationInit',
+              });
+
+              // Call initializeStore logic directly
+              if (
+                currentState.messages.length === 0 &&
+                !currentState.hasValidApiKey &&
+                !currentState.hasSeenWelcomeAnimation &&
+                !currentState.hasCompletedInitialSetup
+              ) {
+                const welcomeMessage = createWelcomeMessage();
+                return {
+                  ...newState,
+                  messages: [welcomeMessage],
+                  isAnimating: true,
+                  animatedContent: welcomeMessage.content,
+                  hasSeenWelcomeAnimation: true,
+                  isInitialized: true,
+                };
+              }
+
+              return {
+                ...newState,
+                isInitialized: true,
+              };
+            }
+
+            return newState;
+          });
         },
       },
     ),
+    { name: 'chat-store' },
   ),
 );

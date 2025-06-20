@@ -1,38 +1,75 @@
-import type { ReactNode } from 'react';
-import { Card, CardFooter, CardHeader } from '@/components/ui';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Card, CardHeader } from '@/components/ui';
+import { cn } from '@/lib/utils';
+import { useChatStore } from '@/store';
+import { motion } from 'motion/react';
 
 interface ChatLayoutProps {
   children: ReactNode;
   header?: ReactNode;
-  footer?: ReactNode;
 }
 
 /**
- * Enhanced chat layout with glassmorphism effects.
- * Works beautifully with AnimatedBackground component.
- * Provides semantic structure with contained header/footer sections.
- * Matches the old project's beautiful card-based design.
- * Now uses shadcn/ui Card components for better semantics and maintainability.
+ * Enhanced chat layout with proper centering and expansion animation.
+ * Integrates with the existing secure chat store and animation state.
+ * Maintains mobile responsiveness and animation control from old project.
  */
-export function ChatLayout({ children, header, footer }: ChatLayoutProps) {
+export function ChatLayout({ children, header }: ChatLayoutProps) {
+  const { isExpanded, hasValidApiKey, setIsExpanded } = useChatStore();
+
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+
+  // Watch for API key changes to handle expansion with proper animation
+  useEffect(() => {
+    if (hasValidApiKey !== isExpanded) {
+      setShouldAnimate(true);
+      setIsExpanded(hasValidApiKey);
+
+      // Reset animation flag after animation completes
+      const timer = setTimeout(() => {
+        setShouldAnimate(false);
+      }, 600);
+
+      return () => clearTimeout(timer);
+    }
+  }, [hasValidApiKey, isExpanded, setIsExpanded]);
+
+  // Get motion animation values
+  const getMotionValues = () => {
+    return {
+      minHeight: isExpanded ? 'calc(100vh - 140px)' : '500px',
+      height: isExpanded ? 'calc(100vh - 140px)' : 'auto',
+    };
+  };
+
   return (
-    <div className="flex min-h-screen flex-col p-4">
-      {/* Header Section - Semantic Card with glassmorphism styling */}
+    <div className="flex min-h-screen flex-col items-center p-4">
+      {/* Header Section */}
       {header && (
-        <Card className="mx-auto mb-6 w-full max-w-4xl">
+        <Card className={cn('w-full max-w-4xl', isExpanded ? 'mb-4' : 'mb-6')}>
           <CardHeader>{header}</CardHeader>
         </Card>
       )}
 
-      {/* Main Content Area */}
-      <main className="mx-auto w-full max-w-4xl flex-1">{children}</main>
-
-      {/* Footer Section - Semantic Card with glassmorphism styling */}
-      {footer && (
-        <Card className="mx-auto mt-6 w-full max-w-4xl">
-          <CardFooter>{footer}</CardFooter>
-        </Card>
-      )}
+      {/* Main Content Area - Conditionally centered based on expansion */}
+      <main
+        className={cn(
+          'flex w-full max-w-4xl flex-1',
+          isExpanded ? '' : 'items-center justify-center', // Center only when collapsed
+        )}
+      >
+        <motion.div
+          className="w-full"
+          initial={false}
+          animate={getMotionValues()}
+          transition={
+            shouldAnimate ? { duration: 0.6, ease: 'easeInOut' } : { duration: 0, ease: 'linear' }
+          }
+          style={{ width: '100%' }}
+        >
+          {children}
+        </motion.div>
+      </main>
     </div>
   );
 }

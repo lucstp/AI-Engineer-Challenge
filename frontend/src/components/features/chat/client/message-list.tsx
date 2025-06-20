@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Avatar, AvatarFallback } from '@/components/ui';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useChatStore } from '@/store';
+import { Bot, User } from 'lucide-react';
 
 import type { MessageListProps } from '../chat.types';
-import { EmptyState } from './empty-state';
 import { TypewriterMessage } from './typewriter-message';
 import { TypingIndicator } from './typing-indicator';
 
@@ -13,20 +14,14 @@ import { TypingIndicator } from './typing-indicator';
  * MessageList - Client Component for message display
  *
  * Features:
- * - Client Component with proper ScrollArea integration
+ * - User messages on the right, assistant messages on the left
+ * - Different styling for user vs assistant messages
  * - TypewriterMessage integration for animated messages
- * - Beautiful empty state with welcome message
  * - Auto-scroll to bottom on new messages
  * - Typing indicator with motion animations
- * - Integrates with existing Zustand store
- * - Single Responsibility: Only handles message list display and scrolling
+ * - Proper chat bubble styling
  */
-export function MessageList({
-  messages,
-  isTyping,
-  animatedContent = '',
-  isAnimating,
-}: MessageListProps) {
+export function MessageList({ messages, isTyping, isAnimating }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
@@ -64,10 +59,9 @@ export function MessageList({
         clearTimeout(userScrollTimeoutRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array is correct here - we only want to set up listener once
+  }, []);
 
-  // Auto-scroll to bottom on new messages using requestAnimationFrame
+  // Auto-scroll to bottom on new messages and content updates
   useEffect(() => {
     if (messages.length > 0) {
       // Cancel any pending animation frame
@@ -89,45 +83,64 @@ export function MessageList({
         }
       };
     }
-  }, [messages.length, userIsScrolling]);
-
-  // Show empty state when no messages
-  if (messages.length === 0) {
-    return <EmptyState />;
-  }
+  }, [messages.length, userIsScrolling]); // Only track length and scroll state to prevent excessive re-runs
 
   return (
     <ScrollArea className="flex-1 px-2" ref={scrollContainerRef}>
       <div className="space-y-6 py-4">
         {messages.map((message, idx) => {
           const isLastMessage = idx === messages.length - 1;
-          // Only show animated content if it's non-empty and isAnimating is true
-          const showAnimated =
-            isLastMessage &&
-            (message.role === 'assistant' || message.id === 'welcome') &&
-            isAnimating &&
-            animatedContent.length > 0;
+          const isUser = message.role === 'user';
+          // Show typewriter animation for assistant messages that are animating
+          const shouldAnimate = isLastMessage && message.role === 'assistant' && isAnimating;
 
           return (
             <div key={message.id} className="flex flex-col space-y-2">
-              {/* Message content with TypewriterMessage integration */}
-              <div className="flex items-start gap-3">
-                <div className="min-w-[80px] text-sm text-blue-200 opacity-70">
-                  {message.role === 'user' ? 'You' : 'Assistant'}
+              {/* Message content with proper alignment */}
+              <div className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
+                {/* User/Bot Avatar */}
+                <div className="flex-shrink-0">
+                  {isUser ? (
+                    <Avatar className="size-8 bg-gradient-to-br from-green-500 to-emerald-600">
+                      <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+                        <User className="size-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <Avatar className="size-8 bg-gradient-to-br from-blue-500 to-purple-600">
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                        <Bot className="size-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <TypewriterMessage
-                    message={message}
-                    isAnimating={showAnimated}
-                    onAnimationComplete={showAnimated ? () => setIsAnimating(false) : undefined}
-                    className="text-white"
-                  />
+
+                {/* Message Content with Chat Bubble Styling */}
+                <div className={`max-w-[75%] min-w-0 flex-1 ${isUser ? 'flex justify-end' : ''}`}>
+                  <div
+                    className={`rounded-lg px-4 py-2 ${
+                      isUser
+                        ? 'ml-auto bg-white/10 text-white' // User: blue bubble on right
+                        : 'mr-auto text-white' // Assistant: transparent bubble on left
+                    }`}
+                  >
+                    <TypewriterMessage
+                      message={message}
+                      isAnimating={shouldAnimate}
+                      onAnimationComplete={shouldAnimate ? () => setIsAnimating(false) : undefined}
+                      className={isUser ? 'text-white' : 'text-white'}
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Timestamp if enabled */}
               {showTimestamps && message.timestamp && (
-                <div className="ml-[92px] text-xs text-blue-300 opacity-50">
+                <div
+                  className={`text-xs text-blue-300 opacity-50 ${
+                    isUser ? 'pr-11 text-right' : 'pl-11 text-left'
+                  }`}
+                >
                   {(() => {
                     const date = new Date(message.timestamp);
                     return !Number.isNaN(date.getTime())
@@ -143,8 +156,19 @@ export function MessageList({
           );
         })}
 
-        {/* Typing indicator */}
-        {isTyping && <TypingIndicator />}
+        {/* Typing indicator - always on the left */}
+        {isTyping && (
+          <div className="flex items-start gap-3">
+            <Avatar className="size-8 bg-gradient-to-br from-blue-500 to-purple-600">
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                <Bot className="size-5" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="rounded-lg bg-white/10 px-4 py-2">
+              <TypingIndicator />
+            </div>
+          </div>
+        )}
 
         {/* Scroll anchor */}
         <div ref={messagesEndRef} />

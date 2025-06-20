@@ -38,9 +38,9 @@ export function ApiKeySection() {
     apiKeyError,
     setApiKey,
     setSelectedModel,
-    deleteApiKey,
     setIsExpanded,
     isLoading,
+    reset,
   } = useChatStore();
 
   // Production-ready API key format validation supporting all 2024-2025 formats
@@ -123,7 +123,8 @@ export function ApiKeySection() {
 
   // Handle deleting API key session
   const handleDeleteApiKey = async () => {
-    await deleteApiKey();
+    // Use nuclear reset for complete cleanup - user gets fresh start
+    await reset();
     setApiKeyInput('');
     setApiKeyTouched(false);
     setShowApiKey(false);

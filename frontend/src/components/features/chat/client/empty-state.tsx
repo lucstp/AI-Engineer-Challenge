@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useChatStore } from '@/store';
 import { logger } from '@/lib/logger';
 import { Bot, Sparkles } from 'lucide-react';
-import { Bot, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 
 // Simple prop interface (1 property) - inline following TypeScript organization rules
@@ -42,7 +41,7 @@ export function EmptyState({ className }: EmptyStateProps) {
         const parsed = JSON.parse(storage) as { state?: { hasSeenWelcomeAnimation?: boolean } };
         hasSeenBefore = parsed?.state?.hasSeenWelcomeAnimation === true;
       } catch (error) {
-        logger.warn('Failed to parse localStorage data, treating as first-time user', error, {
+        logger.warn('Failed to parse localStorage data, treating as first-time user', {
           component: 'EmptyState'
         });
         hasSeenBefore = false;

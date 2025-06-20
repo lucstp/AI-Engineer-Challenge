@@ -338,8 +338,10 @@ export const useChatStore = create<ChatState>()(
                 action: 'rehydrate',
               },
             );
-            // Mark as rehydrated even on error to prevent indefinite waiting
-            useChatStore.setState({ isRehydrated: true });
+            // Defer setState to avoid circular dependency during initialization
+            setTimeout(() => {
+              useChatStore.setState({ isRehydrated: true });
+            }, 0);
             return;
           }
 
@@ -353,43 +355,45 @@ export const useChatStore = create<ChatState>()(
             });
           }
 
-          // Mark rehydration as complete and trigger initialization if needed
-          useChatStore.setState((currentState) => {
-            const newState = { ...currentState, isRehydrated: true };
+          // Defer setState to avoid circular dependency during initialization
+          setTimeout(() => {
+            useChatStore.setState((currentState) => {
+              const newState = { ...currentState, isRehydrated: true };
 
-            // Auto-trigger initialization after rehydration if not already initialized
-            if (!currentState.isInitialized) {
-              logger.info('Auto-triggering store initialization after rehydration', {
-                component: 'ChatStore',
-                action: 'postRehydrationInit',
-              });
+              // Auto-trigger initialization after rehydration if not already initialized
+              if (!currentState.isInitialized) {
+                logger.info('Auto-triggering store initialization after rehydration', {
+                  component: 'ChatStore',
+                  action: 'postRehydrationInit',
+                });
 
-              // Call initializeStore logic directly
-              if (
-                currentState.messages.length === 0 &&
-                !currentState.hasValidApiKey &&
-                !currentState.hasSeenWelcomeAnimation &&
-                !currentState.hasCompletedInitialSetup
-              ) {
-                const welcomeMessage = createWelcomeMessage();
+                // Call initializeStore logic directly
+                if (
+                  currentState.messages.length === 0 &&
+                  !currentState.hasValidApiKey &&
+                  !currentState.hasSeenWelcomeAnimation &&
+                  !currentState.hasCompletedInitialSetup
+                ) {
+                  const welcomeMessage = createWelcomeMessage();
+                  return {
+                    ...newState,
+                    messages: [welcomeMessage],
+                    isAnimating: true,
+                    animatedContent: welcomeMessage.content,
+                    hasSeenWelcomeAnimation: true,
+                    isInitialized: true,
+                  };
+                }
+
                 return {
                   ...newState,
-                  messages: [welcomeMessage],
-                  isAnimating: true,
-                  animatedContent: welcomeMessage.content,
-                  hasSeenWelcomeAnimation: true,
                   isInitialized: true,
                 };
               }
 
-              return {
-                ...newState,
-                isInitialized: true,
-              };
-            }
-
-            return newState;
-          });
+              return newState;
+            });
+          }, 0);
         },
       },
     ),

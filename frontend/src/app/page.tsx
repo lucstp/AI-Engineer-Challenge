@@ -1,6 +1,8 @@
+// src/app/page.tsx
 'use client';
 
 import { useEffect } from 'react';
+// import { SessionDebug } from '@/components/debug/session-debug';
 import { ChatInput, MessageList } from '@/components/features/chat';
 import { AnimatedBackground, ChatLayout, ChatShell } from '@/components/layout';
 import {
@@ -12,14 +14,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui';
+import { useAnimationState } from '@/hooks/use-animation-state';
 import { useChatStore } from '@/store';
 import { Bot, Clock, Sparkles } from 'lucide-react';
 
 /**
- * Renders the main chat page with an animated background, chat interface, and controls.
+ * Main chat page with streaming support and proper state management.
  *
- * Initializes chat state on mount and manages the display of message timestamps using Zustand state management.
- * The page includes a header with bot branding and a timestamp toggle, a chat area displaying messages and input, and a footer with technology stack information.
+ * Updated for streaming architecture:
+ * - Removed server action dependencies
+ * - Uses route handler for streaming
+ * - Improved error handling and loading states
+ * - Better integration with store initialization
  */
 export default function HomePage() {
   const {
@@ -29,24 +35,46 @@ export default function HomePage() {
     checkSession,
     showTimestamps,
     setShowTimestamps,
+    isAnimating,
+    isTyping,
+    isLoading,
   } = useChatStore();
 
-  // Initialize store synchronously (safe for hydration)
+  const { isReturningUser, shouldPlayWelcomeAnimation, isHydrationComplete } = useAnimationState();
+
+  // Phase 1: Initialize store (respects persistence)
   useEffect(() => {
     if (!isInitialized) {
-      initializeStore();
+      console.log('🚀 Page: Initializing store');
+      // Small delay to ensure Zustand persistence rehydration completes first
+      const timeoutId = setTimeout(() => {
+        initializeStore();
+      }, 10);
+      return () => clearTimeout(timeoutId);
     }
   }, [isInitialized, initializeStore]);
 
-  // Check session after hydration (separate effect)
+  // Phase 2: Check session in background (no UI blocking)
   useEffect(() => {
-    if (isInitialized) {
-      checkSession(); // Safe to call after initialization
+    if (isInitialized && isHydrationComplete) {
+      console.log('🔍 Page: Checking session in background');
+      checkSession().catch(console.error);
     }
-  }, [isInitialized, checkSession]);
+  }, [isInitialized, checkSession, isHydrationComplete]);
 
   const onToggleTimestamps = () => {
     setShowTimestamps(!showTimestamps);
+  };
+
+  // Header message logic
+  const getHeaderMessage = () => {
+    if (isReturningUser) {
+      return 'Welcome back!';
+    }
+    if (shouldPlayWelcomeAnimation) {
+      return 'Welcome to AI Assistant!';
+    }
+    return 'Always ready to help';
   };
 
   const headerContent = (
@@ -59,12 +87,16 @@ export default function HomePage() {
             </AvatarFallback>
           </Avatar>
           <div className="absolute top-0 right-0">
-            <Sparkles className="h-4 w-4 animate-pulse text-yellow-300" />
+            <Sparkles
+              className={`h-4 w-4 text-yellow-300 ${
+                shouldPlayWelcomeAnimation ? 'animate-pulse' : ''
+              }`}
+            />
           </div>
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">AI Chat Assistant</h1>
-          <p className="text-sm text-yellow-300">Always ready to help</p>
+          <p className="text-sm text-yellow-300">{getHeaderMessage()}</p>
         </div>
       </div>
 
@@ -93,32 +125,26 @@ export default function HomePage() {
     </div>
   );
 
-  const footerContent = (
-    <div className="text-center">
-      <p className="text-xs text-blue-200">
-        Enterprise Architecture • Next.js 15 + React 19 + Zustand
-      </p>
-    </div>
-  );
-
+  // Always render immediately - no loading/hydration waiting
   return (
     <AnimatedBackground>
-      <ChatLayout header={headerContent} footer={footerContent}>
+      <ChatLayout header={headerContent}>
         <ChatShell>
           <div className="flex h-full flex-col">
             <div className="flex-1 overflow-y-auto">
               <MessageList
-                messages={messages}
-                isLoading={false}
-                isTyping={false}
-                animatedContent=""
-                isAnimating={false}
+                messages={messages || []} // Ensure array fallback
+                isLoading={isLoading}
+                isTyping={isTyping}
+                isAnimating={isAnimating}
               />
             </div>
             <ChatInput />
           </div>
         </ChatShell>
       </ChatLayout>
+      {/* Only show debug in development */}
+      {/* {process.env.NODE_ENV === 'development' && <SessionDebug />} */}
     </AnimatedBackground>
   );
 }

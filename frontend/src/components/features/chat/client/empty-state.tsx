@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useChatStore } from '@/store';
+import { logger } from '@/lib/logger';
+import { Bot, Sparkles } from 'lucide-react';
 import { Bot, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 

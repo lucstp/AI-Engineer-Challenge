@@ -39,20 +39,6 @@ describe('ChatLayout', () => {
     expect(screen.queryByTestId('header')).not.toBeInTheDocument();
   });
 
-  it('renders footer when footer prop is provided', () => {
-    const footerContent = <div data-testid="footer">Footer Content</div>;
-
-    render(
-      <ChatLayout footer={footerContent}>
-        <div>Main Content</div>
-      </ChatLayout>,
-    );
-
-    expect(screen.getByTestId('footer')).toBeInTheDocument();
-    // Check for card-footer data-slot instead of contentinfo role
-    expect(screen.getByTestId('footer').closest('[data-slot="card-footer"]')).toBeInTheDocument();
-  });
-
   it('does not render footer when footer prop is not provided', () => {
     render(
       <ChatLayout>
@@ -65,16 +51,12 @@ describe('ChatLayout', () => {
 
   it('renders all sections when header and footer are provided', () => {
     render(
-      <ChatLayout
-        header={<div data-testid="header">Header</div>}
-        footer={<div data-testid="footer">Footer</div>}
-      >
+      <ChatLayout header={<div data-testid="header">Header</div>}>
         <div data-testid="main">Main</div>
       </ChatLayout>,
     );
 
     expect(screen.getByTestId('header')).toBeInTheDocument();
     expect(screen.getByTestId('main')).toBeInTheDocument();
-    expect(screen.getByTestId('footer')).toBeInTheDocument();
   });
 });

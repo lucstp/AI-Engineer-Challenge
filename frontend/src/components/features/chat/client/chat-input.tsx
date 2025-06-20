@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Textarea } from '@/components/ui';
 import { useChat } from '@/hooks/use-chat';
+import { logger } from '@/lib';
 import { useChatStore } from '@/store';
 import { Send } from 'lucide-react';
-import { logger } from '@/lib';
+
 import { ApiKeySection } from './api-key-section';
 
 /**
@@ -94,7 +95,7 @@ export function ChatInput() {
         {
           component: 'ChatInput',
           action: 'sendMessage',
-        }
+        },
       );
       setSendError(
         error instanceof Error ? error.message : 'Failed to send message. Please try again.',

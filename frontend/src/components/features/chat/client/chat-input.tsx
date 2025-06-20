@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Textarea } from '@/components/ui';
 import { useChat } from '@/hooks/use-chat';
+import { logger } from '@/lib';
 import { useChatStore } from '@/store';
 import { Send } from 'lucide-react';
 
@@ -88,21 +89,14 @@ export function ChatInput() {
     try {
       await sendMessage(message);
     } catch (error) {
-// Add at top with other imports
-import { logger } from '@/lib';
-
-// …
-
-// In the catch block where the error is currently logged:
--      console.error('Failed to send message:', error);
-+      logger.error(
-+        'Failed to send message',
-+        error instanceof Error ? error : new Error(String(error)),
-+        {
-+          component: 'ChatInput',
-+          action: 'sendMessage',
-+        }
-+      );
+      logger.error(
+        'Failed to send message',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'ChatInput',
+          action: 'sendMessage',
+        },
+      );
       setSendError(
         error instanceof Error ? error.message : 'Failed to send message. Please try again.',
       );

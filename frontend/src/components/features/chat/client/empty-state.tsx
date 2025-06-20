@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useChatStore } from '@/store';
 import { logger } from '@/lib/logger';
-import { Bot, Sparkles } from 'lucide-react';
+import { useChatStore } from '@/store';
 import { Bot, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -42,8 +41,8 @@ export function EmptyState({ className }: EmptyStateProps) {
         const parsed = JSON.parse(storage) as { state?: { hasSeenWelcomeAnimation?: boolean } };
         hasSeenBefore = parsed?.state?.hasSeenWelcomeAnimation === true;
       } catch (error) {
-        logger.warn('Failed to parse localStorage data, treating as first-time user', error, {
-          component: 'EmptyState'
+        logger.warn('Failed to parse localStorage data, treating as first-time user', {
+          component: 'EmptyState',
         });
         hasSeenBefore = false;
       }
@@ -52,7 +51,7 @@ export function EmptyState({ className }: EmptyStateProps) {
     logger.debug('EmptyState initial check', {
       component: 'EmptyState',
       hasSeenBefore,
-      hasStorage: !!storage
+      hasStorage: !!storage,
     });
 
     if (hasSeenBefore) {
@@ -66,7 +65,7 @@ export function EmptyState({ className }: EmptyStateProps) {
 
       const timer = setTimeout(() => {
         logger.debug('Marking welcome animation as seen', {
-          component: 'EmptyState'
+          component: 'EmptyState',
         });
         setHasSeenWelcomeAnimation(true);
       }, 2000); // Give user time to read the welcome

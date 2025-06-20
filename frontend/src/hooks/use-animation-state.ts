@@ -1,56 +1,58 @@
+// src/hooks/use-animation-state.ts
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useChatStore } from '@/store';
 
 /**
- * Custom hook for managing animation state based on API key validation
+ * Simplified animation state hook for background animations and welcome states.
  *
- * Prevents flickering during page reload by:
- * - Maintaining animation state during session restoration
- * - Smoothly transitioning between valid/invalid states
- * - Deriving animation state from API key validation status
+ * Focuses on:
+ * - Background animation states (valid/invalid API key)
+ * - Welcome animation control
+ * - Hydration safety
  */
 export function useAnimationState() {
-  const { hasValidApiKey, apiKeyType, apiKeyLength, isInitialized } = useChatStore();
-  const [animationState, setAnimationState] = useState<'valid' | 'invalid' | 'transitioning'>('invalid');
-  const [isStable, setIsStable] = useState(false);
+  const {
+    hasValidApiKey,
+    apiKeyType,
+    apiKeyLength,
+    hasSeenWelcomeAnimation,
+    hasCompletedInitialSetup,
+  } = useChatStore();
 
-  // Track when the session check is complete to prevent flickering
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState(true);
+
+  // Handle hydration and determine user type
   useEffect(() => {
-    // Wait a moment after initialization to let session check complete
-    if (isInitialized && !isStable) {
-      const timer = setTimeout(() => {
-        setIsStable(true);
-      }, 100); // Short delay to let session check complete
+    setIsHydrated(true);
 
-      return () => clearTimeout(timer);
-    }
-  }, [isInitialized, isStable]);
+    // Determine if this is a first-time user based on completed setup
+    setIsFirstTimeUser(!hasCompletedInitialSetup);
+  }, [hasCompletedInitialSetup]);
 
-  // Update animation state based on API key validation
-  useEffect(() => {
-    if (!isStable) return; // Don't update until stable
-
-    const shouldBeValid = hasValidApiKey && apiKeyType && apiKeyLength;
-    const newState = shouldBeValid ? 'valid' : 'invalid';
-
-    if (animationState !== newState) {
-      setAnimationState('transitioning');
-      // Smooth transition
-      const timer = setTimeout(() => {
-        setAnimationState(newState);
-      }, 50);
-
-      return () => clearTimeout(timer);
-    }
-  }, [hasValidApiKey, apiKeyType, apiKeyLength, isStable, animationState]);
+  // Calculate animation states
+  const shouldShowValidAnimation = hasValidApiKey && apiKeyType && apiKeyLength != null && apiKeyLength > 0;
+  const shouldShowInvalidAnimation = !shouldShowValidAnimation;
+  const shouldPlayWelcomeAnimation = !hasSeenWelcomeAnimation && isFirstTimeUser && isHydrated;
 
   return {
-    animationState,
-    isAnimationReady: isStable,
-    shouldShowValidAnimation: animationState === 'valid',
-    shouldShowInvalidAnimation: animationState === 'invalid',
-    isTransitioning: animationState === 'transitioning',
+    // Background animation states
+    shouldShowValidAnimation,
+    shouldShowInvalidAnimation,
+    animationState: shouldShowValidAnimation ? 'valid' : 'invalid',
+
+    // User experience states
+    isFirstTimeUser,
+    isReturningUser: !isFirstTimeUser,
+
+    // Animation control
+    shouldPlayWelcomeAnimation,
+    shouldSkipAllAnimations: hasSeenWelcomeAnimation && !isFirstTimeUser,
+
+    // Ready states
+    isHydrationComplete: isHydrated,
+    isAnimationReady: isHydrated,
   };
 }

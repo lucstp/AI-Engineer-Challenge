@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { logger } from '@/lib';
 import { useChatStore } from '@/store';
 
 /**
@@ -14,12 +15,16 @@ export function StoreInitializer() {
   useEffect(() => {
     // Only run initialization once
     if (isInitialized) {
-      console.log('⏭️ Store already initialized, skipping');
+      logger.debug('Store already initialized, skipping', {
+        component: 'StoreInitializer',
+      });
       return;
     }
 
     const initialize = async () => {
-      console.log('🚀 Starting store initialization...');
+      logger.info('Starting store initialization', {
+        component: 'StoreInitializer',
+      });
 
       // First initialize the store (handles first-time vs returning user)
       initializeStore();
@@ -27,10 +32,20 @@ export function StoreInitializer() {
       // Then check for existing session
       await checkSession();
 
-      console.log('✅ Store initialization complete');
+      logger.success('Store initialization complete', {
+        component: 'StoreInitializer',
+      });
     };
 
-    initialize().catch(console.error);
+    initialize().catch((error) => {
+      logger.error(
+        'Store initialization failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'StoreInitializer',
+        },
+      );
+    });
   }, [initializeStore, checkSession, isInitialized]);
 
   // This component doesn't render anything

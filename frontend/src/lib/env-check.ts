@@ -3,6 +3,8 @@
  * Helps diagnose configuration issues
  */
 
+import { logger } from './logger';
+
 export function checkEnvironmentVariables(): {
   isValid: boolean;
   missing: string[];
@@ -37,10 +39,17 @@ export function logEnvironmentStatus(): void {
   const check = checkEnvironmentVariables();
 
   if (check.isValid) {
-    console.log('✅ Environment variables configured correctly');
+    logger.success('Environment variables configured correctly', {
+      component: 'EnvCheck',
+    });
   } else {
-    console.error('❌ Missing environment variables:', check.missing);
-    console.error('💡 Suggestions:', check.suggestions);
-    console.error('📚 If using Doppler, ensure your secrets are properly loaded');
+    logger.error('Missing environment variables', new Error('Configuration error'), {
+      component: 'EnvCheck',
+      missing: check.missing,
+      suggestions: check.suggestions,
+    });
+    logger.info('If using Doppler, ensure your secrets are properly loaded', {
+      component: 'EnvCheck',
+    });
   }
 }

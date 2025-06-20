@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { logger } from '@/lib';
 import { useChatStore } from '@/store';
 
 interface SessionInfo {
@@ -57,13 +58,22 @@ export function SessionDebug() {
         const stored = localStorage.getItem('chat-storage');
         if (stored) {
           const parsed = JSON.parse(stored);
-          console.log('🔍 Raw localStorage data:', parsed);
+          logger.debug('Raw localStorage data', {
+            component: 'SessionDebug',
+            data: parsed,
+          });
           setLocalStorageInfo(parsed as ZustandPersistedData);
         } else {
           setLocalStorageInfo(null);
         }
       } catch (error) {
-        console.error('Failed to read localStorage:', error);
+        logger.error(
+          'Failed to read localStorage',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            component: 'SessionDebug',
+          },
+        );
       }
 
       // Check cookies (visible ones)

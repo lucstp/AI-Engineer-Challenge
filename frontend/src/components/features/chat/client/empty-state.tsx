@@ -33,9 +33,21 @@ export function EmptyState({ className }: EmptyStateProps) {
     }
 
     const storage = localStorage.getItem('chat-storage');
-    const hasSeenBefore = storage && JSON.parse(storage)?.state?.hasSeenWelcomeAnimation === true;
+    let hasSeenBefore = false;
 
-    console.log('🎬 EmptyState initial check:', { hasSeenBefore, storage: !!storage });
+    if (storage) {
+      try {
+        const parsed = JSON.parse(storage);
+        hasSeenBefore = parsed?.state?.hasSeenWelcomeAnimation === true;
+      } catch (error) {
+        console.warn('Failed to parse localStorage data, treating as first-time user:', error);
+        hasSeenBefore = false;
+      }
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🎬 EmptyState initial check:', { hasSeenBefore, storage: !!storage });
+    }
 
     if (hasSeenBefore) {
       // Returning user - show "ready to help" immediately WITHOUT animation
@@ -47,7 +59,9 @@ export function EmptyState({ className }: EmptyStateProps) {
       setShouldAnimate(true);
 
       const timer = setTimeout(() => {
-        console.log('🎬 Marking welcome animation as seen');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🎬 Marking welcome animation as seen');
+        }
         setHasSeenWelcomeAnimation(true);
       }, 2000); // Give user time to read the welcome
 

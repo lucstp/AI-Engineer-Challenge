@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui';
 import { useAnimationState } from '@/hooks/use-animation-state';
+import { logger } from '@/lib';
 import { useChatStore } from '@/store';
 import { Bot, Clock, Sparkles } from 'lucide-react';
 
@@ -31,6 +32,7 @@ export default function HomePage() {
   const {
     messages,
     isInitialized,
+    isRehydrated,
     initializeStore,
     checkSession,
     showTimestamps,
@@ -42,23 +44,36 @@ export default function HomePage() {
 
   const { isReturningUser, shouldPlayWelcomeAnimation, isHydrationComplete } = useAnimationState();
 
-  // Phase 1: Initialize store (respects persistence)
+  // Phase 1: Initialize store after rehydration completes
   useEffect(() => {
-    if (!isInitialized) {
-      console.log('🚀 Page: Initializing store');
-      // Small delay to ensure Zustand persistence rehydration completes first
-      const timeoutId = setTimeout(() => {
-        initializeStore();
-      }, 10);
-      return () => clearTimeout(timeoutId);
+    if (isRehydrated && !isInitialized) {
+      logger.info('Page: Initializing store after rehydration', {
+        component: 'HomePage',
+        action: 'initializeStore',
+        isRehydrated,
+        isInitialized,
+      });
+      initializeStore();
     }
-  }, [isInitialized, initializeStore]);
+  }, [isRehydrated, isInitialized, initializeStore]);
 
   // Phase 2: Check session in background (no UI blocking)
   useEffect(() => {
     if (isInitialized && isHydrationComplete) {
-      console.log('🔍 Page: Checking session in background');
-      checkSession().catch(console.error);
+      logger.debug('Page: Checking session in background', {
+        component: 'HomePage',
+        action: 'checkSession',
+      });
+      checkSession().catch((error) => {
+        logger.error(
+          'Background session check failed',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            component: 'HomePage',
+            action: 'checkSession',
+          },
+        );
+      });
     }
   }, [isInitialized, checkSession, isHydrationComplete]);
 

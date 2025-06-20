@@ -1,11 +1,13 @@
 // src/store/chat-store.ts
+import { chatLogger, logger, toast } from '@/lib';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
 import type { ChatState } from './store.types';
 
 // Welcome message constants to avoid duplication
-const WELCOME_MESSAGE = "Hello! I'm your AI assistant. To get started, please enter your OpenAI API key in the field below. I'll be ready to help once you've added your key.";
+const WELCOME_MESSAGE =
+  "Hello! I'm your AI assistant. To get started, please enter your OpenAI API key in the field below. I'll be ready to help once you've added your key.";
 
 /**
  * Creates a consistent welcome message object
@@ -27,6 +29,7 @@ const INITIAL_DATA_STATE = {
   apiKeyLength: null as number | null,
   apiKeyError: null as string | null,
   isInitialized: false,
+  isRehydrated: false, // Track Zustand persistence rehydration completion
   selectedModel: 'gpt-4.1-mini',
   isLoading: false,
   isTyping: false,
@@ -95,7 +98,12 @@ export const useChatStore = create<ChatState>()(
                 animatedContent: confirmationMessage.content,
               });
 
-              console.log('✅ API Key validated and setup complete');
+              chatLogger.success('API Key validated and setup complete', {
+                action: 'setApiKey',
+                keyType,
+                keyLength,
+              });
+              toast.success('API key added successfully!');
               return { success: true, error: null };
             }
 
@@ -126,13 +134,7 @@ export const useChatStore = create<ChatState>()(
           try {
             await deleteApiKeySession();
 
-            const welcomeMessage = {
-              id: 'welcome',
-              content:
-                "Hello! I'm your AI assistant. To get started, please enter your OpenAI API key in the field below. I'll be ready to help once you've added your key.",
-              role: 'assistant' as const,
-              timestamp: new Date().toISOString(),
-            };
+            const welcomeMessage = createWelcomeMessage();
 
             set({
               hasValidApiKey: false,
@@ -145,7 +147,15 @@ export const useChatStore = create<ChatState>()(
               animatedContent: welcomeMessage.content,
             });
           } catch (error) {
-            console.error('Failed to delete API key:', error);
+            logger.error(
+              'Failed to delete API key',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                component: 'ChatStore',
+                action: 'deleteApiKey',
+              },
+            );
+            toast.error('Failed to delete API key');
           }
         },
 
@@ -153,7 +163,9 @@ export const useChatStore = create<ChatState>()(
         initializeStore: () => {
           const state = get();
 
-          console.log('🚀 Store initialization check:', {
+          logger.debug('Store initialization check', {
+            component: 'ChatStore',
+            action: 'initializeStore',
             isInitialized: state.isInitialized,
             hasCompletedInitialSetup: state.hasCompletedInitialSetup,
             messagesCount: state.messages.length,
@@ -161,7 +173,10 @@ export const useChatStore = create<ChatState>()(
 
           // Skip if already initialized
           if (state.isInitialized) {
-            console.log('✅ Store already initialized from persistence');
+            logger.debug('Store already initialized from persistence', {
+              component: 'ChatStore',
+              action: 'initializeStore',
+            });
             return;
           }
 
@@ -172,15 +187,12 @@ export const useChatStore = create<ChatState>()(
             !state.hasSeenWelcomeAnimation &&
             !state.hasCompletedInitialSetup
           ) {
-            const welcomeMessage = {
-              id: 'welcome',
-              content:
-                "Hello! I'm your AI assistant. To get started, please enter your OpenAI API key in the field below. I'll be ready to help once you've added your key.",
-              role: 'assistant' as const,
-              timestamp: new Date().toISOString(),
-            };
+            const welcomeMessage = createWelcomeMessage();
 
-            console.log('🆕 First-time user initialization');
+            logger.info('First-time user initialization', {
+              component: 'ChatStore',
+              action: 'initializeStore',
+            });
             set({
               messages: [welcomeMessage],
               isAnimating: true,
@@ -189,7 +201,10 @@ export const useChatStore = create<ChatState>()(
               isInitialized: true,
             });
           } else {
-            console.log('🔧 Marking as initialized without changes');
+            logger.debug('Marking as initialized without changes', {
+              component: 'ChatStore',
+              action: 'initializeStore',
+            });
             set({
               isInitialized: true,
             });
@@ -213,19 +228,16 @@ export const useChatStore = create<ChatState>()(
                 lastSuccessfulKeyType: session.keyType || currentState.lastSuccessfulKeyType,
                 isExpanded: true,
               });
-              console.log('✅ Session restored with valid API key');
+              chatLogger.success('Session restored with valid API key', {
+                action: 'checkSession',
+                keyType: session.keyType,
+              });
             } else {
               const shouldShowWelcome =
                 currentState.messages.length === 0 && !currentState.hasCompletedInitialSetup;
 
               if (shouldShowWelcome) {
-                const welcomeMessage = {
-                  id: 'welcome',
-                  content:
-                    "Hello! I'm your AI assistant. To get started, please enter your OpenAI API key in the field below. I'll be ready to help once you've added your key.",
-                  role: 'assistant' as const,
-                  timestamp: new Date().toISOString(),
-                };
+                const welcomeMessage = createWelcomeMessage();
 
                 set({
                   hasValidApiKey: false,
@@ -247,7 +259,14 @@ export const useChatStore = create<ChatState>()(
               }
             }
           } catch (error) {
-            console.error('❌ Session check failed:', error);
+            logger.error(
+              'Session check failed',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                component: 'ChatStore',
+                action: 'checkSession',
+              },
+            );
             set({
               hasValidApiKey: false,
               apiKeyType: null,
@@ -275,16 +294,17 @@ export const useChatStore = create<ChatState>()(
             await deleteApiKeySession();
             // Note: Removed direct localStorage.removeItem() - Zustand's persistence middleware handles cleanup
           } catch (error) {
-            console.error('Reset cleanup failed:', error);
+            logger.error(
+              'Reset cleanup failed',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                component: 'ChatStore',
+                action: 'reset',
+              },
+            );
           }
 
-          const welcomeMessage = {
-            id: 'welcome',
-            content:
-              "Hello! I'm your AI assistant. To get started, please enter your OpenAI API key in the field below. I'll be ready to help once you've added your key.",
-            role: 'assistant' as const,
-            timestamp: new Date().toISOString(),
-          };
+          const welcomeMessage = createWelcomeMessage();
 
           // Reset state - Zustand persistence middleware will handle storage cleanup automatically
           set({
@@ -310,17 +330,66 @@ export const useChatStore = create<ChatState>()(
         }),
         onRehydrateStorage: () => (state?: ChatState, error?: unknown) => {
           if (error) {
-            console.error('❌ Store rehydration failed:', error);
+            logger.error(
+              'Store rehydration failed',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                component: 'ChatStore',
+                action: 'rehydrate',
+              },
+            );
+            // Mark as rehydrated even on error to prevent indefinite waiting
+            useChatStore.setState({ isRehydrated: true });
             return;
           }
 
           if (state) {
-            console.log('🔄 Store rehydrated successfully:', {
+            logger.debug('Store rehydrated successfully', {
+              component: 'ChatStore',
+              action: 'rehydrate',
               messagesCount: state.messages.length,
               hasCompletedInitialSetup: state.hasCompletedInitialSetup,
               isInitialized: state.isInitialized,
             });
           }
+
+          // Mark rehydration as complete and trigger initialization if needed
+          useChatStore.setState((currentState) => {
+            const newState = { ...currentState, isRehydrated: true };
+
+            // Auto-trigger initialization after rehydration if not already initialized
+            if (!currentState.isInitialized) {
+              logger.info('Auto-triggering store initialization after rehydration', {
+                component: 'ChatStore',
+                action: 'postRehydrationInit',
+              });
+
+              // Call initializeStore logic directly
+              if (
+                currentState.messages.length === 0 &&
+                !currentState.hasValidApiKey &&
+                !currentState.hasSeenWelcomeAnimation &&
+                !currentState.hasCompletedInitialSetup
+              ) {
+                const welcomeMessage = createWelcomeMessage();
+                return {
+                  ...newState,
+                  messages: [welcomeMessage],
+                  isAnimating: true,
+                  animatedContent: welcomeMessage.content,
+                  hasSeenWelcomeAnimation: true,
+                  isInitialized: true,
+                };
+              }
+
+              return {
+                ...newState,
+                isInitialized: true,
+              };
+            }
+
+            return newState;
+          });
         },
       },
     ),

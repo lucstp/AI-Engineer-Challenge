@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { chatLogger } from '@/lib';
 import { useChatStore } from '@/store';
 import type { Message } from '@/types';
 
@@ -116,9 +117,19 @@ export function useChat() {
           timestamp: new Date().toISOString(),
         });
 
-        console.log('✅ Message sent and streamed successfully');
+        chatLogger.success('Message sent and streamed successfully', {
+          action: 'sendMessage',
+          messageLength: content.length,
+          model: selectedModel,
+        });
       } catch (error) {
-        console.error('❌ Failed to send message:', error);
+        chatLogger.error(
+          'Failed to send message',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            action: 'sendMessage',
+          },
+        );
 
         // Add error message to chat
         const errorMessage: Message = {

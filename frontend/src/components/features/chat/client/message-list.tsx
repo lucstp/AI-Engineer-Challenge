@@ -83,7 +83,7 @@ export function MessageList({ messages, isTyping, isAnimating }: MessageListProp
         }
       };
     }
-  }, [messages.length, messages, userIsScrolling]); // Added messages dependency for content updates
+  }, [messages.length, userIsScrolling]); // Only track length and scroll state to prevent excessive re-runs
 
   return (
     <ScrollArea className="flex-1 px-2" ref={scrollContainerRef}>

@@ -33,7 +33,8 @@ export function useAnimationState() {
   }, [hasCompletedInitialSetup]);
 
   // Calculate animation states
-  const shouldShowValidAnimation = hasValidApiKey && apiKeyType && apiKeyLength != null && apiKeyLength > 0;
+  const shouldShowValidAnimation =
+    hasValidApiKey && apiKeyType && apiKeyLength != null && apiKeyLength > 0;
   const shouldShowInvalidAnimation = !shouldShowValidAnimation;
   const shouldPlayWelcomeAnimation = !hasSeenWelcomeAnimation && isFirstTimeUser && isHydrated;
 

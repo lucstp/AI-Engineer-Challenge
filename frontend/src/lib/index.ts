@@ -17,3 +17,6 @@ export * from './api-security';
 
 // API client utilities
 export * from './api-client';
+
+// Logging utilities
+export * from './logger';

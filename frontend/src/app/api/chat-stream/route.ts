@@ -1,6 +1,7 @@
 // src/app/api/chat-stream/route.ts
 import type { NextRequest } from 'next/server';
 import { getApiKeySession, getDecryptedApiKey } from '@/app/actions/api-key-actions';
+import { logger } from '@/lib';
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,15 +57,27 @@ export async function POST(request: NextRequest) {
     const selectedModel = allowedModels.includes(model) ? model : 'gpt-4o-mini';
 
     if (model !== selectedModel) {
-      console.warn(`⚠️ Invalid model "${model}" requested, falling back to "${selectedModel}"`);
+      logger.warn(`Invalid model "${model}" requested, falling back to "${selectedModel}"`, {
+        component: 'ChatStreamAPI',
+        requestedModel: model,
+        selectedModel,
+      });
     }
 
-    console.log(`🤖 Using model: ${selectedModel} for user request`);
+    logger.info(`Using model: ${selectedModel} for user request`, {
+      component: 'ChatStreamAPI',
+      model: selectedModel,
+      messageLength: message.length,
+    });
 
     // 6. Call FastAPI backend with streaming
     const apiUrl = process.env.API_URL || 'http://localhost:8000';
 
-    console.log('🌐 Calling FastAPI backend:', apiUrl, 'with model:', selectedModel);
+    logger.debug('Calling FastAPI backend', {
+      component: 'ChatStreamAPI',
+      apiUrl,
+      model: selectedModel,
+    });
 
     const response = await fetch(`${apiUrl}/api/chat`, {
       method: 'POST',
@@ -83,7 +96,11 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');
-      console.error('🚨 FastAPI backend error:', response.status, errorText);
+      logger.error('FastAPI backend error', new Error(`Backend error: ${response.status}`), {
+        component: 'ChatStreamAPI',
+        status: response.status,
+        errorText,
+      });
 
       return new Response(
         JSON.stringify({
@@ -111,7 +128,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Chat stream error:', error);
+    logger.error('Chat stream error', error instanceof Error ? error : new Error(String(error)), {
+      component: 'ChatStreamAPI',
+    });
 
     return new Response(
       JSON.stringify({ error: 'Failed to process chat request. Please try again.' }),

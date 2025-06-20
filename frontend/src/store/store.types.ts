@@ -11,6 +11,7 @@ export interface ChatState {
   apiKeyLength: number | null;
   apiKeyError: string | null;
   isInitialized: boolean;
+  isRehydrated: boolean; // Track Zustand persistence rehydration completion
   selectedModel: string;
 
   // UI state

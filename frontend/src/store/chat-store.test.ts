@@ -195,6 +195,8 @@ describe('chat-store Zustand store', () => {
         .getState()
         .setMessages([{ id: '1', content: 'hi', role: 'user', timestamp: 't1' }]);
       useChatStore.getState().setIsExpanded(true);
+      useChatStore.getState().setIsAnimating(true);
+      useChatStore.getState().setAnimatedContent('test animation');
 
       // Give the persistence middleware time to write to localStorage
       await new Promise((resolve) => setTimeout(resolve, 10));
@@ -203,6 +205,9 @@ describe('chat-store Zustand store', () => {
       expect(persisted.state.selectedModel).toBe('gpt-4.2');
       expect(persisted.state.messages).toHaveLength(1);
       expect(persisted.state.isExpanded).toBe(true);
+      // FIXED: Animation states should NOT be persisted (they're derived from API key state)
+      expect(persisted.state.isAnimating).toBeUndefined();
+      expect(persisted.state.animatedContent).toBeUndefined();
       // Ensure API key data is NOT persisted for security
       expect(persisted.state.hasValidApiKey).toBeUndefined();
       expect(persisted.state.apiKeyType).toBeUndefined();

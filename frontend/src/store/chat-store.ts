@@ -102,13 +102,13 @@ export const useChatStore = create<ChatState>()(
           }
         },
 
-        // FIXED: Safe initialization - no Server Actions during hydration
+        // FIXED: Safe initialization - no server actions during hydration
         initializeStore: () => {
-          // Just mark as initialized - session check happens on user interaction
+          // Just mark as initialized - session check happens after hydration
           set({ isInitialized: true });
         },
 
-        // NEW: Separate session check method (called after hydration)
+        // Session check method (called after hydration in useEffect)
         checkSession: async () => {
           // Dynamic import to avoid hydration issues
           const { getApiKeySession } = await import('@/app/actions/api-key-actions');
@@ -155,16 +155,19 @@ export const useChatStore = create<ChatState>()(
       {
         name: 'chat-storage',
         partialize: (state) => ({
-          // Only persist safe UI state - NO API KEYS
+          // FIXED: Persist UI state but NOT animation states (they should be derived)
           selectedModel: state.selectedModel,
           messages: state.messages,
           isExpanded: state.isExpanded,
           showTimestamps: state.showTimestamps,
+          // REMOVED: Animation states should be derived from API key state, not persisted
+          // isAnimating: state.isAnimating,
+          // animatedContent: state.animatedContent,
         }),
-        // FIXED: Safe rehydration - no Server Actions
+        // FIXED: Safe rehydration - no server actions during hydration
         onRehydrateStorage: () => (state) => {
           if (state) {
-            // Just initialize - don't call Server Actions during hydration
+            // Just initialize - session check happens in useEffect after hydration
             state.initializeStore();
           }
         },

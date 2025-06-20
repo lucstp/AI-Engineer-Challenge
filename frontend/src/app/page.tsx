@@ -22,14 +22,28 @@ import { Bot, Clock, Sparkles } from 'lucide-react';
  * The page includes a header with bot branding and a timestamp toggle, a chat area displaying messages and input, and a footer with technology stack information.
  */
 export default function HomePage() {
-  const { messages, isInitialized, initializeStore, showTimestamps, setShowTimestamps } =
-    useChatStore();
+  const {
+    messages,
+    isInitialized,
+    initializeStore,
+    checkSession,
+    showTimestamps,
+    setShowTimestamps,
+  } = useChatStore();
 
+  // Initialize store synchronously (safe for hydration)
   useEffect(() => {
     if (!isInitialized) {
       initializeStore();
     }
   }, [isInitialized, initializeStore]);
+
+  // Check session after hydration (separate effect)
+  useEffect(() => {
+    if (isInitialized) {
+      checkSession(); // Safe to call after initialization
+    }
+  }, [isInitialized, checkSession]);
 
   const onToggleTimestamps = () => {
     setShowTimestamps(!showTimestamps);

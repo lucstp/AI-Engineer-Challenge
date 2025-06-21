@@ -94,6 +94,18 @@ export function MessageList({ messages, isTyping, isAnimating }: MessageListProp
           // Show typewriter animation for assistant messages that are animating
           const shouldAnimate = isLastMessage && message.role === 'assistant' && isAnimating;
 
+          // Debug logging for animation logic (only in development)
+          if (process.env.NODE_ENV === 'development' && message.role === 'assistant' && isLastMessage) {
+            console.log('🎬 MessageList Animation Check:', {
+              messageId: message.id,
+              isLastMessage,
+              messageRole: message.role,
+              storeIsAnimating: isAnimating,
+              shouldAnimate,
+              messageContent: `${message.content.substring(0, 30)}...`,
+            });
+          }
+
           return (
             <div key={message.id} className="flex flex-col space-y-2">
               {/* Message content with proper alignment */}

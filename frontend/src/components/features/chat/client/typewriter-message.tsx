@@ -14,9 +14,22 @@ function useTypewriter(text: string, startAnimation: boolean, speed = 10) {
   const animationRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🎯 useTypewriter effect triggered:', {
+        startAnimation,
+        textLength: text.length,
+        text: `${text.substring(0, 30)}...`,
+      });
+    }
+
     if (!startAnimation) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⏸️ Animation not started - startAnimation is false');
+      }
       return;
     }
+
+    console.log('🚀 Starting typewriter animation');
 
     // Clear any existing animation
     if (animationRef.current) {
@@ -105,6 +118,18 @@ export function TypewriterMessage({
   isAnimating = true,
   onAnimationComplete,
 }: TypewriterMessageProps) {
+  // Debug logging for animation state
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🎬 TypewriterMessage props:', {
+        messageId: message.id,
+        isAnimating,
+        messageContent: `${message.content.substring(0, 30)}...`,
+        messageLength: message.content.length,
+      });
+    }
+  }, [message.id, isAnimating, message.content]);
+
   // Use our typewriter hook
   const { displayText, isComplete } = useTypewriter(
     message.content,
@@ -112,9 +137,23 @@ export function TypewriterMessage({
     10, // Base speed in ms
   );
 
+  // Debug logging for typewriter state
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔤 Typewriter state:', {
+        messageId: message.id,
+        displayTextLength: displayText.length,
+        totalLength: message.content.length,
+        isComplete,
+        isAnimating,
+      });
+    }
+  }, [message.id, displayText.length, message.content.length, isComplete, isAnimating]);
+
   // Call onAnimationComplete when animation finishes
   useEffect(() => {
     if (isComplete && onAnimationComplete) {
+      console.log('✅ Animation complete, calling callback');
       onAnimationComplete();
     }
   }, [isComplete, onAnimationComplete]);

@@ -2,8 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { createComponentLogger } from '@/lib';
 import type { Message } from '@/types';
 import { motion } from 'motion/react';
+
+const logger = createComponentLogger('TypewriterMessage');
+
+// Feature flag for detailed animation debugging - only enable when explicitly needed
+const ENABLE_DETAILED_ANIMATION_LOGS =
+  process.env.NODE_ENV === 'development' &&
+  (process.env.DEBUG_ANIMATIONS === 'true' ||
+    (typeof window !== 'undefined' && window?.location?.search?.includes('debug=animations')));
 
 /**
  * Custom hook for typewriter animation with dynamic speed
@@ -14,9 +23,31 @@ function useTypewriter(text: string, startAnimation: boolean, speed = 10) {
   const animationRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Only log animation triggers when detailed debugging is enabled
+    if (ENABLE_DETAILED_ANIMATION_LOGS) {
+      logger.debug('useTypewriter effect triggered', {
+        action: 'effect-triggered',
+        startAnimation,
+        textLength: text.length,
+        contentType: text.length > 0 ? 'has-content' : 'empty',
+      });
+    }
+
     if (!startAnimation) {
+      // Minimal logging for skipped animations
+      if (ENABLE_DETAILED_ANIMATION_LOGS) {
+        logger.debug('Animation skipped', {
+          action: 'animation-skipped',
+        });
+      }
       return;
     }
+
+    // Log animation start only once per animation, not on every state change
+    logger.info('Typewriter animation started', {
+      action: 'animation-start',
+      textLength: text.length,
+    });
 
     // Clear any existing animation
     if (animationRef.current) {
@@ -105,6 +136,19 @@ export function TypewriterMessage({
   isAnimating = true,
   onAnimationComplete,
 }: TypewriterMessageProps) {
+  // Conditional debug logging for animation state - only when detailed debugging is enabled
+  useEffect(() => {
+    if (ENABLE_DETAILED_ANIMATION_LOGS) {
+      logger.debug('TypewriterMessage props received', {
+        action: 'props-received',
+        messageId: message.id,
+        isAnimating,
+        messageLength: message.content.length,
+        messageRole: message.role,
+      });
+    }
+  }, [message.id, isAnimating, message.content, message.role]);
+
   // Use our typewriter hook
   const { displayText, isComplete } = useTypewriter(
     message.content,
@@ -112,12 +156,41 @@ export function TypewriterMessage({
     10, // Base speed in ms
   );
 
+  // Conditional debug logging for typewriter state - only log significant state changes
+  useEffect(() => {
+    // Only log completion or when detailed debugging is enabled
+    if (isComplete) {
+      logger.info('Typewriter animation completed', {
+        action: 'animation-completed',
+        messageId: message.id,
+        finalLength: displayText.length,
+      });
+    } else if (ENABLE_DETAILED_ANIMATION_LOGS && displayText.length % 50 === 0) {
+      // In debug mode, only log every 50 characters to reduce noise
+      logger.debug('Typewriter progress update', {
+        action: 'progress-update',
+        messageId: message.id,
+        progressPercent:
+          message.content.length > 0
+            ? Math.round((displayText.length / message.content.length) * 100)
+            : 0,
+      });
+    }
+  }, [message.id, displayText.length, message.content.length, isComplete]);
+
   // Call onAnimationComplete when animation finishes
   useEffect(() => {
     if (isComplete && onAnimationComplete) {
+      // Only log callback execution when detailed debugging is enabled
+      if (ENABLE_DETAILED_ANIMATION_LOGS) {
+        logger.debug('Animation complete, executing callback', {
+          action: 'callback-execution',
+          messageId: message.id,
+        });
+      }
       onAnimationComplete();
     }
-  }, [isComplete, onAnimationComplete]);
+  }, [isComplete, onAnimationComplete, message.id]);
 
   return (
     <div className={cn('prose prose-invert max-w-none', className)}>

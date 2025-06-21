@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect } from 'react';
-// import { SessionDebug } from '@/components/debug/session-debug';
+import { SessionDebug } from '@/components/debug/session-debug';
 import { ChatInput, MessageList } from '@/components/features/chat';
 import { AnimatedBackground, ChatLayout, ChatShell } from '@/components/layout';
 import {
@@ -22,11 +22,11 @@ import { Bot, Clock, Sparkles } from 'lucide-react';
 /**
  * Main chat page with streaming support and proper state management.
  *
- * Updated for streaming architecture:
- * - Removed server action dependencies
- * - Uses route handler for streaming
- * - Improved error handling and loading states
- * - Better integration with store initialization
+ * Silicon Valley approach:
+ * - Render immediately with smart defaults
+ * - Sync state seamlessly in background
+ * - No loading screens or hydration delays
+ * - Smooth transitions when state loads
  */
 export default function HomePage() {
   const {
@@ -35,29 +35,36 @@ export default function HomePage() {
     isRehydrated,
     initializeStore,
     checkSession,
+    checkWelcomeAnimation,
     showTimestamps,
     setShowTimestamps,
     isAnimating,
     isTyping,
     isLoading,
+    hasValidApiKey,
+    hasSeenWelcomeAnimation,
+    setIsAnimating,
+    setHasSeenWelcomeAnimation,
   } = useChatStore();
 
   const { isReturningUser, shouldPlayWelcomeAnimation, isHydrationComplete } = useAnimationState();
 
-  // Phase 1: Initialize store after rehydration completes
+  // Phase 1: Initialize store
   useEffect(() => {
-    if (isRehydrated && !isInitialized) {
-      logger.info('Page: Initializing store after rehydration', {
+    if (!isInitialized) {
+      logger.info('Page: Initializing store', {
         component: 'HomePage',
         action: 'initializeStore',
-        isRehydrated,
         isInitialized,
       });
       initializeStore();
     }
-  }, [isRehydrated, isInitialized, initializeStore]);
+  }, [isInitialized, initializeStore]);
 
-  // Phase 2: Check session in background (no UI blocking)
+  // Phase 2: Animation is now handled by the store after proper rehydration
+  // No manual animation triggers needed here
+
+  // Phase 3: Check session in background (no UI blocking)
   useEffect(() => {
     if (isInitialized && isHydrationComplete) {
       logger.debug('Page: Checking session in background', {
@@ -140,7 +147,7 @@ export default function HomePage() {
     </div>
   );
 
-  // Always render immediately - no loading/hydration waiting
+  // Silicon Valley approach: Always render immediately with smart defaults
   return (
     <AnimatedBackground>
       <ChatLayout header={headerContent}>
@@ -154,12 +161,25 @@ export default function HomePage() {
                 isAnimating={isAnimating}
               />
             </div>
+
+            {/* Show tip when no valid API key */}
+            {!hasValidApiKey && (
+              <div className="flex justify-center px-6 pb-4">
+                <div className="max-w-sm rounded-lg border border-white/20 bg-white/10 p-4 backdrop-blur-xl">
+                  <p className="text-sm text-yellow-300">
+                    🔒 <strong>Security:</strong> Your API key is encrypted server-side and never
+                    exposed to your browser. Only OpenAI receives your key for API requests.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <ChatInput />
           </div>
         </ChatShell>
       </ChatLayout>
       {/* Only show debug in development */}
-      {/* {process.env.NODE_ENV === 'development' && <SessionDebug />} */}
+      {process.env.NODE_ENV === 'development' && <SessionDebug />}
     </AnimatedBackground>
   );
 }

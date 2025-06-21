@@ -1,8 +1,7 @@
 ---
-description: Client-side performance optimization, Core Web Vitals, and browser-specific patterns
+description:
 globs:
-  - "**/*.{ts,tsx,js,jsx}"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Client-Side Performance Patterns

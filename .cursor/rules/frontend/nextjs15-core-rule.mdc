@@ -1,8 +1,7 @@
 ---
-description: Next.js 15 stable features, async APIs, and caching changes
-globs:
-  - "**/*.{ts,tsx,js,jsx}"
-alwaysApply: false
+description: # Next.js 15 stable features, async APIs, and caching changes
+globs: ["**/app/**/*.{ts,tsx}", "**/pages/**/*.{ts,tsx}", "next.config.{ts,js}"]
+alwaysApply: true
 ---
 
 # Next.js 15 Core Features (Stable Oct 21, 2024)

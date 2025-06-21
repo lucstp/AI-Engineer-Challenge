@@ -1,136 +1,91 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { logger } from '@/lib';
 import { useChatStore } from '@/store';
 
-interface SessionInfo {
-  [key: string]: string;
+interface DebugInfo {
+  messages: number;
+  apiKey: boolean;
+  isInitialized: boolean;
+  hasSeenWelcome: boolean;
+  localStorage: string | null;
+  parsedStorage: {
+    state?: {
+      messages?: unknown[];
+      hasSeenWelcomeAnimation?: boolean;
+      isInitialized?: boolean;
+    };
+  } | null;
 }
 
-interface LocalStorageData {
-  state?: {
-    selectedModel?: string;
-    messages?: unknown[];
-    isExpanded?: boolean;
-    showTimestamps?: boolean;
-    hasSeenWelcomeAnimation?: boolean;
-    hasCompletedInitialSetup?: boolean;
-    lastSuccessfulKeyType?: string | null;
-  };
-  version?: number;
-}
-
-// Alternative: Direct Zustand persist structure
-interface ZustandPersistedData {
-  selectedModel?: string;
-  messages?: unknown[];
-  isExpanded?: boolean;
-  showTimestamps?: boolean;
-  hasSeenWelcomeAnimation?: boolean;
-  hasCompletedInitialSetup?: boolean;
-  lastSuccessfulKeyType?: string | null;
-  version?: number;
-}
-
-/**
- * Debug component to help diagnose persistence and session issues
- * Only renders in development mode
- */
 export function SessionDebug() {
-  const {
-    hasValidApiKey,
-    apiKeyType,
-    apiKeyLength,
-    isInitialized,
-    messages,
-    hasSeenWelcomeAnimation,
-    hasCompletedInitialSetup,
-  } = useChatStore();
+  const [debugInfo, setDebugInfo] = useState<DebugInfo>({
+    messages: 0,
+    apiKey: false,
+    isInitialized: false,
+    hasSeenWelcome: false,
+    localStorage: null,
+    parsedStorage: null,
+  });
 
-  const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
-  const [localStorageInfo, setLocalStorageInfo] = useState<ZustandPersistedData | null>(null);
+  const { messages, hasValidApiKey, isInitialized, hasSeenWelcomeAnimation } = useChatStore();
 
   useEffect(() => {
-    const checkStorage = () => {
-      // Check localStorage persistence
+    // Get localStorage data
+    const storageData = typeof window !== 'undefined' ? localStorage.getItem('chat-storage') : null;
+    let parsedData = null;
+
+    if (storageData) {
       try {
-        const stored = localStorage.getItem('chat-storage');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          logger.debug('Raw localStorage data', {
-            component: 'SessionDebug',
-            data: parsed,
-          });
-          setLocalStorageInfo(parsed as ZustandPersistedData);
-        } else {
-          setLocalStorageInfo(null);
-        }
-      } catch (error) {
-        logger.error(
-          'Failed to read localStorage',
-          error instanceof Error ? error : new Error(String(error)),
-          {
-            component: 'SessionDebug',
-          },
-        );
+        parsedData = JSON.parse(storageData);
+      } catch (e) {
+        console.error('Failed to parse localStorage:', e);
       }
+    }
 
-      // Check cookies (visible ones)
-      const cookies = document.cookie.split(';').reduce((acc: SessionInfo, cookie) => {
-        const [key, value] = cookie.trim().split('=');
-        if (key) {
-          acc[key] = value || '';
-        }
-        return acc;
-      }, {});
+    setDebugInfo({
+      messages: messages.length,
+      apiKey: hasValidApiKey,
+      isInitialized,
+      hasSeenWelcome: hasSeenWelcomeAnimation,
+      localStorage: storageData,
+      parsedStorage: parsedData,
+    });
+  }, [messages, hasValidApiKey, isInitialized, hasSeenWelcomeAnimation]);
 
-      setSessionInfo(cookies);
-    };
-
-    // Initial check
-    checkStorage();
-
-    // Watch for storage changes
-    const interval = setInterval(checkStorage, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Only show in development
   if (process.env.NODE_ENV !== 'development') {
     return null;
   }
 
   return (
-    <div className="fixed right-4 bottom-4 max-w-sm rounded-lg bg-black/80 p-4 text-xs text-white backdrop-blur-sm">
-      <h3 className="font-bold text-yellow-300">🔍 Session Debug</h3>
+    <div className="fixed bottom-4 left-4 z-50 max-w-sm rounded-lg bg-black/80 p-3 font-mono text-base text-white">
+      <div className="mb-2 font-bold">🐛 Debug Info</div>
+      <div>Messages: {debugInfo.messages}</div>
+      <div>API Key: {debugInfo.apiKey ? '✅ Yes' : '❌ No'}</div>
+      <div>Initialized: {debugInfo.isInitialized ? '✅ Yes' : '❌ No'}</div>
+      <div>Seen Welcome: {debugInfo.hasSeenWelcome ? '✅ Yes' : '❌ No'}</div>
 
-      <div className="mt-2 space-y-1">
-        <div>Initialized: {isInitialized ? '✅' : '❌'}</div>
-        <div>Valid API Key: {hasValidApiKey ? '✅' : '❌'}</div>
-        <div>API Key Type: {apiKeyType || 'None'}</div>
-        <div>API Key Length: {apiKeyLength || 'None'}</div>
-        <div>Messages Count: {messages.length}</div>
-        <div>Seen Welcome: {hasSeenWelcomeAnimation ? '✅' : '❌'}</div>
-        <div>Setup Complete: {hasCompletedInitialSetup ? '✅' : '❌'}</div>
-      </div>
-
-      <div className="mt-2">
-        <div className="font-semibold text-blue-300">localStorage:</div>
-        <div className="max-h-20 overflow-y-auto text-[10px]">
-          {localStorageInfo ? <pre>{JSON.stringify(localStorageInfo, null, 1)}</pre> : 'No data'}
-        </div>
-      </div>
-
-      <div className="mt-2">
-        <div className="font-semibold text-green-300">Cookies (visible):</div>
-        <div className="max-h-20 overflow-y-auto text-[10px]">
-          {sessionInfo && Object.keys(sessionInfo).length > 0 ? (
-            <pre>{JSON.stringify(sessionInfo, null, 1)}</pre>
-          ) : (
-            'No cookies visible'
-          )}
-        </div>
+      <div className="mt-2 border-t border-gray-600 pt-2">
+        <div className="font-bold">LocalStorage:</div>
+        {debugInfo.localStorage ? (
+          <div className="max-h-32 overflow-y-auto text-base">
+            <div>Has Data: ✅ Yes</div>
+            {debugInfo.parsedStorage && (
+              <>
+                <div>Stored Messages: {debugInfo.parsedStorage.state?.messages?.length || 0}</div>
+                <div>
+                  Stored hasSeenWelcome:{' '}
+                  {debugInfo.parsedStorage.state?.hasSeenWelcomeAnimation ? '✅' : '❌'}
+                </div>
+                <div>
+                  Stored isInitialized: {debugInfo.parsedStorage.state?.isInitialized ? '✅' : '❌'}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="text-red-400">❌ No Data</div>
+        )}
       </div>
     </div>
   );

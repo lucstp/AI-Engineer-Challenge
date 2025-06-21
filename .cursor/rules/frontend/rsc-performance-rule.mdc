@@ -1,8 +1,7 @@
 ---
-description: React Server Components performance patterns and server-side optimization strategies
+description:
 globs:
-  - "**/*.{ts,tsx,js,jsx}"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # React Server Components Performance Patterns

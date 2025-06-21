@@ -22,7 +22,6 @@ export {
   MessageBubble,
   MessageList,
   TypingIndicator,
-  EmptyState,
   ChatInput,
   ModelSelector,
 } from './client';

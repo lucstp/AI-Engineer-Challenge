@@ -1,0 +1,38 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# The AI Engineer Challenge Project
+
+## Project Context
+I'm working on the AI Engineer Challenge - building my first LLM-powered application with a Next.js frontend and FastAPI backend, then deploying it to Vercel.
+
+## Current Project Structure
+- `/api/app.py` - FastAPI backend (already provided) with streaming chat endpoint
+- `/api/requirements.txt` - Python dependencies
+- `vercel.json` - Deployment configuration for both frontend and backend
+- Need to create: Next.js frontend that integrates with the existing backend
+
+## Backend API Details
+The provided FastAPI backend has:
+- POST `/api/chat` endpoint expecting: developer_message, user_message, model (optional), api_key
+- Returns streaming text responses from OpenAI API
+- CORS enabled for frontend integration
+- Health check at GET `/api/health`
+
+## Frontend Requirements
+- Next.js with TypeScript, Tailwind CSS, Shadcn, Zustand
+- Chat interface with streaming response display
+- Secure encrypted session API key input (password field)
+- Integration with existing `/api/chat` endpoint
+- Responsive design with good contrast/UX
+- Must work locally and deploy to Vercel
+
+## Development Approach
+Following "vibe coding" methodology using Cursor IDE with indexed Next.js and Vercel documentation. Building incrementally with frequent git commits.
+
+## Goal
+Create a production-ready chat application that demonstrates LLM integration, then deploy publicly via Vercel for sharing on LinkedIn.
+
+When helping with this project, please provide production-ready code, consider the existing backend integration, and follow Next.js/Vercel best practices.

@@ -21,25 +21,58 @@ function createWelcomeMessage() {
   };
 }
 
+// Check if this is a first-time user (no persisted data)
+function isFirstTimeUser(): boolean {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+
+  try {
+    const stored = localStorage.getItem('chat-storage');
+    return !stored; // First time if no data exists
+  } catch {
+    return true;
+  }
+}
+
+// Check if user has a valid API key in persisted state
+function hasPersistedApiKey(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  try {
+    const stored = localStorage.getItem('chat-storage');
+    if (!stored) {
+      return false;
+    }
+
+    const parsed = JSON.parse(stored);
+    return parsed?.state?.hasValidApiKey === true;
+  } catch {
+    return false;
+  }
+}
+
 // Initial state for data only (without action functions)
+// Start with consistent server/client state to prevent hydration mismatch
 const INITIAL_DATA_STATE = {
-  messages: [],
-  hasValidApiKey: false,
+  messages: [createWelcomeMessage()], // Always start with welcome message
+  hasValidApiKey: false, // Always start false, will be updated after hydration
   apiKeyType: null as string | null,
   apiKeyLength: null as number | null,
   apiKeyError: null as string | null,
-  isInitialized: false,
-  isRehydrated: false, // Track Zustand persistence rehydration completion
+  isInitialized: false, // Start false, will be initialized after hydration
   selectedModel: 'gpt-4.1-mini',
   isLoading: false,
   isTyping: false,
   showTimestamps: false,
-  isAnimating: false,
+  isAnimating: false, // Always false initially - no hydration issues
   animatedContent: '',
-  isExpanded: false,
-  hasSeenWelcomeAnimation: false,
-  hasCompletedInitialSetup: false,
+  isExpanded: false, // Start collapsed, will be updated after hydration
+  hasSeenWelcomeAnimation: false, // Allow animation for first-time users
+  hasCompletedInitialSetup: false, // Start false, will be updated after hydration
   lastSuccessfulKeyType: null as string | null,
+  isRehydrated: false, // Will be set to true by components after detecting rehydration
 };
 
 export const useChatStore = create<ChatState>()(
@@ -50,7 +83,19 @@ export const useChatStore = create<ChatState>()(
         ...INITIAL_DATA_STATE,
 
         // Messages actions
-        setMessages: (messages) => set({ messages }),
+        setMessages: (messages) => {
+          logger.debug('🔄 setMessages called', {
+            component: 'ChatStore',
+            action: 'setMessages',
+            messageCount: messages.length,
+            messages: messages.map((m) => ({
+              id: m.id,
+              content: `${m.content.substring(0, 30)}...`,
+              role: m.role,
+            })),
+          });
+          set({ messages });
+        },
         addMessage: (message) =>
           set((state) => ({
             messages: [...state.messages, message],
@@ -59,7 +104,13 @@ export const useChatStore = create<ChatState>()(
           set((state) => ({
             messages: state.messages.map((msg) => (msg.id === id ? { ...msg, ...updates } : msg)),
           })),
-        clearMessages: () => set({ messages: [] }),
+        clearMessages: () => {
+          logger.debug('🗑️ clearMessages called', {
+            component: 'ChatStore',
+            action: 'clearMessages',
+          });
+          set({ messages: [] });
+        },
 
         // API Key actions
         setApiKey: async (key: string) => {
@@ -159,56 +210,40 @@ export const useChatStore = create<ChatState>()(
           }
         },
 
-        // Fixed initialization with proper type safety
+        // Initialize store after rehydration
         initializeStore: () => {
           const state = get();
 
-          logger.debug('Store initialization check', {
+          logger.debug('🚀 initializeStore called after rehydration', {
             component: 'ChatStore',
             action: 'initializeStore',
             isInitialized: state.isInitialized,
-            hasCompletedInitialSetup: state.hasCompletedInitialSetup,
             messagesCount: state.messages.length,
+            hasSeenWelcomeAnimation: state.hasSeenWelcomeAnimation,
           });
 
           // Skip if already initialized
           if (state.isInitialized) {
-            logger.debug('Store already initialized from persistence', {
+            logger.debug('✅ Store already initialized', {
               component: 'ChatStore',
               action: 'initializeStore',
             });
             return;
           }
 
-          // Only run first-time initialization for truly new users
-          if (
-            state.messages.length === 0 &&
-            !state.hasValidApiKey &&
-            !state.hasSeenWelcomeAnimation &&
-            !state.hasCompletedInitialSetup
-          ) {
-            const welcomeMessage = createWelcomeMessage();
+          // Mark as initialized and trigger welcome animation check
+          set({ isInitialized: true });
 
-            logger.info('First-time user initialization', {
-              component: 'ChatStore',
-              action: 'initializeStore',
-            });
-            set({
-              messages: [welcomeMessage],
-              isAnimating: true,
-              animatedContent: welcomeMessage.content,
-              hasSeenWelcomeAnimation: true,
-              isInitialized: true,
-            });
-          } else {
-            logger.debug('Marking as initialized without changes', {
-              component: 'ChatStore',
-              action: 'initializeStore',
-            });
-            set({
-              isInitialized: true,
-            });
-          }
+          // Check if we need to show welcome animation
+          // This will handle both first-time users and returning users properly
+          setTimeout(() => {
+            get().checkWelcomeAnimation();
+          }, 0);
+
+          logger.debug('✅ Store initialized and welcome animation check queued', {
+            component: 'ChatStore',
+            action: 'initializeStore',
+          });
         },
 
         // Session check with proper array handling
@@ -233,30 +268,14 @@ export const useChatStore = create<ChatState>()(
                 keyType: session.keyType,
               });
             } else {
-              const shouldShowWelcome =
-                currentState.messages.length === 0 && !currentState.hasCompletedInitialSetup;
-
-              if (shouldShowWelcome) {
-                const welcomeMessage = createWelcomeMessage();
-
-                set({
-                  hasValidApiKey: false,
-                  apiKeyType: null,
-                  apiKeyLength: null,
-                  messages: [welcomeMessage],
-                  isExpanded: false,
-                  isAnimating: true,
-                  animatedContent: welcomeMessage.content,
-                  hasSeenWelcomeAnimation: true,
-                });
-              } else {
-                set({
-                  hasValidApiKey: false,
-                  apiKeyType: null,
-                  apiKeyLength: null,
-                  isExpanded: false,
-                });
-              }
+              // Only update API key related state, DO NOT touch messages
+              // Messages should only be managed by initializeStore for first-time users
+              set({
+                hasValidApiKey: false,
+                apiKeyType: null,
+                apiKeyLength: null,
+                isExpanded: false,
+              });
             }
           } catch (error) {
             logger.error(
@@ -267,6 +286,7 @@ export const useChatStore = create<ChatState>()(
                 action: 'checkSession',
               },
             );
+            // Only update API key related state, DO NOT touch messages
             set({
               hasValidApiKey: false,
               apiKeyType: null,
@@ -286,6 +306,95 @@ export const useChatStore = create<ChatState>()(
         setIsExpanded: (expanded) => set({ isExpanded: expanded }),
         setHasSeenWelcomeAnimation: (seen) => set({ hasSeenWelcomeAnimation: seen }),
         setHasCompletedInitialSetup: (completed) => set({ hasCompletedInitialSetup: completed }),
+        setIsRehydrated: (rehydrated: boolean) => set({ isRehydrated: rehydrated }),
+
+        // Check if welcome animation should play after hydration
+        checkWelcomeAnimation: () => {
+          const state = get();
+
+          logger.info('🎬 checkWelcomeAnimation called', {
+            component: 'ChatStore',
+            action: 'checkWelcomeAnimation',
+            messagesCount: state.messages.length,
+            hasSeenWelcome: state.hasSeenWelcomeAnimation,
+            isInitialized: state.isInitialized,
+          });
+
+          // Case 1: No messages yet - add welcome message
+          if (state.messages.length === 0) {
+            const welcomeMessage = createWelcomeMessage();
+            const shouldAnimate = !state.hasSeenWelcomeAnimation; // Simplified - just check if we've seen it
+
+            logger.info('🎉 Adding welcome message (no existing messages)', {
+              component: 'ChatStore',
+              action: 'checkWelcomeAnimation',
+              shouldAnimate,
+              messageId: welcomeMessage.id,
+            });
+
+            set({
+              messages: [welcomeMessage],
+              isAnimating: shouldAnimate,
+              animatedContent: shouldAnimate ? WELCOME_MESSAGE : '',
+              hasSeenWelcomeAnimation: true,
+              isInitialized: true,
+            });
+
+            // Ensure animation state is set in next tick for proper rendering
+            if (shouldAnimate) {
+              setTimeout(() => {
+                const currentState = get();
+                if (currentState.isAnimating) {
+                  logger.debug('🎬 Animation state confirmed after timeout', {
+                    component: 'ChatStore',
+                    action: 'checkWelcomeAnimation-confirm',
+                    isAnimating: currentState.isAnimating,
+                  });
+                }
+              }, 50);
+            }
+          }
+          // Case 2: Messages exist but we haven't seen welcome animation (first-time user with persisted state)
+          else if (!state.hasSeenWelcomeAnimation) {
+            logger.info('🎬 Triggering animation for existing welcome message (first-time user)', {
+              component: 'ChatStore',
+              action: 'checkWelcomeAnimation',
+              existingMessagesCount: state.messages.length,
+            });
+
+            set({
+              isAnimating: true,
+              animatedContent: WELCOME_MESSAGE,
+              hasSeenWelcomeAnimation: true,
+            });
+
+            // Ensure animation state is set in next tick for proper rendering
+            setTimeout(() => {
+              const currentState = get();
+              if (currentState.isAnimating) {
+                logger.debug('🎬 Animation state confirmed for existing message', {
+                  component: 'ChatStore',
+                  action: 'checkWelcomeAnimation-confirm-existing',
+                  isAnimating: currentState.isAnimating,
+                });
+              }
+            }, 50);
+          }
+          // Case 3: Returning user - animation already seen
+          else {
+            logger.debug('👋 Skipping animation - returning user', {
+              component: 'ChatStore',
+              action: 'checkWelcomeAnimation',
+              messageCount: state.messages.length,
+              hasSeenWelcome: state.hasSeenWelcomeAnimation,
+            });
+
+            // Just mark as initialized if we have messages
+            if (!state.isInitialized) {
+              set({ isInitialized: true });
+            }
+          }
+        },
 
         // Reset with proper array initialization
         reset: async () => {
@@ -318,85 +427,77 @@ export const useChatStore = create<ChatState>()(
       }),
       {
         name: 'chat-storage',
-        partialize: (state: ChatState) => ({
-          selectedModel: state.selectedModel,
-          messages: state.messages,
-          showTimestamps: state.showTimestamps,
-          hasSeenWelcomeAnimation: state.hasSeenWelcomeAnimation,
-          hasCompletedInitialSetup: state.hasCompletedInitialSetup,
-          lastSuccessfulKeyType: state.lastSuccessfulKeyType,
-          isInitialized: state.isInitialized,
-          // Note: isExpanded is NOT persisted - it's derived from hasValidApiKey for proper animations
-        }),
-        onRehydrateStorage: () => (state?: ChatState, error?: unknown) => {
-          if (error) {
-            logger.error(
-              'Store rehydration failed',
-              error instanceof Error ? error : new Error(String(error)),
-              {
-                component: 'ChatStore',
-                action: 'rehydrate',
-              },
-            );
-            // Defer setState to avoid circular dependency during initialization
-            setTimeout(() => {
-              useChatStore.setState({ isRehydrated: true });
-            }, 0);
-            return;
-          }
+        partialize: (state: ChatState) => {
+          const persistedData = {
+            selectedModel: state.selectedModel,
+            messages: state.messages,
+            showTimestamps: state.showTimestamps,
+            hasSeenWelcomeAnimation: state.hasSeenWelcomeAnimation,
+            hasCompletedInitialSetup: state.hasCompletedInitialSetup,
+            lastSuccessfulKeyType: state.lastSuccessfulKeyType,
+            isInitialized: state.isInitialized,
+            isExpanded: state.isExpanded, // Persist expansion state for smooth user experience
+            // Persist API key state to prevent flash on refresh
+            hasValidApiKey: state.hasValidApiKey,
+            apiKeyType: state.apiKeyType,
+            apiKeyLength: state.apiKeyLength,
+          };
 
-          if (state) {
-            logger.debug('Store rehydrated successfully', {
-              component: 'ChatStore',
-              action: 'rehydrate',
-              messagesCount: state.messages.length,
-              hasCompletedInitialSetup: state.hasCompletedInitialSetup,
-              isInitialized: state.isInitialized,
-            });
-          }
+          logger.debug('💾 Persisting state to localStorage', {
+            component: 'ChatStore',
+            action: 'partialize',
+            messagesCount: persistedData.messages.length,
+            isInitialized: persistedData.isInitialized,
+            hasSeenWelcomeAnimation: persistedData.hasSeenWelcomeAnimation,
+            hasCompletedInitialSetup: persistedData.hasCompletedInitialSetup,
+            persistedDataSize: JSON.stringify(persistedData).length,
+            persistedMessages: persistedData.messages.map((m) => ({
+              id: m.id,
+              content: m.content ? `${m.content.substring(0, 30)}...` : '[empty content]',
+            })),
+          });
 
-          // Defer setState to avoid circular dependency during initialization
-          setTimeout(() => {
-            useChatStore.setState((currentState) => {
-              const newState = { ...currentState, isRehydrated: true };
+          return persistedData;
+        },
+        onRehydrateStorage: () => {
+          logger.info('🔄 Starting Zustand rehydration', {
+            component: 'ChatStore',
+            action: 'onRehydrateStorage',
+          });
 
-              // Auto-trigger initialization after rehydration if not already initialized
-              if (!currentState.isInitialized) {
-                logger.info('Auto-triggering store initialization after rehydration', {
+          return (state, error) => {
+            if (error) {
+              logger.error(
+                '❌ Zustand rehydration failed',
+                error instanceof Error ? error : new Error(String(error)),
+                {
                   component: 'ChatStore',
-                  action: 'postRehydrationInit',
-                });
+                  action: 'onRehydrateStorage',
+                },
+              );
+              return;
+            }
 
-                // Call initializeStore logic directly
-                if (
-                  currentState.messages.length === 0 &&
-                  !currentState.hasValidApiKey &&
-                  !currentState.hasSeenWelcomeAnimation &&
-                  !currentState.hasCompletedInitialSetup
-                ) {
-                  const welcomeMessage = createWelcomeMessage();
-                  return {
-                    ...newState,
-                    messages: [welcomeMessage],
-                    isAnimating: true,
-                    animatedContent: welcomeMessage.content,
-                    hasSeenWelcomeAnimation: true,
-                    isInitialized: true,
-                  };
-                }
+            if (state) {
+              logger.info('✅ Zustand rehydration complete', {
+                component: 'ChatStore',
+                action: 'onRehydrateStorage',
+                messagesCount: state.messages?.length || 0,
+                hasSeenWelcome: state.hasSeenWelcomeAnimation || false,
+                isInitialized: state.isInitialized || false,
+                hasValidApiKey: state.hasValidApiKey || false,
+              });
 
-                return {
-                  ...newState,
-                  isInitialized: true,
-                };
-              }
-
-              return newState;
-            });
-          }, 0);
+              // Note: isRehydrated flag will be set by component after detecting rehydration
+              // This prevents circular reference issues during store initialization
+            }
+          };
         },
       },
     ),
-    { name: 'chat-store' },
+    {
+      name: 'chat-store',
+      enabled: process.env.NODE_ENV === 'development',
+    },
   ),
 );

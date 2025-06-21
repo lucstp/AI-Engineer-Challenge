@@ -53,6 +53,92 @@ Before responding to any request, follow these steps:
 - Prefer early returns to reduce nesting
 - Structure: main exports → subcomponents → helpers → types
 
+### Biome Compatibility Standards (Critical)
+**Always use block statements with curly braces** - never single-line statements:
+
+```typescript
+// ✅ ALWAYS DO - Block statements (Biome compliant)
+if (!stored) {
+  return false;
+}
+
+if (condition) {
+  doSomething();
+} else {
+  doSomethingElse();
+}
+
+for (const item of items) {
+  processItem(item);
+}
+
+while (isLoading) {
+  checkStatus();
+}
+
+// ❌ NEVER DO - Single-line statements (Biome flags these)
+if (!stored) return false;
+if (condition) doSomething(); else doSomethingElse();
+for (const item of items) processItem(item);
+while (isLoading) checkStatus();
+```
+
+### Early Returns with Block Statements
+```typescript
+// ✅ Correct - Block statements for early returns
+function validateInput(input: string) {
+  if (!input) {
+    return { valid: false, error: 'Required' };
+  }
+
+  if (input.length < 3) {
+    return { valid: false, error: 'Too short' };
+  }
+
+  return { valid: true };
+}
+
+// ✅ React component early returns
+function UserProfile({ userId }: { userId: string }) {
+  if (!userId) {
+    return <div>No user ID provided</div>;
+  }
+
+  if (userId === 'guest') {
+    return <GuestProfile />;
+  }
+
+  return <AuthenticatedProfile userId={userId} />;
+}
+```
+
+### Loop and Conditional Formatting
+```typescript
+// ✅ Always use blocks - even for single statements
+if (user.isAdmin) {
+  redirectToAdmin();
+}
+
+items.forEach((item) => {
+  processItem(item);
+});
+
+// ✅ Ternary for simple assignments only
+const result = condition ? valueA : valueB;
+const className = isActive ? 'active' : 'inactive';
+
+// ✅ For complex logic, use if/else blocks
+if (user.role === 'admin') {
+  performAdminAction();
+  logAdminAccess();
+} else if (user.role === 'moderator') {
+  performModeratorAction();
+  logModeratorAccess();
+} else {
+  performUserAction();
+}
+```
+
 ### Naming Conventions
 
 - Follow the established naming conventions defined in `naming-convention-rule.mdc`
@@ -100,7 +186,7 @@ Before responding to any request, follow these steps:
 - **Dynamic loading** for non-critical components
 - **Optimize images**: WebP format, size data, lazy loading
 - **Optimize for Core Web Vitals** (LCP, CLS, FID/INP)
-- Use **Turbopack** for faster development builds
+- Use **Turbopack** for faster development builds when possible
 - Implement **React Compiler** optimizations when available
 
 ### Modern Development Patterns
@@ -151,6 +237,11 @@ When working on specific aspects of the frontend, consult these specialized rule
 - **See: `animation-patterns-rule.mdc`** for accessibility-compliant animations
 - **See: `animation-patterns-rule.mdc`** for Tailwind + motion integration guidelines
 
+### State Management
+- **See: `zustand-enterprise-rule.mdc`** for Zustand slice-based architecture
+- **See: `zustand-enterprise-rule.mdc`** for persistence, SSR compatibility, and real-time patterns
+- **See: `zustand-enterprise-rule.mdc`** for chat applications and streaming state management
+
 ---
 
 ## Quick Reference Checklist
@@ -170,6 +261,7 @@ When implementing any frontend feature, ensure:
 - ✅ **Testing strategy** for components and user interactions
 - ✅ **Animation guidelines** using motion/react with Tailwind separation
 - ✅ **React 19 features** like Actions, useActionState, and useOptimistic
+- ✅ **Biome compatibility** - always use block statements with curly braces
 
 ## Integration Guidelines
 
@@ -183,7 +275,7 @@ When implementing any frontend feature, ensure:
 1. **Server State** (RSC) - Preferred for data fetching
 2. **URL State** (@nuqs) - For shareable application state
 3. **Local State** (useState) - Only for ephemeral UI state
-4. **Global State** (Context/Zustand) - Sparingly, for truly global concerns
+4. **Global State** (Zustand slices) - For cross-component shared state
 
 ### File Organization
 - Use kebab-case for all file and directory names
@@ -191,7 +283,7 @@ When implementing any frontend feature, ensure:
 - Implement barrel exports for clean public APIs
 - Follow the established project structure patterns
 
-### Barrel Exports Pattern (Updated) ← Add this new section
+### Barrel Exports Pattern
 - **External API**: Use barrel exports for clean public APIs between features
 - **Internal API**: Use direct imports within the same feature to avoid circular dependencies
 - **Rule**: Never import from barrel file within the same directory tree that exports to that barrel
@@ -210,11 +302,12 @@ When implementing any frontend feature, ensure:
 - **Animation**: Motion library (motion/react)
 - **Linting**: Biome (formatting) + ESLint 9 (React-specific rules)
 - **Package Manager**: pnpm
+- **State Management**: Zustand with slice-based architecture
 
 ### Development Tools
 - **Turbopack**: For faster development builds
 - **React Compiler**: Experimental optimization
-- **Biome**: Fast formatting and basic linting
+- **Biome**: Fast formatting and basic linting with block statement enforcement
 - **ESLint**: React/Next.js specific rules and accessibility
 
 ## Enterprise Standards Summary
@@ -229,6 +322,7 @@ When implementing any frontend feature, ensure:
 - Follow naming conventions consistently
 - Implement comprehensive error handling
 - Use motion/react for animations with Tailwind for static styles
+- **Always use block statements with curly braces** (Biome requirement)
 
 ### ❌ NEVER DO
 - Mix `pages/` and `app/` directories
@@ -238,5 +332,6 @@ When implementing any frontend feature, ensure:
 - Skip error handling in Server Actions
 - Use CSS animations when motion/react is available
 - Mix animation approaches (CSS + motion for same property)
+- **Use single-line statements without braces** (Biome will flag these)
 
 This orchestrator ensures all specialized rules work together harmoniously while maintaining the structured approach and comprehensive coverage your engineering team needs.

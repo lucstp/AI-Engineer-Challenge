@@ -11,7 +11,6 @@ export interface ChatState {
   apiKeyLength: number | null;
   apiKeyError: string | null;
   isInitialized: boolean;
-  isRehydrated: boolean; // Track Zustand persistence rehydration completion
   selectedModel: string;
 
   // UI state
@@ -26,6 +25,7 @@ export interface ChatState {
   hasSeenWelcomeAnimation: boolean;
   hasCompletedInitialSetup: boolean;
   lastSuccessfulKeyType: string | null;
+  isRehydrated: boolean;
 
   // Actions
   setMessages: (messages: Message[]) => void;
@@ -53,6 +53,8 @@ export interface ChatState {
   // Animation control actions
   setHasSeenWelcomeAnimation: (seen: boolean) => void;
   setHasCompletedInitialSetup: (completed: boolean) => void;
+  setIsRehydrated: (rehydrated: boolean) => void;
+  checkWelcomeAnimation: () => void;
 
   // Utility actions
   reset: () => Promise<void>;

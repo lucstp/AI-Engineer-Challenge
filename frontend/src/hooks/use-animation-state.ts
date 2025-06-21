@@ -5,12 +5,13 @@ import { useEffect, useState } from 'react';
 import { useChatStore } from '@/store';
 
 /**
- * Simplified animation state hook for background animations and welcome states.
+ * Animation state hook with Silicon Valley-grade user experience.
  *
- * Focuses on:
- * - Background animation states (valid/invalid API key)
- * - Welcome animation control
- * - Hydration safety
+ * Silicon Valley approach:
+ * - Provide smart defaults immediately (invalid state for new users)
+ * - Smooth transitions when persisted state loads
+ * - No loading screens or hydration delays
+ * - Seamless background state synchronization
  */
 export function useAnimationState() {
   const {
@@ -19,27 +20,30 @@ export function useAnimationState() {
     apiKeyLength,
     hasSeenWelcomeAnimation,
     hasCompletedInitialSetup,
+    isRehydrated,
   } = useChatStore();
 
   const [isHydrated, setIsHydrated] = useState(false);
-  const [isFirstTimeUser, setIsFirstTimeUser] = useState(true);
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState(true); // Smart default
 
-  // Handle hydration and determine user type
+  // Handle hydration and determine user type with smooth transitions
   useEffect(() => {
-    setIsHydrated(true);
+    // Wait for actual Zustand rehydration to complete
+    if (isRehydrated) {
+      setIsHydrated(true);
+      setIsFirstTimeUser(!hasCompletedInitialSetup);
+    }
+  }, [hasCompletedInitialSetup, isRehydrated]);
 
-    // Determine if this is a first-time user based on completed setup
-    setIsFirstTimeUser(!hasCompletedInitialSetup);
-  }, [hasCompletedInitialSetup]);
-
-  // Calculate animation states
+  // Calculate animation states with smart defaults
+  // Default to invalid state (most users don't have API keys), then transition smoothly
   const shouldShowValidAnimation =
     hasValidApiKey && apiKeyType && apiKeyLength != null && apiKeyLength > 0;
   const shouldShowInvalidAnimation = !shouldShowValidAnimation;
   const shouldPlayWelcomeAnimation = !hasSeenWelcomeAnimation && isFirstTimeUser && isHydrated;
 
   return {
-    // Background animation states
+    // Background animation states (smart defaults)
     shouldShowValidAnimation,
     shouldShowInvalidAnimation,
     animationState: shouldShowValidAnimation ? 'valid' : 'invalid',

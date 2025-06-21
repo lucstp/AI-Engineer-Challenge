@@ -1,0 +1,109 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+---
+name: "Zustand Enterprise Architecture"
+description: "Enterprise-grade Zustand rules for slice-based architecture, SSR hydration, persistence, and production-quality state design."
+globs:
+  - "src/store/**"
+alwaysApply: false
+---
+
+## Rule Integration
+
+This rule works in conjunction with:
+- **See: `frontend-standard-rule.mdc`** for overall architecture principles
+- **See: `typescript-rule.mdc`** for type safety standards
+- **See: `react19-core-rule.mdc`** for React 19 integration patterns
+- **See: `nextjs15-core-rule.mdc`** for SSR and App Router guidelines
+- **See: `rsc-component-patterns-rule.mdc`** for Server Components integration
+
+
+## Zustand Enterprise Rules
+
+You are working with Zustand state management in a production-grade AI app using Next.js 15 (App Router) and React 19. Follow these rules:
+
+### 🧱 Architecture
+- Use **slice-based store composition** (e.g. `chat-slice.ts`, `auth-slice.ts`, etc.).
+- Each slice must expose **typed state and actions** and be combined in a centralized `index.ts` using `create<Store>()(...)`.
+- Use `store.types.ts` to define and share interfaces across slices. Keep types clean, separated, and centrally organized.
+
+### 🧠 State Modeling
+- State objects must:
+  - Use default values that avoid SSR mismatches.
+  - Treat all arrays (like `messages`) as always-initialized (`[]`, never `undefined`).
+  - Avoid storing undefined/null where not required.
+  - Explicitly initialize booleans (e.g. `isAnimating: false`).
+- State with ephemeral or animation logic (e.g. `animatedContent`) must be gated or excluded from persistence.
+
+### ♻️ Rehydration Patterns
+- Use `persist` middleware with:
+  - `partialize()` to persist only selective state (e.g. `selectedModel`, `hasValidApiKey`, `messages`, etc.).
+  - `onRehydrateStorage()` to log and respond to hydration status.
+  - A custom `isRehydrated` flag in the state to confirm hydration from a client-side component.
+- In layout, mount a `StoreInitializer` client component to call `initializeStore()` and `checkSession()` after hydration.
+
+### 🔄 Hydration-Safe SSR
+- Always start the store with the **same default state on server and client**.
+- Never rely on persisted values during initial render on the server.
+- Use a `hydrated` flag in components to delay hydration-sensitive UI.
+- If needed, use `suppressHydrationWarning` or wrap logic in `useEffect`.
+
+### 🔐 API Key Handling
+- Treat `hasValidApiKey`, `apiKeyType`, and `apiKeyLength` as persistable.
+- NEVER persist the API key string itself. Only persist derived metadata.
+- Encapsulate API key logic in slice methods like `setApiKey()`, `checkSession()`, `deleteApiKey()`.
+
+### 🚀 Slice Design
+- Export slice as a creator: `export const createChatSlice = (set, get) => ({ ... })`.
+- Co-locate state, actions, logging, and validation logic.
+- Document each action with JSDoc (e.g. `/** Adds a new message to the chat state */`).
+- Group actions logically and prefix with their domain (`chat/`, `auth/`, `ui/`).
+
+### 📦 Store Composition
+- In `index.ts`, compose all slices with `create()` and optional middleware (`persist`, `devtools`).
+- Name each persisted slice with a clear identifier (e.g. `'chat-storage'`).
+- Add `devtools` middleware in development with named action labels (e.g. `setMessages`, `deleteApiKey`).
+
+### 🧪 Testing & Debugging
+- Expose actions via `useChatStore.getState().myAction()` for direct testing.
+- Reset state in tests using `useChatStore.setState(initialState, true)`.
+- Use Redux DevTools with `{ name: 'chat-store' }` and explicit action names.
+- Log hydration status with `logger.debug/info/error` hooks inside `onRehydrateStorage`.
+
+### 📉 Performance
+- Use selectors with `shallow` equality for performance-sensitive components.
+- Separate derived or computed state from persistent state.
+- Use `immer` or batching in heavy state updates to avoid over-renders.
+
+### 🔍 Observability & Logging
+- Use `logger.debug()` in every major store action (e.g. `setMessages`, `setApiKey`).
+- Use `chatLogger.success()` for API-related lifecycle logs.
+- Centralize logging patterns for store hydration and initialization.
+
+### 🔁 Real-Time / Streaming
+- For real-time chat or streaming apps:
+  - Append new tokens/messages incrementally via `addMessage()`.
+  - Ensure `setAnimatedContent()` doesn’t trigger SSR mismatches.
+  - Use `isTyping`, `isAnimating`, and `animatedContent` as transient UI flags (never persist).
+
+### 🧹 Resetting
+- Provide a `reset()` method that resets state to default and removes sensitive flags.
+- Use the same `INITIAL_DATA_STATE` object to avoid mismatches or leakage across sessions.
+- Leverage Zustand’s own internal cleanup (`localStorage.removeItem(...)` is unnecessary).
+
+### 📁 Folder Convention
+- Organize Zustand logic in:
+
+  src/store/
+  ├── index.ts              # Main store combining all slices
+  ├── chat-slice.ts         # Messages, streaming, model selection
+  ├── ui-slice.ts           # Animation states, UI preferences
+  ├── auth-slice.ts         # API key management (secure)
+  ├── system-slice.ts       # Initialization, session management
+  └── store.types.ts        # All slice TypeScript interfaces
+
+  - Group all logic, types, and middleware in the same folder. This simplifies onboarding, debugging, and testing.
+

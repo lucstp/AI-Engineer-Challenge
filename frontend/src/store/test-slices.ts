@@ -4,6 +4,7 @@
  */
 
 import { logger } from '@/lib';
+
 import { createWelcomeMessage } from './chat-slice';
 import type {
   AuthSliceCreator,

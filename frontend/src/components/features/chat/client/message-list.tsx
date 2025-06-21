@@ -95,7 +95,11 @@ export function MessageList({ messages, isTyping, isAnimating }: MessageListProp
           const shouldAnimate = isLastMessage && message.role === 'assistant' && isAnimating;
 
           // Debug logging for animation logic (only in development)
-          if (process.env.NODE_ENV === 'development' && message.role === 'assistant' && isLastMessage) {
+          if (
+            process.env.NODE_ENV === 'development' &&
+            message.role === 'assistant' &&
+            isLastMessage
+          ) {
             console.log('🎬 MessageList Animation Check:', {
               messageId: message.id,
               isLastMessage,

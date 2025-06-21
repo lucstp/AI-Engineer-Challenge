@@ -28,12 +28,7 @@ export function SessionDebug() {
     parsedStorage: null,
   });
 
-  const {
-    messages,
-    hasValidApiKey,
-    isInitialized,
-    hasSeenWelcomeAnimation,
-  } = useChatStore();
+  const { messages, hasValidApiKey, isInitialized, hasSeenWelcomeAnimation } = useChatStore();
 
   useEffect(() => {
     // Get localStorage data
@@ -63,14 +58,14 @@ export function SessionDebug() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 bg-black/80 text-white p-3 rounded-lg text-base font-mono max-w-sm z-50">
-      <div className="font-bold mb-2">🐛 Debug Info</div>
+    <div className="fixed bottom-4 left-4 z-50 max-w-sm rounded-lg bg-black/80 p-3 font-mono text-base text-white">
+      <div className="mb-2 font-bold">🐛 Debug Info</div>
       <div>Messages: {debugInfo.messages}</div>
       <div>API Key: {debugInfo.apiKey ? '✅ Yes' : '❌ No'}</div>
       <div>Initialized: {debugInfo.isInitialized ? '✅ Yes' : '❌ No'}</div>
       <div>Seen Welcome: {debugInfo.hasSeenWelcome ? '✅ Yes' : '❌ No'}</div>
 
-      <div className="mt-2 pt-2 border-t border-gray-600">
+      <div className="mt-2 border-t border-gray-600 pt-2">
         <div className="font-bold">LocalStorage:</div>
         {debugInfo.localStorage ? (
           <div className="max-h-32 overflow-y-auto text-base">
@@ -78,8 +73,13 @@ export function SessionDebug() {
             {debugInfo.parsedStorage && (
               <>
                 <div>Stored Messages: {debugInfo.parsedStorage.state?.messages?.length || 0}</div>
-                <div>Stored hasSeenWelcome: {debugInfo.parsedStorage.state?.hasSeenWelcomeAnimation ? '✅' : '❌'}</div>
-                <div>Stored isInitialized: {debugInfo.parsedStorage.state?.isInitialized ? '✅' : '❌'}</div>
+                <div>
+                  Stored hasSeenWelcome:{' '}
+                  {debugInfo.parsedStorage.state?.hasSeenWelcomeAnimation ? '✅' : '❌'}
+                </div>
+                <div>
+                  Stored isInitialized: {debugInfo.parsedStorage.state?.isInitialized ? '✅' : '❌'}
+                </div>
               </>
             )}
           </div>

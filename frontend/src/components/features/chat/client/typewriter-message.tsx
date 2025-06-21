@@ -9,7 +9,14 @@ import { motion } from 'motion/react';
 const logger = createComponentLogger('TypewriterMessage');
 
 /**
- * Custom hook for typewriter animation with dynamic speed
+ * Animates a string with a typewriter effect, revealing one character at a time with dynamic speed and natural pauses.
+ *
+ * The animation speed adapts to the length of the text and introduces brief pauses after punctuation for a more natural typing feel. Animation can be started or stopped via the `startAnimation` flag.
+ *
+ * @param text - The full string to animate
+ * @param startAnimation - Whether to start the animation
+ * @param speed - Base typing speed in milliseconds per character (default: 10)
+ * @returns An object containing the currently displayed substring (`displayText`) and a boolean indicating if the animation is complete (`isComplete`)
  */
 function useTypewriter(text: string, startAnimation: boolean, speed = 10) {
   const [displayText, setDisplayText] = useState('');
@@ -108,14 +115,14 @@ interface TypewriterMessageProps {
 }
 
 /**
- * TypewriterMessage - Client Component for animated message display
+ * Renders a message with a typewriter animation effect, revealing text character by character.
  *
- * Features:
- * - Dynamic typewriter animation with natural pacing
- * - Integration with message.animated property
- * - Speed adjustments based on content length
- * - Natural pauses at punctuation
- * - Callback for animation completion
+ * Displays the animated message content if `isAnimating` is true; otherwise, shows the full message instantly. Invokes an optional callback when the animation completes. The animation speed adapts to message length and includes natural pauses at punctuation for a more lifelike effect.
+ *
+ * @param message - The message object containing the text to display and a unique identifier.
+ * @param className - Optional CSS class for custom styling.
+ * @param isAnimating - Whether to animate the message display. Defaults to true.
+ * @param onAnimationComplete - Optional callback invoked when the animation finishes.
  */
 export function TypewriterMessage({
   message,

@@ -20,13 +20,11 @@ import { useChatStore } from '@/store';
 import { Bot, Clock, Sparkles } from 'lucide-react';
 
 /**
- * Main chat page with streaming support and proper state management.
+ * Renders the main chat page, handling immediate UI display, background state initialization, and session validation.
  *
- * Silicon Valley approach:
- * - Render immediately with smart defaults
- * - Sync state seamlessly in background
- * - No loading screens or hydration delays
- * - Smooth transitions when state loads
+ * Initializes chat state on mount, checks user session after hydration, and manages UI for message streaming, typing, and animation states. Provides a toggle for message timestamps and displays a security notice if no valid API key is present. Debug information is shown in development mode.
+ *
+ * This route is the primary entry point for the chat assistant.
  */
 export default function HomePage() {
   const {

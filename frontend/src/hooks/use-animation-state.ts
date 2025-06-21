@@ -5,13 +5,11 @@ import { useEffect, useState } from 'react';
 import { useChatStore } from '@/store';
 
 /**
- * Animation state hook with Silicon Valley-grade user experience.
+ * React hook for managing animation state and user experience flags with smooth transitions and smart defaults.
  *
- * Silicon Valley approach:
- * - Provide smart defaults immediately (invalid state for new users)
- * - Smooth transitions when persisted state loads
- * - No loading screens or hydration delays
- * - Seamless background state synchronization
+ * Integrates Zustand store hydration and user setup status to determine animation visibility, welcome flow, and readiness flags. Ensures seamless background state synchronization and avoids loading delays by providing immediate defaults and updating state only after store rehydration.
+ *
+ * @returns An object containing animation state flags, user experience indicators, animation control flags, and readiness states.
  */
 export function useAnimationState() {
   const {

@@ -11,15 +11,13 @@ import { TypewriterMessage } from './typewriter-message';
 import { TypingIndicator } from './typing-indicator';
 
 /**
- * MessageList - Client Component for message display
+ * Renders a scrollable, accessible chat message list with user and assistant messages, animated typing effects, and optional timestamps.
  *
- * Features:
- * - User messages on the right, assistant messages on the left
- * - Different styling for user vs assistant messages
- * - TypewriterMessage integration for animated messages
- * - Auto-scroll to bottom on new messages
- * - Typing indicator with motion animations
- * - Proper chat bubble styling
+ * User messages are aligned to the right with distinct styling, while assistant messages appear on the left. The component auto-scrolls to the latest message unless the user is actively scrolling. Animated typewriter effects are shown for the latest assistant message when enabled. A typing indicator appears when the assistant is composing a response. Timestamps can be displayed below each message if enabled in settings. The component is keyboard and screen reader accessible.
+ *
+ * @param messages - Array of chat messages to display in order
+ * @param isTyping - Whether the assistant is currently typing
+ * @param isAnimating - Whether to animate the latest assistant message with a typewriter effect
  */
 export function MessageList({ messages, isTyping, isAnimating }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);

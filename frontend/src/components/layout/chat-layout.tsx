@@ -15,14 +15,12 @@ interface ChatLayoutProps {
 }
 
 /**
- * Enhanced chat layout with Silicon Valley-grade user experience.
- * Includes proper hydration guard for Zustand persistence.
+ * Provides an accessible, animated chat interface layout with hydration guard and seamless state synchronization.
  *
- * Silicon Valley approach:
- * - Render immediately with smart defaults (collapsed for new users)
- * - Smooth animations when state actually changes
- * - No loading screens or hydration delays (after initial hydration)
- * - Seamless state synchronization
+ * Renders a responsive chat layout that animates expansion and collapse based on application state, ensuring consistent UI after hydration and smooth transitions. The layout synchronizes its expansion state with API key validity and avoids SSR/CSR mismatches. Includes optional header content and centers main content when collapsed for improved accessibility.
+ *
+ * @param children - Main chat content to display within the layout.
+ * @param header - Optional header content rendered above the chat area.
  */
 export function ChatLayout({ children, header }: ChatLayoutProps) {
   const { isExpanded, hasValidApiKey, setIsExpanded } = useChatStore();

@@ -18,6 +18,11 @@ interface DebugInfo {
   } | null;
 }
 
+/**
+ * Displays a development-only debug panel with live chat session state and localStorage details.
+ *
+ * Shows counts and flags for messages, API key validity, initialization, and welcome animation status, along with parsed localStorage data if available. The panel is visually fixed in the lower-left corner and is not rendered in production environments.
+ */
 export function SessionDebug() {
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({
     messages: 0,

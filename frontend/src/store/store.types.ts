@@ -70,6 +70,10 @@ export interface SystemSlice {
   isInitialized: boolean;
   isRehydrated: boolean;
 
+  // Timeout management state (not persisted)
+  initTimeoutId: NodeJS.Timeout | null;
+  welcomeAnimationTimeoutId: NodeJS.Timeout | null;
+
   // Actions
   initializeStore: () => void;
   checkSession: () => Promise<void>;

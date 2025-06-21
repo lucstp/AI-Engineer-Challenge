@@ -127,6 +127,8 @@ export const createSystemTestSlice: SystemSliceCreator = (set, _get) => ({
   // Initial state
   isInitialized: false,
   isRehydrated: true,
+  initTimeoutId: null,
+  welcomeAnimationTimeoutId: null,
 
   // Actions
   initializeStore: () => {
@@ -151,6 +153,8 @@ export const createSystemTestSlice: SystemSliceCreator = (set, _get) => ({
     set({
       isInitialized: true,
       isRehydrated: true,
+      initTimeoutId: null,
+      welcomeAnimationTimeoutId: null,
     });
   },
 

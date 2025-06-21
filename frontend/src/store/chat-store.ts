@@ -10,7 +10,9 @@ const WELCOME_MESSAGE =
   "Hello! I'm your AI assistant. To get started, please enter your OpenAI API key in the field below. I'll be ready to help once you've added your key.";
 
 /**
- * Creates a consistent welcome message object
+ * Generates a standardized welcome message object from the assistant.
+ *
+ * @returns An object representing the assistant's welcome message, including id, content, role, and timestamp.
  */
 function createWelcomeMessage() {
   return {
@@ -21,7 +23,11 @@ function createWelcomeMessage() {
   };
 }
 
-// Check if this is a first-time user (no persisted data)
+/**
+ * Determines whether the current user is accessing the chat for the first time by checking for persisted chat data in localStorage.
+ *
+ * @returns `true` if no chat data is found in localStorage or if localStorage is unavailable; otherwise, `false`.
+ */
 function isFirstTimeUser(): boolean {
   if (typeof window === 'undefined') {
     return true;
@@ -35,7 +41,11 @@ function isFirstTimeUser(): boolean {
   }
 }
 
-// Check if user has a valid API key in persisted state
+/**
+ * Determines whether a valid API key is present in the persisted chat store state.
+ *
+ * @returns True if the persisted state indicates a valid API key; otherwise, false.
+ */
 function hasPersistedApiKey(): boolean {
   if (typeof window === 'undefined') {
     return false;

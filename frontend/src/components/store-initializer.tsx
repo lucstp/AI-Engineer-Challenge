@@ -6,7 +6,9 @@ import { logger } from '@/lib';
 import { useChatStore } from '@/store';
 
 /**
- * Store Initializer - Simple initialization after a brief delay to allow Zustand rehydration
+ * Initializes the Zustand chat store after a short delay to ensure state rehydration, then checks the session status.
+ *
+ * This component performs store initialization and session verification on mount, but does not render any UI or accept props.
  */
 export function StoreInitializer() {
   const { initializeStore, checkSession, isInitialized } = useChatStore();

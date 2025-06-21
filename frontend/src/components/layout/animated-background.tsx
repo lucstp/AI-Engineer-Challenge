@@ -4,21 +4,11 @@ import { useAnimationState } from '@/hooks/use-animation-state';
 import { useChatStore } from '@/store';
 
 /**
- * Animated background with Silicon Valley-grade user experience.
+ * Renders an animated, visually rich background with smart defaults and smooth transitions for optimal user experience.
  *
- * Silicon Valley approach:
- * - Render immediately with smart defaults (gray logos for new users)
- * - Smooth transitions when persisted state loads
- * - No loading screens or hydration delays
- * - Seamless state synchronization
+ * The background adapts in real time to app state: gray logos are shown by default for new or unauthenticated users, while yellow logos appear when a valid API key is detected after state rehydration. A dynamic glassmorphism overlay ensures seamless visual transitions and prevents hydration mismatches or flashing.
  *
- * Features:
- * - Smart default: Show gray logos initially (most users don't have API keys)
- * - Smooth transitions when real state loads from persistence
- * - No hydration mismatch or flashing
- * - Maintains visual stability across page reloads
- *
- * @param children - The content to render above the animated background
+ * @param children - React nodes to display above the animated background
  */
 export function AnimatedBackground({ children }: { children: React.ReactNode }) {
   const { isRehydrated, hasValidApiKey } = useChatStore();

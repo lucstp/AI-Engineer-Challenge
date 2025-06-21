@@ -76,6 +76,7 @@ export interface SystemSlice {
   checkWelcomeAnimation: () => void;
   setIsRehydrated: (rehydrated: boolean) => void;
   reset: () => Promise<void>;
+  cleanup: () => void;
 }
 
 // Combined store type

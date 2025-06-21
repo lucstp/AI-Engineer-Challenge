@@ -21,41 +21,53 @@ function createWelcomeMessage() {
 /**
  * System slice handles initialization, session management, and system-level operations
  */
-export const createSystemSlice: SliceStateCreator<SystemSlice> = (set, get) => ({
-  // Initial state
-  isInitialized: false,
-  isRehydrated: true,
+export const createSystemSlice: SliceStateCreator<SystemSlice> = (set, get) => {
+  // Store timeout IDs for cleanup
+  let initTimeoutId: NodeJS.Timeout | null = null;
+  let welcomeAnimationTimeoutId: NodeJS.Timeout | null = null;
+
+  return {
+    // Initial state
+    isInitialized: false,
+    isRehydrated: true,
 
   // Actions
 
-  /** Initializes the store after rehydration */
-  initializeStore: () => {
-    const state = get();
+    /** Initializes the store after rehydration */
+    initializeStore: () => {
+      const state = get();
 
-    logger.debug('🚀 initializeStore called after rehydration', {
-      component: 'SystemSlice',
-      action: 'initializeStore',
-      isInitialized: state.isInitialized,
-      messagesCount: state.messages.length,
-      hasSeenWelcomeAnimation: state.hasSeenWelcomeAnimation,
-    });
+      logger.debug('🚀 initializeStore called after rehydration', {
+        component: 'SystemSlice',
+        action: 'initializeStore',
+        isInitialized: state.isInitialized,
+        messagesCount: state.messages.length,
+        hasSeenWelcomeAnimation: state.hasSeenWelcomeAnimation,
+      });
 
-    if (state.isInitialized) {
-      logger.debug('✅ Store already initialized');
-      return;
-    }
+      if (state.isInitialized) {
+        logger.debug('✅ Store already initialized');
+        return;
+      }
 
-    set({ isInitialized: true });
+      set({ isInitialized: true });
 
-    setTimeout(() => {
-      get().checkWelcomeAnimation();
-    }, 0);
+      // Clear existing timeout if any
+      if (initTimeoutId) {
+        clearTimeout(initTimeoutId);
+        initTimeoutId = null;
+      }
 
-    logger.debug('✅ Store initialized and welcome animation check queued', {
-      component: 'SystemSlice',
-      action: 'initializeStore',
-    });
-  },
+      initTimeoutId = setTimeout(() => {
+        get().checkWelcomeAnimation();
+        initTimeoutId = null;
+      }, 0);
+
+      logger.debug('✅ Store initialized and welcome animation check queued', {
+        component: 'SystemSlice',
+        action: 'initializeStore',
+      });
+    },
 
   /** Checks session and updates API key state */
   checkSession: async () => {
@@ -146,7 +158,13 @@ export const createSystemSlice: SliceStateCreator<SystemSlice> = (set, get) => (
 
       // Ensure animation state is set in next tick for proper rendering
       if (shouldAnimate) {
-        setTimeout(() => {
+        // Clear existing timeout if any
+        if (welcomeAnimationTimeoutId) {
+          clearTimeout(welcomeAnimationTimeoutId);
+          welcomeAnimationTimeoutId = null;
+        }
+
+        welcomeAnimationTimeoutId = setTimeout(() => {
           const currentState = get();
           if (currentState.isAnimating) {
             logger.debug('🎬 Animation state confirmed after timeout', {
@@ -155,6 +173,7 @@ export const createSystemSlice: SliceStateCreator<SystemSlice> = (set, get) => (
               isAnimating: currentState.isAnimating,
             });
           }
+          welcomeAnimationTimeoutId = null;
         }, 50);
       }
     }
@@ -171,7 +190,13 @@ export const createSystemSlice: SliceStateCreator<SystemSlice> = (set, get) => (
       state.setHasSeenWelcomeAnimation(true);
 
       // Ensure animation state is set in next tick for proper rendering
-      setTimeout(() => {
+      // Clear existing timeout if any
+      if (welcomeAnimationTimeoutId) {
+        clearTimeout(welcomeAnimationTimeoutId);
+        welcomeAnimationTimeoutId = null;
+      }
+
+      welcomeAnimationTimeoutId = setTimeout(() => {
         const currentState = get();
         if (currentState.isAnimating) {
           logger.debug('🎬 Animation state confirmed for existing message', {
@@ -180,6 +205,7 @@ export const createSystemSlice: SliceStateCreator<SystemSlice> = (set, get) => (
             isAnimating: currentState.isAnimating,
           });
         }
+        welcomeAnimationTimeoutId = null;
       }, 50);
     }
     // Case 3: Returning user - animation already seen
@@ -250,4 +276,17 @@ export const createSystemSlice: SliceStateCreator<SystemSlice> = (set, get) => (
       isRehydrated: true,
     }); // partial state update
   },
-});
+
+    /** Cleanup function to clear all timeouts */
+    cleanup: () => {
+      if (initTimeoutId) {
+        clearTimeout(initTimeoutId);
+        initTimeoutId = null;
+      }
+      if (welcomeAnimationTimeoutId) {
+        clearTimeout(welcomeAnimationTimeoutId);
+        welcomeAnimationTimeoutId = null;
+      }
+    },
+  };
+};

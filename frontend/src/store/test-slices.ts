@@ -4,22 +4,13 @@
  */
 
 import { logger } from '@/lib';
-
+import { createWelcomeMessage } from './chat-slice';
 import type {
   AuthSliceCreator,
   ChatSliceCreator,
   SystemSliceCreator,
   UiSliceCreator,
 } from './store.types';
-
-// Welcome message for initial state
-const createWelcomeMessage = () => ({
-  id: 'welcome',
-  content:
-    "Hello! I'm your AI assistant. To get started, please enter your OpenAI API key in the field below. I'll be ready to help once you've added your key.",
-  role: 'assistant' as const,
-  timestamp: new Date().toISOString(),
-});
 
 /**
  * Chat slice creator for isolated testing
@@ -161,4 +152,6 @@ export const createSystemTestSlice: SystemSliceCreator = (set, _get) => ({
       isRehydrated: true,
     });
   },
+
+  cleanup: () => {}, // No-op for test slice
 });

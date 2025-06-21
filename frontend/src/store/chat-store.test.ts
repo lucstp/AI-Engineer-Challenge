@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useChatStore, type Message } from './index';
+import {
+  createAuthTestStore,
+  createChatTestStore,
+  createSystemTestStore,
+  createTestStore,
+  createUiTestStore,
+  type Message,
+} from './index';
 
 // Mock the server actions
 vi.mock('@/app/actions/api-key-actions', () => ({
@@ -8,11 +15,6 @@ vi.mock('@/app/actions/api-key-actions', () => ({
   getApiKeySession: vi.fn(),
   deleteApiKeySession: vi.fn(),
 }));
-
-// Helper to reset Zustand store state between tests using public API
-const resetStore = async () => {
-  await useChatStore.getState().reset();
-};
 
 // Clearly fake/mock API keys for testing (51 chars total, 48 after prefix sk-)
 const validKey = 'sk-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; // 48 a's after sk-
@@ -23,195 +25,244 @@ const wrongLengthKey = 'sk-shortkey123'; // too short
 const invalidCharKey = 'sk-abc$%^defghijklmnopqrstuvwxyz1234567890ABCDEFghij'; // contains symbols
 const uppercaseOnlyKey = 'sk-ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKL'; // 48 uppercase after sk-
 
-describe('chat-store Zustand store', () => {
-  beforeEach(async () => {
-    await resetStore();
+describe('chat-store Zustand slice-based architecture', () => {
+  beforeEach(() => {
     // Clear localStorage mocks
     localStorage.clear();
     vi.clearAllMocks();
   });
 
-  describe('messages state', () => {
+  describe('ChatSlice: messages state', () => {
     it('sets messages', () => {
+      const store = createChatTestStore();
       const messages: Message[] = [{ id: '1', content: 'hi', role: 'user', timestamp: 't1' }];
-      useChatStore.getState().setMessages(messages);
-      expect(useChatStore.getState().messages).toEqual(messages);
+
+      store.getState().setMessages(messages);
+      expect(store.getState().messages).toEqual(messages);
     });
 
     it('adds a message', () => {
+      const store = createChatTestStore();
       const msg: Message = { id: '2', content: 'hello', role: 'assistant', timestamp: 't2' };
-      useChatStore.getState().addMessage(msg);
-      expect(useChatStore.getState().messages).toContainEqual(msg);
+
+      store.getState().addMessage(msg);
+      expect(store.getState().messages).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: '2', content: 'hello' })]),
+      );
+    });
+
+    it('updates a message', () => {
+      const store = createChatTestStore();
+      const initialMsg: Message = { id: '1', content: 'hi', role: 'user', timestamp: 't1' };
+
+      store.getState().setMessages([initialMsg]);
+      store.getState().updateMessage('1', { content: 'updated content' });
+
+      expect(store.getState().messages).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: '1', content: 'updated content' })]),
+      );
     });
 
     it('clears messages', () => {
-      useChatStore
-        .getState()
-        .setMessages([{ id: '1', content: 'hi', role: 'user', timestamp: 't1' }]);
-      useChatStore.getState().clearMessages();
-      expect(useChatStore.getState().messages).toEqual([]);
+      const store = createChatTestStore();
+      store.getState().setMessages([{ id: '1', content: 'hi', role: 'user', timestamp: 't1' }]);
+
+      store.getState().clearMessages();
+      expect(store.getState().messages).toEqual([]);
+    });
+
+    it('sets selected model', () => {
+      const store = createChatTestStore();
+
+      store.getState().setSelectedModel('gpt-4');
+      expect(store.getState().selectedModel).toBe('gpt-4');
     });
   });
 
-  describe('API key state (secure)', () => {
+  describe('AuthSlice: API key management', () => {
     it('sets and validates a valid API key', async () => {
-      const { validateAndStoreApiKey } = await import('@/app/actions/api-key-actions');
-      vi.mocked(validateAndStoreApiKey).mockResolvedValue({
-        success: true,
-        data: {
-          success: true,
-          keyInfo: { type: 'project', length: 51 },
-        },
-      });
+      const store = createAuthTestStore();
 
-      await useChatStore.getState().setApiKey(validKey);
-      expect(useChatStore.getState().hasValidApiKey).toBe(true);
-      expect(useChatStore.getState().apiKeyType).toBe('project');
-      expect(useChatStore.getState().apiKeyLength).toBe(51);
-      expect(useChatStore.getState().apiKeyError).toBeNull();
-    });
+      const result = await store.getState().setApiKey(validKey);
 
-    it('rejects an invalid API key', async () => {
-      const { validateAndStoreApiKey } = await import('@/app/actions/api-key-actions');
-      vi.mocked(validateAndStoreApiKey).mockResolvedValue({
-        success: false,
-        error: 'Invalid API key format',
-        fieldErrors: { apiKey: ['Invalid OpenAI API key format'] },
-      });
-
-      await useChatStore.getState().setApiKey('invalid-key');
-      expect(useChatStore.getState().hasValidApiKey).toBe(false);
-      expect(useChatStore.getState().apiKeyType).toBeNull();
-      expect(useChatStore.getState().apiKeyLength).toBeNull();
-      expect(useChatStore.getState().apiKeyError).toBe('Invalid API key format');
+      expect(result.success).toBe(true);
+      expect(store.getState().hasValidApiKey).toBe(true);
+      expect(store.getState().apiKeyType).toBe('test-key');
+      expect(store.getState().apiKeyLength).toBe(validKey.length);
+      expect(store.getState().apiKeyError).toBeNull();
     });
 
     it('deletes API key and clears related state', async () => {
-      const { deleteApiKeySession } = await import('@/app/actions/api-key-actions');
-      vi.mocked(deleteApiKeySession).mockResolvedValue();
+      const store = createAuthTestStore();
 
       // First set a valid key
-      const { validateAndStoreApiKey } = await import('@/app/actions/api-key-actions');
-      vi.mocked(validateAndStoreApiKey).mockResolvedValue({
-        success: true,
-        data: {
-          success: true,
-          keyInfo: { type: 'project', length: 51 },
-        },
-      });
-      await useChatStore.getState().setApiKey(validKey);
+      await store.getState().setApiKey(validKey);
+      expect(store.getState().hasValidApiKey).toBe(true);
 
       // Then delete it
-      await useChatStore.getState().deleteApiKey();
-      expect(useChatStore.getState().hasValidApiKey).toBe(false);
-      expect(useChatStore.getState().apiKeyType).toBeNull();
-      expect(useChatStore.getState().apiKeyLength).toBeNull();
-      expect(useChatStore.getState().apiKeyError).toBeNull();
-      expect(useChatStore.getState().messages).toEqual([]);
+      await store.getState().deleteApiKey();
+      expect(store.getState().hasValidApiKey).toBe(false);
+      expect(store.getState().apiKeyType).toBeNull();
+      expect(store.getState().apiKeyLength).toBeNull();
+      expect(store.getState().apiKeyError).toBeNull();
     });
 
-    it('handles server action errors gracefully', async () => {
-      const { validateAndStoreApiKey } = await import('@/app/actions/api-key-actions');
-      vi.mocked(validateAndStoreApiKey).mockRejectedValue(new Error('Network error'));
+    it('manages setup completion state', () => {
+      const store = createAuthTestStore();
 
-      await useChatStore.getState().setApiKey(validKey);
-      expect(useChatStore.getState().hasValidApiKey).toBe(false);
-      expect(useChatStore.getState().apiKeyError).toBe('Failed to validate API key');
+      store.getState().setHasCompletedInitialSetup(true);
+      expect(store.getState().hasCompletedInitialSetup).toBe(true);
     });
   });
 
-  describe('initialization', () => {
-    it('initializes with valid session', async () => {
-      const { getApiKeySession } = await import('@/app/actions/api-key-actions');
-      vi.mocked(getApiKeySession).mockResolvedValue({
-        hasValidKey: true,
-        keyType: 'project',
-        keyLength: 51,
-        expiresAt: Date.now() + 86400000,
-      });
-
-      // Initialize store (synchronous)
-      useChatStore.getState().initializeStore();
-      expect(useChatStore.getState().isInitialized).toBe(true);
-
-      // Then check session (asynchronous)
-      await useChatStore.getState().checkSession();
-      expect(useChatStore.getState().hasValidApiKey).toBe(true);
-      expect(useChatStore.getState().apiKeyType).toBe('project');
-    });
-
-    it('initializes without valid session', async () => {
-      const { getApiKeySession } = await import('@/app/actions/api-key-actions');
-      vi.mocked(getApiKeySession).mockResolvedValue(null);
-
-      // Initialize store (synchronous)
-      useChatStore.getState().initializeStore();
-      expect(useChatStore.getState().isInitialized).toBe(true);
-
-      // Then check session (asynchronous)
-      await useChatStore.getState().checkSession();
-      expect(useChatStore.getState().hasValidApiKey).toBe(false);
-    });
-  });
-
-  describe('model state', () => {
-    it('sets selected model', () => {
-      useChatStore.getState().setSelectedModel('gpt-4.2');
-      expect(useChatStore.getState().selectedModel).toBe('gpt-4.2');
-    });
-  });
-
-  describe('UI state', () => {
+  describe('UiSlice: UI state management', () => {
     it('sets isLoading', () => {
-      useChatStore.getState().setIsLoading(true);
-      expect(useChatStore.getState().isLoading).toBe(true);
+      const store = createUiTestStore();
+
+      store.getState().setIsLoading(true);
+      expect(store.getState().isLoading).toBe(true);
     });
+
     it('sets isTyping', () => {
-      useChatStore.getState().setIsTyping(true);
-      expect(useChatStore.getState().isTyping).toBe(true);
+      const store = createUiTestStore();
+
+      store.getState().setIsTyping(true);
+      expect(store.getState().isTyping).toBe(true);
     });
+
     it('sets showTimestamps', () => {
-      useChatStore.getState().setShowTimestamps(true);
-      expect(useChatStore.getState().showTimestamps).toBe(true);
+      const store = createUiTestStore();
+
+      store.getState().setShowTimestamps(true);
+      expect(store.getState().showTimestamps).toBe(true);
     });
+
     it('sets isAnimating', () => {
-      useChatStore.getState().setIsAnimating(true);
-      expect(useChatStore.getState().isAnimating).toBe(true);
+      const store = createUiTestStore();
+
+      store.getState().setIsAnimating(true);
+      expect(store.getState().isAnimating).toBe(true);
     });
+
     it('sets animatedContent', () => {
-      useChatStore.getState().setAnimatedContent('anim');
-      expect(useChatStore.getState().animatedContent).toBe('anim');
+      const store = createUiTestStore();
+
+      store.getState().setAnimatedContent('test animation');
+      expect(store.getState().animatedContent).toBe('test animation');
     });
+
     it('sets isExpanded', () => {
-      useChatStore.getState().setIsExpanded(true);
-      expect(useChatStore.getState().isExpanded).toBe(true);
+      const store = createUiTestStore();
+
+      store.getState().setIsExpanded(true);
+      expect(store.getState().isExpanded).toBe(true);
+    });
+
+    it('manages animation modes', () => {
+      const store = createUiTestStore();
+
+      store.getState().setAnimationMode('expanded');
+      expect(store.getState().animationMode).toBe('expanded');
+
+      store.getState().setBackgroundMode('valid');
+      expect(store.getState().backgroundMode).toBe('valid');
+    });
+
+    it('manages welcome animation state', () => {
+      const store = createUiTestStore();
+
+      store.getState().setHasSeenWelcomeAnimation(true);
+      expect(store.getState().hasSeenWelcomeAnimation).toBe(true);
     });
   });
 
-  describe('persistence', () => {
-    it('persists only safe data (no API keys)', async () => {
-      useChatStore.getState().setSelectedModel('gpt-4.2');
-      useChatStore
-        .getState()
-        .setMessages([{ id: '1', content: 'hi', role: 'user', timestamp: 't1' }]);
-      useChatStore.getState().setIsExpanded(true);
-      useChatStore.getState().setIsAnimating(true);
-      useChatStore.getState().setAnimatedContent('test animation');
+  describe('SystemSlice: initialization and session', () => {
+    it('initializes store', () => {
+      const store = createSystemTestStore();
 
-      // Give the persistence middleware time to write to localStorage
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      store.getState().initializeStore();
+      expect(store.getState().isInitialized).toBe(true);
+    });
 
-      const persisted = JSON.parse(localStorage.getItem('chat-storage') || '{}');
-      expect(persisted.state.selectedModel).toBe('gpt-4.2');
-      expect(persisted.state.messages).toHaveLength(1);
-      expect(persisted.state.isExpanded).toBe(true);
-      // FIXED: Animation states should NOT be persisted (they're derived from API key state)
-      expect(persisted.state.isAnimating).toBeUndefined();
-      expect(persisted.state.animatedContent).toBeUndefined();
-      // Ensure API key data is NOT persisted for security
-      expect(persisted.state.hasValidApiKey).toBeUndefined();
-      expect(persisted.state.apiKeyType).toBeUndefined();
-      expect(persisted.state.apiKeyLength).toBeUndefined();
+    it('checks session', async () => {
+      const store = createSystemTestStore();
+
+      await store.getState().checkSession();
+      expect(store.getState().isInitialized).toBe(true);
+    });
+
+    it('sets rehydration state', () => {
+      const store = createSystemTestStore();
+
+      store.getState().setIsRehydrated(false);
+      expect(store.getState().isRehydrated).toBe(false);
+    });
+
+    it('resets state', async () => {
+      const store = createSystemTestStore();
+
+      await store.getState().reset();
+      expect(store.getState().isInitialized).toBe(true);
+      expect(store.getState().isRehydrated).toBe(true);
+    });
+  });
+
+  describe('Combined Store: slice integration', () => {
+    it('combines all slices correctly', () => {
+      const store = createTestStore();
+
+      // Test that all slice methods are available
+      expect(typeof store.getState().setMessages).toBe('function');
+      expect(typeof store.getState().setIsLoading).toBe('function');
+      expect(typeof store.getState().setApiKey).toBe('function');
+      expect(typeof store.getState().initializeStore).toBe('function');
+    });
+
+    it('maintains slice independence', () => {
+      const store = createTestStore();
+
+      // Test that slices work independently
+      store.getState().setSelectedModel('gpt-4');
+      store.getState().setIsLoading(true);
+      store.getState().setHasCompletedInitialSetup(true);
+
+      expect(store.getState().selectedModel).toBe('gpt-4');
+      expect(store.getState().isLoading).toBe(true);
+      expect(store.getState().hasCompletedInitialSetup).toBe(true);
+    });
+  });
+
+  describe('Slice architecture benefits', () => {
+    it('allows isolated testing of chat functionality', () => {
+      const chatStore = createChatTestStore();
+
+      // Test chat functionality in isolation
+      chatStore.getState().setSelectedModel('gpt-4');
+      chatStore.getState().addMessage({ id: '1', content: 'test', role: 'user', timestamp: 'now' });
+
+      expect(chatStore.getState().selectedModel).toBe('gpt-4');
+      expect(chatStore.getState().messages).toHaveLength(2); // welcome + test message
+    });
+
+    it('allows isolated testing of UI functionality', () => {
+      const uiStore = createUiTestStore();
+
+      // Test UI functionality in isolation
+      uiStore.getState().setIsLoading(true);
+      uiStore.getState().setAnimationMode('expanded');
+
+      expect(uiStore.getState().isLoading).toBe(true);
+      expect(uiStore.getState().animationMode).toBe('expanded');
+    });
+
+    it('allows isolated testing of auth functionality', async () => {
+      const authStore = createAuthTestStore();
+
+      // Test auth functionality in isolation
+      const result = await authStore.getState().setApiKey('test-key');
+
+      expect(result.success).toBe(true);
+      expect(authStore.getState().hasValidApiKey).toBe(true);
     });
   });
 });

@@ -53,8 +53,6 @@ describe('HomePage Integration', () => {
     render(<HomePage />);
     // Header
     expect(screen.getByText('AI Chat Assistant')).toBeInTheDocument();
-    // Footer
-    expect(screen.getByText(/Enterprise Architecture/)).toBeInTheDocument();
     // Check for chat components
     expect(screen.getByRole('main')).toBeInTheDocument();
   });

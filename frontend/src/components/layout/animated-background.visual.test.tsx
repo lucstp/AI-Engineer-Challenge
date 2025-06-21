@@ -30,6 +30,9 @@ const setupSecureMockStore = (
     // Include other required store properties
     messages: [],
     isInitialized: true,
+    isRehydrated: true,
+    hasSeenWelcomeAnimation: true,
+    hasCompletedInitialSetup: true,
     initializeStore: vi.fn(),
     checkSession: vi.fn(), // Add missing checkSession method
     apiKeyError: null,
@@ -127,7 +130,7 @@ describe('AnimatedBackground Visual Tests', () => {
 
       // Yellow logo should be visible
       const yellowLogo = container.querySelector(
-        '[class*="opacity-100"][class*="aimakerspace-i-192.png"]',
+        '[class*="aimakerspace-i-192.png"].opacity-100, [class*="aimakerspace-i-192.png"][class*="opacity-100"]',
       );
       expect(yellowLogo).toHaveClass(
         'absolute',
@@ -159,7 +162,7 @@ describe('AnimatedBackground Visual Tests', () => {
       );
 
       const backdropElement = container.querySelector('[class*="backdrop-blur-"]');
-      expect(backdropElement).toHaveClass('absolute', 'inset-0', 'backdrop-blur-[2px]');
+      expect(backdropElement).toHaveClass('absolute', 'inset-0', 'backdrop-blur-[1.5px]');
     });
 
     it('applies proper z-index layering', () => {
@@ -335,7 +338,7 @@ describe('AnimatedBackground Visual Tests', () => {
 
       // Backdrop blur should not completely obscure content
       const backdropElement = container.querySelector('[class*="backdrop-blur-"]');
-      expect(backdropElement).toHaveClass('backdrop-blur-[2px]'); // Light blur only
+      expect(backdropElement).toHaveClass('backdrop-blur-[1.5px]'); // Light blur only
     });
 
     it('does not interfere with focus states', () => {

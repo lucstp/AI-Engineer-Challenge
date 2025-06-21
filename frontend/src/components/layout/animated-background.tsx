@@ -29,21 +29,21 @@ export function AnimatedBackground({ children }: { children: React.ReactNode }) 
       <div className="absolute inset-0 origin-center [transform:scale(2.5)] bg-gradient-to-bl from-[#0f172a] via-[#1e1a78] to-[#0f172a]">
         {/* Gray logo pattern - smart default, then controlled by state */}
         <div
-          className={`absolute inset-0 bg-[url(/assets/logos/aimakerspace-gray-192.png)] bg-[length:192px_192px] bg-center bg-repeat transition-opacity duration-500 ease-in-out ${
+          className={`absolute inset-0 bg-[url(/assets/logos/aimakerspace-gray-192.png)] bg-[length:192px_192px] bg-center bg-repeat transition-opacity duration-300 ease-in-out ${
             showInvalidLogos ? 'opacity-100' : 'opacity-0'
           }`}
         />
 
         {/* Yellow logo pattern - hidden by default, shown when API key is valid */}
         <div
-          className={`absolute inset-0 bg-[url(/assets/logos/aimakerspace-i-192.png)] bg-[length:192px_192px] bg-center bg-repeat transition-opacity duration-500 ease-in-out ${
+          className={`absolute inset-0 bg-[url(/assets/logos/aimakerspace-i-192.png)] bg-[length:192px_192px] bg-center bg-repeat transition-opacity duration-300 ease-in-out ${
             showValidLogos ? 'opacity-100' : 'opacity-0'
           }`}
         />
 
         {/* Glassmorphism overlay with smart defaults */}
         <div
-          className={`absolute inset-0 transition-all duration-500 ease-in-out ${blurIntensity}`}
+          className={`absolute inset-0 transition-all duration-300 ease-in-out ${blurIntensity}`}
         />
       </div>
 

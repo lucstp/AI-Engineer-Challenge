@@ -4,7 +4,6 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
 import type { ChatState } from './store.types';
-import type { Message } from '@/types';
 
 // Welcome message constants to avoid duplication
 const WELCOME_MESSAGE =
@@ -24,7 +23,9 @@ function createWelcomeMessage() {
 
 // Check if this is a first-time user (no persisted data)
 function isFirstTimeUser(): boolean {
-  if (typeof window === 'undefined') return true;
+  if (typeof window === 'undefined') {
+    return true;
+  }
 
   try {
     const stored = localStorage.getItem('chat-storage');
@@ -36,10 +37,14 @@ function isFirstTimeUser(): boolean {
 
 // Check if user has a valid API key in persisted state
 function hasPersistedApiKey(): boolean {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === 'undefined') {
+    return false;
+  }
   try {
     const stored = localStorage.getItem('chat-storage');
-    if (!stored) return false;
+    if (!stored) {
+      return false;
+    }
 
     const parsed = JSON.parse(stored);
     return parsed?.state?.hasValidApiKey === true;
@@ -303,7 +308,7 @@ export const useChatStore = create<ChatState>()(
         setHasCompletedInitialSetup: (completed) => set({ hasCompletedInitialSetup: completed }),
         setIsRehydrated: (rehydrated: boolean) => set({ isRehydrated: rehydrated }),
 
-                                // Check if welcome animation should play after hydration
+        // Check if welcome animation should play after hydration
         checkWelcomeAnimation: () => {
           const state = get();
 
@@ -462,10 +467,14 @@ export const useChatStore = create<ChatState>()(
 
           return (state, error) => {
             if (error) {
-              logger.error('❌ Zustand rehydration failed', error instanceof Error ? error : new Error(String(error)), {
-                component: 'ChatStore',
-                action: 'onRehydrateStorage',
-              });
+              logger.error(
+                '❌ Zustand rehydration failed',
+                error instanceof Error ? error : new Error(String(error)),
+                {
+                  component: 'ChatStore',
+                  action: 'onRehydrateStorage',
+                },
+              );
               return;
             }
 

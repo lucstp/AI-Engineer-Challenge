@@ -1,9 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { motion } from 'motion/react';
+
+import { createComponentLogger } from '@/lib';
 import { cn } from '@/lib/utils';
 import type { Message } from '@/types';
-import { motion } from 'motion/react';
+
+const logger = createComponentLogger('TypewriterMessage');
 
 /**
  * Custom hook for typewriter animation with dynamic speed
@@ -14,22 +18,24 @@ function useTypewriter(text: string, startAnimation: boolean, speed = 10) {
   const animationRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🎯 useTypewriter effect triggered:', {
-        startAnimation,
-        textLength: text.length,
-        text: `${text.substring(0, 30)}...`,
-      });
-    }
+    logger.debug('useTypewriter effect triggered', {
+      action: 'effect-triggered',
+      startAnimation,
+      textLength: text.length,
+      text: `${text.substring(0, 30)}...`,
+    });
 
     if (!startAnimation) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('⏸️ Animation not started - startAnimation is false');
-      }
+      logger.debug('Animation not started - startAnimation is false', {
+        action: 'animation-skipped',
+      });
       return;
     }
 
-    console.log('🚀 Starting typewriter animation');
+    logger.debug('Starting typewriter animation', {
+      action: 'animation-start',
+      textLength: text.length,
+    });
 
     // Clear any existing animation
     if (animationRef.current) {
@@ -120,14 +126,13 @@ export function TypewriterMessage({
 }: TypewriterMessageProps) {
   // Debug logging for animation state
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🎬 TypewriterMessage props:', {
-        messageId: message.id,
-        isAnimating,
-        messageContent: `${message.content.substring(0, 30)}...`,
-        messageLength: message.content.length,
-      });
-    }
+    logger.debug('TypewriterMessage props', {
+      action: 'props-received',
+      messageId: message.id,
+      isAnimating,
+      messageContent: `${message.content.substring(0, 30)}...`,
+      messageLength: message.content.length,
+    });
   }, [message.id, isAnimating, message.content]);
 
   // Use our typewriter hook
@@ -139,24 +144,26 @@ export function TypewriterMessage({
 
   // Debug logging for typewriter state
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔤 Typewriter state:', {
-        messageId: message.id,
-        displayTextLength: displayText.length,
-        totalLength: message.content.length,
-        isComplete,
-        isAnimating,
-      });
-    }
+    logger.debug('Typewriter state update', {
+      action: 'state-update',
+      messageId: message.id,
+      displayTextLength: displayText.length,
+      totalLength: message.content.length,
+      isComplete,
+      isAnimating,
+    });
   }, [message.id, displayText.length, message.content.length, isComplete, isAnimating]);
 
   // Call onAnimationComplete when animation finishes
   useEffect(() => {
     if (isComplete && onAnimationComplete) {
-      console.log('✅ Animation complete, calling callback');
+      logger.debug('Animation complete, calling callback', {
+        action: 'animation-complete',
+        messageId: message.id,
+      });
       onAnimationComplete();
     }
-  }, [isComplete, onAnimationComplete]);
+  }, [isComplete, onAnimationComplete, message.id]);
 
   return (
     <div className={cn('prose prose-invert max-w-none', className)}>

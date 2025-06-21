@@ -72,7 +72,7 @@ const INITIAL_DATA_STATE = {
   hasSeenWelcomeAnimation: false, // Allow animation for first-time users
   hasCompletedInitialSetup: false, // Start false, will be updated after hydration
   lastSuccessfulKeyType: null as string | null,
-  isRehydrated: true, // Always true since we handle rehydration with delays
+  isRehydrated: false, // Will be set to true by components after detecting rehydration
 };
 
 export const useChatStore = create<ChatState>()(
@@ -453,7 +453,7 @@ export const useChatStore = create<ChatState>()(
             persistedDataSize: JSON.stringify(persistedData).length,
             persistedMessages: persistedData.messages.map((m) => ({
               id: m.id,
-              content: `${m.content?.substring(0, 30)}...`,
+              content: m.content ? `${m.content.substring(0, 30)}...` : '[empty content]',
             })),
           });
 

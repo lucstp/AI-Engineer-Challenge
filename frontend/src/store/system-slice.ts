@@ -7,7 +7,9 @@ const WELCOME_MESSAGE =
   "Hello! I'm your AI assistant. To get started, please enter your OpenAI API key in the field below. I'll be ready to help once you've added your key.";
 
 /**
- * Generates a standardized welcome message object from the assistant.
+ * Creates a standardized assistant welcome message object with a fixed ID, predefined content, role, and current timestamp.
+ *
+ * @returns An object representing the assistant's welcome message
  */
 function createWelcomeMessage() {
   return {

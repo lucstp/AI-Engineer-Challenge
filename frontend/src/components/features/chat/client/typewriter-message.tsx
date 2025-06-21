@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'motion/react';
-
-import { createComponentLogger } from '@/lib';
 import { cn } from '@/lib/utils';
+import { createComponentLogger } from '@/lib';
 import type { Message } from '@/types';
+import { motion } from 'motion/react';
 
 const logger = createComponentLogger('TypewriterMessage');
 

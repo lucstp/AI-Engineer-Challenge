@@ -1,8 +1,7 @@
 ---
-description: UI styling patterns, shadcn/ui integration, and responsive design
+description:
 globs:
-  - "**/*.{ts,tsx,js,jsx}"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # UI and Styling Patterns

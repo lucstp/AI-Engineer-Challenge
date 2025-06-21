@@ -1,8 +1,7 @@
 ---
-description: Component architecture orchestrator - references UI styling and RSC patterns
+description:
 globs:
-  - "**/*.{ts,tsx,js,jsx}"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Component Architecture Patterns (Orchestrator)

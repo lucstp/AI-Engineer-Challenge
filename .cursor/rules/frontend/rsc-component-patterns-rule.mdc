@@ -1,7 +1,7 @@
 ---
-description: React Server Components patterns, server-side rendering, and data fetching
+description:
 globs:
-alwaysApply: false
+alwaysApply: true
 ---
 
 # React Server Components Patterns

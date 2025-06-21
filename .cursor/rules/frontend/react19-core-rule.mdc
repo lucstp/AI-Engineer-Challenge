@@ -1,8 +1,7 @@
 ---
-description: React 19 stable features, new APIs, and modern patterns
+description:
 globs:
-  - "**/*.{ts,tsx,js,jsx}"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # React 19 Core Features (Stable Dec 5, 2024)
